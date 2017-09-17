@@ -1,5 +1,6 @@
 hlnet=/home/yaozishu/hlnet CD=. {
  Makefile
+ README.md
  vim_project
  c-stl=c-stl {
   array.c
