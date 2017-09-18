@@ -39,6 +39,8 @@ typedef int (*shut_hander)(int client_id);
 typedef int (*tcpmsg_hander)(int client_id, cmd_head_t *head, char *data);
 //UDP消息函数，ip和port是大端(网络序)
 typedef int (*udpmsg_hander)(uint32_t ip, uint16_t port, cmd_head_t *head, char *data);
+//UDP读取函数
+typedef void (*udp_reader)(int fd);
 //数据库消息函数
 typedef int (*dbmsg_hander)(cmd_head_t *head, char *data);
 

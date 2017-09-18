@@ -31,8 +31,6 @@ int reg_shut_event(sock_type_e type, shut_hander func);
 int reg_tcp_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func);
 //注册UDP消息
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
-//注册数据库消息
-int reg_db_msg(uint16_t msg, dbmsg_hander func);
 
 //发送数据(tcp)
 int tcp_send(uint32_t client_id, uint16_t cmd, char *data, uint32_t len);

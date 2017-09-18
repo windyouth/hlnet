@@ -7,6 +7,8 @@
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
 
+#include <stdint.h>
+
 //队列结构体
 typedef struct _queue
 {

@@ -3,9 +3,9 @@
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include "hlnet.h"
-#include "queue.h"
+#include "../c-stl/queue.h"
 #include "../c-stl/map.h"
-#include "epollet.h"
+#include "../epollet/epollet.h"
 #include "../uthread/uthread.h"
 
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
@@ -198,11 +198,6 @@ int serv_create()
 	//构造调度器
 	int res  = schedule_create();
 	if (res != SUCCESS) return res;
-
-	//初始化数据库消息映射器
-	g_dbmsg_map = (map *)malloc(sizeof(map));
-	if (!g_dbmsg_map) return MEM_ERROR;
-	if (map_init(g_dbmsg_map) != OP_MAP_SUCCESS) return MEM_ERROR;
 
 	return epollet_create();
 }

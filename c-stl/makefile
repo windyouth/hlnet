@@ -5,6 +5,7 @@ obj_name = $(src:%.c=%.o)
 obj_dir = ../obj
 obj = $(addprefix $(obj_dir)/, $(obj_name))
 flag += -fPIC
+flag += -std=gnu99
 
 all: $(target) copy
 

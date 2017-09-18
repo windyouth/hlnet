@@ -1,8 +1,10 @@
 #include "database.h"
 #include "../c-stl/queue.h"
+#include "../c-stl/map.h"
+#include "pthread.h"
 #include "pthread.h"
 
-thread_t				g_thread = -1;
+pthread_t				g_thread = -1;
 
 queue					*g_dbqueue = NULL;
 map						*g_dbmsg_map = NULL;					//数据库消息映射
@@ -20,9 +22,14 @@ int start_dbthread()
 	g_dbqueue = (queue *)malloc(sizeof(queue));
 	if (!g_dbqueue) return MEM_ERROR;
 
+	//初始化数据库消息映射器
+	g_dbmsg_map = (map *)malloc(sizeof(map));
+	if (!g_dbmsg_map) return MEM_ERROR;
+	if (map_init(g_dbmsg_map) != OP_MAP_SUCCESS) return MEM_ERROR;
+
 	zero(g_dbqueue);
 	int res = queue_init(g_dbqueue, 5120);
-	if (res != QP_QUEUE_SUCCESS) return FAILURE;
+	if (res != OP_QUEUE_SUCCESS) return FAILURE;
 
 	//创建线程
 	res = pthread_create(g_thread, NULL, dbthread_run, 0);

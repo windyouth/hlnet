@@ -7,6 +7,8 @@
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
 
+#include <stdint.h>
+
 //队列结构体
 typedef struct _queue
 {
@@ -38,7 +40,7 @@ typedef struct _queue
 				i = ++i % (queue)->capacity, (item) = (queue)->table[i])
 
 //初始化队列
-int queue_init(queue *queue);
+int queue_init(queue *queue, uint32_t capacity);
 //末尾加入一个元素，队列满后将自动扩展。
 //本函数不保证线程安全，多线程请使用push_fixed。
 int queue_push(queue *queue, void *item);

@@ -1,4 +1,4 @@
-hlnet=/home/yaozishu/hlnet CD=. {
+hlnet=/home/heluan/hlnet CD=. {
  Makefile
  README.md
  vim_project

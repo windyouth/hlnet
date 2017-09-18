@@ -5,6 +5,7 @@ obj_name = $(src:%.c=%.o)
 obj_dir = ../obj
 obj = $(addprefix $(obj_dir)/, $(obj_name))
 flag += -fPIC
+flag += -std=gnu99
 #附加包含目录
 flag += -I../common -I../c-stl
 

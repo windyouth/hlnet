@@ -19,6 +19,22 @@
 struct epoll_event  *g_events = NULL;						//事件数组指针 
 int 				g_epoll_fd = INVALID_SOCKET;			//epoll元套接字
 
+//全局变量
+int 				g_client_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(用户端)
+int 				g_manage_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(管理端)
+int 				g_udp_fd = INVALID_SOCKET;				//监听的套接字ID(UDP)
+
+buffer				*g_client_buf = NULL;					//数据队列(用户端)
+buffer				*g_manage_buf = NULL;					//数据队列(管理端)
+
+link_hander			g_client_link = NULL;					//连接事件函数指针(用户端)
+shut_hander			g_client_shut = NULL;					//断开事件函数指针(用户端)
+
+link_hander			g_manage_link = NULL;					//连接事件函数指针(管理端)
+shut_hander			g_manage_shut = NULL;					//断开事件函数指针(管理端)
+
+udp_reader			g_udp_reader = NULL;					//udp读取函数指针
+
 
 //创建一个tcp套接字并监听端口
 int create_tcp_socket(uint16_t port)

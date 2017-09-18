@@ -1,7 +1,7 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
 
-#include "common.h"
+#include "../common/common.h"
 #include "buffer.h"
 #include "../c-stl/list.h"
 
