@@ -8,6 +8,7 @@
 #include "../epollet/epollet.h"
 #include "../uthread/uthread.h"
 
+
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
 
 //线程状态
@@ -24,7 +25,10 @@ map						*g_net_client_msg = NULL;				//网络消息映射(TCP用户端口)
 map						*g_net_manage_msg = NULL;				//网络消息映射(TCP管理端口)
 map						*g_net_udp_msg = NULL;					//网络消息映射(UDP端口)
 
-char					*g_udp_buffer = NULL;					//UDP所用缓冲区
+char					*g_udp_buffer = NULL;					//UDP缓冲区
+
+static schedule_t		*g_schedule = NULL;						//协程调度器
+
 
 //网络消息分发(客户端)
 void issue_client_msg(void *arg)
@@ -134,7 +138,7 @@ int create_tcp_client(uint16_t port)
 	if (!g_client_buf) return MEM_ERROR;
 		
 	//创建协程
-	int issue_id = uthread_create(issue_client_msg);
+	int issue_id = uthread_create(g_schedule, issue_client_msg);
 	if (issue_id < 0) return FAILURE;
 	uthread_add(issue_id);
 
@@ -160,7 +164,7 @@ int create_tcp_manage(uint16_t port)
 	if (!g_manage_buf) return MEM_ERROR;
 
 	//创建协程
-	int issue_id = uthread_create(issue_manage_msg);
+	int issue_id = uthread_create(g_schedule, issue_manage_msg);
 	if (issue_id < 0) return FAILURE;
 	uthread_add(issue_id);
 
@@ -196,8 +200,8 @@ int create_udp(uint16_t port)
 int serv_create()
 {
 	//构造调度器
-	int res  = schedule_create();
-	if (res != SUCCESS) return res;
+	g_schedule  = schedule_create();
+	if (!g_schedule) return FAILURE;
 
 	return epollet_create();
 }
@@ -205,7 +209,6 @@ int serv_create()
 //添加服务器参数
 int serv_ctl(sock_type_e sock_type, short port)
 {
-	
 	//tcp客户端
 	if (sock_type == SOCKTYPE_TCP_CLIENT)		
 	{
@@ -231,14 +234,11 @@ int serv_ctl(sock_type_e sock_type, short port)
 int serv_run()
 {
 	//创建协程
-	int epollet_id = uthread_create(epollet_run);
+	int epollet_id = uthread_create(g_schedule, epollet_run);
 	if (epollet_id < 0) return FAILURE;
 	
-	//加入协程数组
-	uthread_add(epollet_id);
-	
 	//调度器运行
-	uthread_run();
+	uthread_run(g_schedule);
 }
 
 //注册连接消息函数

@@ -1,8 +1,7 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
 
-#include "../common/common.h"
-#include "buffer.h"
+#include "../common/buffer.h"
 #include "../c-stl/list.h"
 
 //重置客户端结构
@@ -22,6 +21,7 @@
 	safe_free(cli);										\
 }while (0)
 
+//正在读的部分
 enum read_part_e
 {
 	READ_PART_HEAD 		= 1,			//正在读包头
@@ -32,7 +32,7 @@ enum read_part_e
 typedef struct _read_status
 {
 	uint16_t			need;			//未读完的字节数
-	uint8_t				part;			//正在读的部分，参见枚举：read_status_e
+	uint8_t				part;			//参见：read_part_e
 	uint8_t				reserve;		//保留字段 
 }read_status_t, *pread_status;
 

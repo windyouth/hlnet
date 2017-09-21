@@ -22,8 +22,8 @@
 
 #include <ucontext.h>
 
-#define DEFAULT_STACK_SZIE (1024*128)
-#define MAX_UTHREAD_SIZE   1024
+#define 				DEFAULT_STACK_SZIE 					(1024*128)
+#define 				MAX_UTHREAD_SIZE   					1024
 
 //错误码
 #define 				UTHREAD_ERR_SUCCESS					0				//成功
@@ -40,28 +40,31 @@ enum uthread_state
 
 typedef void (*Fun)(void *arg);
 
+//协程结构体
 typedef struct uthread_t
 {
-    ucontext_t ctx;
-    Fun func;
-    void *arg;
-    enum uthread_state state;
-    char stack[DEFAULT_STACK_SZIE];
+    ucontext_t 				ctx;
+    Fun 					func;
+    void 					*arg;
+    enum uthread_state 		state;
+    char 					stack[DEFAULT_STACK_SZIE];
 }uthread_t;
 
 //调度器结构体
 typedef struct _schedule_t
 {
-    ucontext_t main;
-    int running_thread;
-    uthread_t *threads;
-    int max_index; 				// 曾经使用到的最大的index + 1
+    ucontext_t 				main;
+    int 					running_thread;
+	int 					active_count;			//活跃的协程数量
+    uthread_t 				*threads;
+    int 					max_index; 				//曾经使用到的最大的index + 1
 }schedule_t;
+
 
 /*
  * 构造调度器
  */
-int schedule_create();
+schedule_t *schedule_create();
 
 /*help the thread running in the schedule*/
 static void uthread_body(schedule_t *ps);
@@ -75,17 +78,12 @@ static void uthread_body(schedule_t *ps);
 *    @return:
 *        return the index of the created thread in schedule
 */
-int uthread_create(Fun func);
-
-/*
- * 将创建的协程加入到运行数组中
- */
-int uthread_add(int id);
+int uthread_create(schedule_t *sche, Fun func);
 
 /*
  * 运转协程调度器
  */
-int uthread_run();
+void uthread_run(schedule_t *sche);
 
 /* Hang the currently running thread, switch to main thread */
 void uthread_yield(schedule_t *schedule);
@@ -98,13 +96,5 @@ void uthread_resume(schedule_t *schedule, int id);
  */
 void uthread_sleep(schedule_t* schedule, int msec);
 
-/*test whether all the threads in schedule run over
-* @param[in]:
-*    const schedule_t & schedule 
-* @param[out]:
-* @return:
-*    return 1 if all threads run over,otherwise return 0
-*/
-int  schedule_finished(const schedule_t *schedule);
 
 #endif

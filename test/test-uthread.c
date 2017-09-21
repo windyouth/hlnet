@@ -60,6 +60,8 @@ void func4(void *arg)
 		printf("i = %d\n", i);
 		show_cpu_mem_stat();
 		usleep(100000);
+
+    	uthread_yield((schedule_t *)arg);
 	}
 }
 
@@ -84,17 +86,13 @@ void context_test()
 
 void schedule_test()
 {
-	schedule_create();
+	schedule_t *sche = schedule_create();
     
-    int id2 = uthread_create(func2);
-    int id3 = uthread_create(func3);
-	int id4 = uthread_create(func4);
+    int id2 = uthread_create(sche, func2);
+    int id3 = uthread_create(sche, func3);
+	int id4 = uthread_create(sche, func4);
 
-	uthread_add(id2);
-	uthread_add(id3);
-	uthread_add(id4);
-    
-    uthread_run();
+    uthread_run(sche);
 
     puts("main over");
 }

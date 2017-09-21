@@ -18,9 +18,9 @@
 
 #include <sys/time.h>
 #include "uthread.h"
-#include "../c-stl/array.h"
 #include "../common/common.h"
 #include "../common/algorithm.h"
+
 
 //协程参数
 typedef struct _uthread_arg
@@ -29,31 +29,23 @@ typedef struct _uthread_arg
 	void				*parameter;			//参数
 }uthread_arg_t;
 
-schedule_t				*g_schedule = NULL;						//调度器
-array				 	*g_uthread_array = NULL;				//协程数组
-
 
 /*
  * 构造调度器
  */
-int schedule_create()
+schedule_t *schedule_create()
 {
 	/* 构造调度器 */
-	g_schedule = (schedule_t *)malloc(sizeof(schedule_t));
-	if (!g_schedule) return MEM_ERROR;
-	zero(g_schedule);
+	schedule_t *scheduler = (schedule_t *)malloc(sizeof(schedule_t));
+	if (!scheduler) return NULL;
+	zero(scheduler);
 	
 	int len = MAX_UTHREAD_SIZE * sizeof(uthread_t);
-	g_schedule->threads = (uthread_t *)malloc(len);
-	if (!g_schedule->threads) return MEM_ERROR;
-	zero(g_schedule->threads);
+	scheduler->threads = (uthread_t *)malloc(len);
+	if (!scheduler->threads) return NULL;
+	zero(scheduler->threads);
 
-	/* 构造协程数组 */
-	g_uthread_array = (array *)malloc(sizeof(array));
-	if (!g_uthread_array) return MEM_ERROR;
-	zero(g_uthread_array);
-
-	return array_init(g_uthread_array, 16);
+	return scheduler;
 }
 
 void uthread_resume(schedule_t *schedule, int id)
@@ -85,75 +77,73 @@ void uthread_body(schedule_t *ps)
 {
     int id = ps->running_thread;
 
-    if(id != -1){
+    if(id != -1)
+	{
         uthread_t *t = &(ps->threads[id]);
+
+        t->state = UTHREAD_STATE_RUNNING;
+		ps->active_count++;
 
         t->func(t->arg);
 
         t->state = UTHREAD_STATE_FREE;
-        
+		if(ps->active_count > 0) ps->active_count--;
+
         ps->running_thread = -1;
     }
 }
 
-int uthread_create(Fun func)
+int uthread_create(schedule_t *sche, Fun func)
 {
-	if (!g_schedule) return UTHREAD_ERR_ERROR;
+	if (!sche) return PARAM_ERROR;
 	
 	int id = 0;
     
-    for(id = 0; id < g_schedule->max_index; ++id )
+    for(id = 0; id < sche->max_index; ++id)
 	{
-        if(g_schedule->threads[id].state == UTHREAD_STATE_FREE)
+        if(sche->threads[id].state == UTHREAD_STATE_FREE)
 		{
             break;
         }
     }
     
-    if (id == g_schedule->max_index) {
-        g_schedule->max_index++;
+    if (id == sche->max_index) 
+	{
+		if (sche->max_index == MAX_UTHREAD_SIZE)
+			return FULL_ERROR;
+        sche->max_index++;
     }
 
-    uthread_t *t = &(g_schedule->threads[id]);
+    uthread_t *t = &(sche->threads[id]);
 
     t->state = UTHREAD_STATE_READY;
     t->func = func;
-    t->arg = g_schedule;
+    t->arg = sche;
 
     getcontext(&(t->ctx));
     
     t->ctx.uc_stack.ss_sp = t->stack;
     t->ctx.uc_stack.ss_size = DEFAULT_STACK_SZIE;
     t->ctx.uc_stack.ss_flags = 0;
-    t->ctx.uc_link = &(g_schedule->main);
-    g_schedule->running_thread = id;
+    t->ctx.uc_link = &(sche->main);
+    sche->running_thread = id;
     
-    makecontext(&(t->ctx), (void (*)(void))(uthread_body), 1, g_schedule);
-    swapcontext(&(g_schedule->main), &(t->ctx));
+    makecontext(&(t->ctx), (void (*)(void))(uthread_body), 1, sche);
+    swapcontext(&(sche->main), &(t->ctx));
     
     return id;
 }
 
 /*
- * 将创建的协程加入到运行数组中
- */
-int uthread_add(int id)
-{
-	array_push_back(g_uthread_array, id);
-}
-
-/*
  * 运转协程调度器
  */
-int uthread_run()
+void uthread_run(schedule_t *sche)
 {
-	int id = NULL;
-	while (!schedule_finished(g_schedule))
+	int id;
+	while (sche->active_count)
 	{
-		array_foreach(g_uthread_array, id, 0)
-		{
-			uthread_resume(g_schedule, id);
-		}
+		for (id = 0; id < sche->max_index; ++id)
+			uthread_resume(sche, id);
 	}
 }
 
@@ -177,24 +167,5 @@ void uthread_sleep(schedule_t* schedule, int msec)
 	}
 }
 
-int schedule_finished(const schedule_t *schedule)
-{
-    if (schedule->running_thread != -1)
-	{
-        return 0;
-    }
-	else
-	{
-        for(int i = 0; i < schedule->max_index; ++i)
-		{
-            if(schedule->threads[i].state != UTHREAD_STATE_FREE)
-			{
-                return 0;
-            }
-        }
-    }
-
-    return 1;
-}
 
 #endif

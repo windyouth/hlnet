@@ -9,6 +9,7 @@
 #define				PARAM_ERROR				-2					//参数错误
 #define				MEM_ERROR				-3					//内存错误
 #define				NET_ERROR				-4					//网络错误
+#define				FULL_ERROR				-5					//容器已满
 
 #define 			INVALID_SOCKET			-1					//非法套接字编号
 

@@ -1,9 +1,6 @@
 #ifndef _EPOLLET_H_
 #define	_EPOLLET_H_ 1
 
-#include <stdint.h>
-#include "buffer.h"
-#include "../common/common.h"
 #include "client_store.h"
 
 
