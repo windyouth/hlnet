@@ -11,6 +11,20 @@ uthread_dir = ./uthread
 cstl_dir = ./c-stl
 main_dir = ./src
 
+lib_dir = ./lib
+obj_dir = ./obj
+bin_dir = ./bin
+
+#创建目录
+#如果不想像clean一样写成目标依赖项的形式，就必须这样写。
+ifneq ($(MAKECMDGOALS), clean)
+$(shell mkdir -p $(lib_dir))
+$(shell mkdir -p $(obj_dir)) 
+$(shell mkdir -p $(bin_dir))
+$(shell mkdir -p $(bin_dir)/include)
+$(shell mkdir -p $(bin_dir)/lib)
+endif
+
 .PHONY: main common cstl uthread epollet
 
 all: $(target)
@@ -40,3 +54,4 @@ clean:
 	make -C $(uthread_dir) clean
 	make -C $(cstl_dir) clean
 	make -C $(epollet_dir) clean
+	rm -rf $(lib_dir) $(obj_dir) $(bin_dir)

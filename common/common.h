@@ -10,11 +10,15 @@
 #define				MEM_ERROR				-3					//内存错误
 #define				NET_ERROR				-4					//网络错误
 #define				FULL_ERROR				-5					//容器已满
+#define				EMPTY_ERROR				-6					//容器已空
 
 #define 			INVALID_SOCKET			-1					//非法套接字编号
 
 #define				YES						1
 #define				NO						0
+
+#define				PATH_LENGTH				256					//地址长度
+
 
 //网络数据包头
 typedef struct _cmd_head
@@ -43,7 +47,7 @@ typedef int (*udpmsg_hander)(uint32_t ip, uint16_t port, cmd_head_t *head, char 
 //UDP读取函数
 typedef void (*udp_reader)(int fd);
 //数据库消息函数
-typedef int (*dbmsg_hander)(cmd_head_t *head, char *data);
+typedef int (*dbmsg_hander)(char *data, uint32_t len);
 
 #endif //_COMMON_H_
 

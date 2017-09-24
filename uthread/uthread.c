@@ -48,6 +48,7 @@ schedule_t *schedule_create()
 	return scheduler;
 }
 
+//调度协程
 void uthread_resume(schedule_t *schedule, int id)
 {
     if(id < 0 || id >= schedule->max_index){
@@ -56,7 +57,9 @@ void uthread_resume(schedule_t *schedule, int id)
 
     uthread_t *t = &(schedule->threads[id]);
 
-    if (t->state == UTHREAD_STATE_SUSPEND) {
+	//只有处于暂停状态的协程，才进行调度。
+    if (t->state == UTHREAD_STATE_SUSPEND) 
+	{
         swapcontext(&(schedule->main), &(t->ctx));
     }
 }

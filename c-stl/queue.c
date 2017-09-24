@@ -101,8 +101,8 @@ int queue_push_fixed(queue* queue, void* item)
 void* queue_pop(queue *queue)
 {
 	//参数检查
-	assert(queue != NULL);
-	if (NULL == queue)
+	assert(queue && queue->size > 0);
+	if (!queue || queue->size == 0)
 	{
 		return NULL;
 	}

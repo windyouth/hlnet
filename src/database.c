@@ -3,25 +3,58 @@
 #include "../c-stl/map.h"
 #include "pthread.h"
 #include "../common/buffer_store.h"
+#include "../uthread/uthread.h"
+
 
 pthread_t				g_thread = -1;
+static schedule_t		*g_schedule = NULL;						//协程调度器
 
 queue					*g_dbmsg_queue = NULL;
 map						*g_dbmsg_map = NULL;					//数据库消息映射
 
+
+//数据库消息分发
+void issue_db_msg(void *arg)
+{
+	buffer *buf = NULL;
+	dbmsg_hander hander;
+	for (;;)
+	{
+		//如果为空，让出协程控制权
+		if (queue_empty(g_dbmsg_queue))	
+		{
+			uthread_yield((schedule_t *)arg);
+			continue;
+		}
+
+		//从队列中弹出一条数据,并读出命令码
+		buffer *msg = (buffer *)queue_pop(g_dbmsg_queue);
+		int *cmd;
+		buffer_read(msg, cmd, sizeof(int));
+
+		//根据命令码查出函数并调用
+		hander = map_get(g_dbmsg_map, *cmd, sizeof(int));
+		if (hander)
+			hander(read_ptr(msg), msg->len);
+		
+		//回收利用
+		recycle_buffer(msg);
+	}
+}
+
 //运行函数
 void *dbthread_run(void *args)
 {
-	for (;;)
-	{
-
-	}
-
-	return NULL;
+	//创建协程
+	int dbmsg_id = uthread_create(g_schedule, issue_db_msg);
+	if (dbmsg_id < 0) return FAILURE;
+	
+	//调度器运行
+	uthread_run(g_schedule);
 }
 
 //启动数据库线程
-int start_dbthread()
+int start_db_thread()
 {
 	//申请内存
 	g_dbmsg_queue = (queue *)malloc(sizeof(queue));

@@ -52,10 +52,6 @@ void issue_client_msg(void *arg)
 			{
 				hander(head->client_id, &(head->head), data);
 			}
-			else
-			{
-				//打印日志,报告有未注册的网络消息
-			}
 		}
 
 		uthread_yield((schedule_t *)arg);
