@@ -9,8 +9,10 @@
 #define				PARAM_ERROR				-2					//参数错误
 #define				MEM_ERROR				-3					//内存错误
 #define				NET_ERROR				-4					//网络错误
-#define				FULL_ERROR				-5					//容器已满
-#define				EMPTY_ERROR				-6					//容器已空
+#define				IO_ERROR				-5					//IO错误
+#define				FULL_ERROR				-6					//容器已满
+#define				EMPTY_ERROR				-7					//容器已空
+#define				REPEAT_ERROR			-8					//重复操作
 
 #define 			INVALID_SOCKET			-1					//非法套接字编号
 

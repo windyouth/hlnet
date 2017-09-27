@@ -5,11 +5,14 @@
 #include "../common/common.h"
 #include "../common/buffer_store.h"
 #include "../c-stl/queue.h"
+#include "../uthread/uthread.h"
 
 #define				DEFAULT_LOG_LENGTH				256
 
-char				*g_log_file = NULL;				//日志文件路径
-log_level_e			g_log_level;					//日志等级
+char				*g_log_path = NULL;				//日志文件路径
+FILE				*g_log_file = NULL;				//日志文件结构
+log_level_e			g_log_level = loglevel_error;	//日志等级
+queue				*g_log_queue = NULL;			//日志队列
 
 //日志等级字符串
 char g_level_string[4][8] = 
@@ -26,23 +29,30 @@ int init_log(char *path, log_level_e level)
 	//参数检查
 	assert(path);
 	if (!path) return PARAM_ERROR;
+	if (g_log_path) return REPEAT_ERROR;
 
 	//申请内存
-	if (!g_log_file)
-	{
-		g_log_file = (char *)malloc(PATH_LENGTH);
-		if (!g_log_file) return MEM_ERROR;
-	}
+	g_log_path = (char *)malloc(PATH_LENGTH);
+	if (!g_log_path) return MEM_ERROR;
 
 	//写入
-	snprintf(g_log_file, PATH_LENGTH, path);
+	snprintf(g_log_path, PATH_LENGTH, path);
 	g_log_level = level;
+
+	g_log_file = fopen(g_log_path, "w+");
+	if (!g_log_file) return IO_ERROR; 
+	
+	//初始化日志队列
+	g_log_queue = (queue *)malloc(sizeof(queue));
+	if (!g_log_queue) return MEM_ERROR;
+	int res = queue_init(g_log_queue, 256);
+	if (res != OP_QUEUE_SUCCESS) return FAILURE;
 
 	return buffer_store_init();
 }
 
-//写日志
-int write_log(log_level_e level, const char *file, const char *func, int line, 
+//添加日志
+int add_log(log_level_e level, const char *file, const char *func, int line, 
 			  const char *format, ...)
 {
 	//参数检查
@@ -73,5 +83,41 @@ int write_log(log_level_e level, const char *file, const char *func, int line,
 	seek_write(buf, strlen(write_ptr(buf)));
 	//写结束换行符
 	buffer_write(buf, '\n', 1);
+
+	queue_push(g_log_queue, buf);
 }
 
+//写日志
+void write_log(void *arg)
+{
+	buffer *item = NULL;
+	for (;;)
+	{
+		//如果为空，让出协程控制权
+		if (queue_empty(g_log_queue))	
+		{
+			uthread_yield((schedule_t *)arg);
+			continue;
+		}
+
+		//从队列中弹出一条数据
+		item = (buffer *)queue_pop(g_log_queue);
+		if (!item) 
+		{
+			uthread_yield((schedule_t *)arg);
+			continue;
+		}
+
+		if (g_log_file)
+			fwrite(read_ptr(item), 1, item->len, g_log_file);
+
+		//回收利用
+		recycle_buffer(item);
+	}
+}
+
+//释放日志
+void free_log()
+{
+	fclose(g_log_file);
+}

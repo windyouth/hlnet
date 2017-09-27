@@ -16,7 +16,8 @@ map						*g_dbmsg_map = NULL;					//数据库消息映射
 //数据库消息分发
 void issue_db_msg(void *arg)
 {
-	buffer *buf = NULL;
+	buffer *msg = NULL;
+	int *cmd = NULL;
 	dbmsg_hander hander;
 	for (;;)
 	{
@@ -28,8 +29,12 @@ void issue_db_msg(void *arg)
 		}
 
 		//从队列中弹出一条数据,并读出命令码
-		buffer *msg = (buffer *)queue_pop(g_dbmsg_queue);
-		int *cmd;
+		msg = (buffer *)queue_pop(g_dbmsg_queue);
+		if (!msg) 
+		{
+			uthread_yield((schedule_t *)arg);
+			continue;
+		}
 		buffer_read(msg, cmd, sizeof(int));
 
 		//根据命令码查出函数并调用
@@ -61,7 +66,6 @@ int start_db_thread()
 	if (!g_dbmsg_queue) return MEM_ERROR;
 
 	//初始化队列
-	zero(g_dbmsg_queue);
 	int res = queue_init(g_dbmsg_queue, 5120);
 	if (res != OP_QUEUE_SUCCESS) return FAILURE;
 
