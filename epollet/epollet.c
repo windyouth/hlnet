@@ -243,7 +243,7 @@ int read_data(struct epoll_event *ev, client_t *cli, buffer *global_buf)
 	if (res < 0)
 	{
 		//由于是边缘触发，为防止该套接字变僵尸，直接删除之。
-		close_socket(ev);
+		close_client((client_t *)ev->data.ptr);
 		return res;
 	}
 
@@ -272,7 +272,7 @@ int read_data(struct epoll_event *ev, client_t *cli, buffer *global_buf)
 		cmd_head_t *head = (cmd_head_t *)(cli->in->buf);
 		if (head->data_size > MAX_CMDDATA_LEN) 
 		{
-			close_socket(ev);
+			close_client((client_t *)ev->data.ptr);
 			return FAILURE;
 		}
 
@@ -309,7 +309,7 @@ static void tcp_read(struct epoll_event *ev)
 	//对端关闭连接或者其他错误，关闭套接字。
 	if (ev->events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 	{
-		close_socket(ev);
+		close_client((client_t *)ev->data.ptr);
 	}
 
 	client_t *client = (client_t *)ev->data.ptr;
@@ -390,26 +390,29 @@ int epollet_run(void *arg)
 }
 
 //关闭套接字
-void close_socket(struct epoll_event *ev)
+void close_client(client_t *cli)
 {
+	//检查参数
+	assert(cli);
+	if (!cli) return;
+
 	//从epoll中删除
 	struct epoll_event event = { 0 };
-	epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, ev->data.fd, &event);
+	epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, cli->fd, &event);
 
 	//通知上层
-	client_t *cli = ev->data.ptr;
 	if (cli->parent == g_client_tcp_fd)
 	{	
 		if (g_client_shut)
-			g_client_shut(ev->data.fd); 
+			g_client_shut(cli->id); 
 	}
-	else if (cli->parent == g_client_tcp_fd)
+	else if (cli->parent == g_manage_tcp_fd)
 	{
 		if (g_manage_shut)
-			g_manage_shut(ev->data.fd); 
+			g_manage_shut(cli->id); 
 	}
 
 	//关闭套接字并将客户端结构回收
-	close(ev->data.fd);
-	recycle_client((client_t *)ev->data.ptr);
+	close(cli->fd);
+	recycle_client(cli);
 }

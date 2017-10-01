@@ -29,7 +29,7 @@ int epollet_add(int fd, void *data_ptr, int flag);
 int epollet_run(void *arg);
 
 //关闭套接字
-void close_socket(struct epoll_event *ev);
+void close_client(client_t *cli);
 
 //全局变量
 extern int 				g_client_tcp_fd;		//监听的套接字ID(用户端)

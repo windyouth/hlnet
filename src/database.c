@@ -1,7 +1,8 @@
+#include <pthread.h>
 #include "database.h"
+#include "log.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
-#include "pthread.h"
 #include "../common/buffer_store.h"
 #include "../uthread/uthread.h"
 
@@ -51,8 +52,10 @@ void issue_db_msg(void *arg)
 void *dbthread_run(void *args)
 {
 	//创建协程
-	int dbmsg_id = uthread_create(g_schedule, issue_db_msg);
-	if (dbmsg_id < 0) return FAILURE;
+	int id = uthread_create(g_schedule, issue_db_msg);
+	if (id < 0) return FAILURE;
+	id = uthread_create(g_schedule, write_log);
+	if (id < 0) return FAILURE;
 	
 	//调度器运行
 	uthread_run(g_schedule);

@@ -1,4 +1,4 @@
-target = bin/lib/hlnet.so
+target = bin/lib/libhlnet.so
 
 flag += -Llib
 flag += -lmain -lcommon -lcstl -luthread -lepollet
