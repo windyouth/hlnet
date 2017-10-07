@@ -81,5 +81,10 @@ int buffer_write(buffer *buf, char *src, uint32_t len);
 //往缓冲区写数字
 int buffer_write_int(buffer *buf, int num);
 
+//取得一个缓冲区
+buffer *extract_buffer();
+//回收一个缓冲区
+void recycle_buffer(buffer *buf);
+
 #endif //_BUFFER_H_
 

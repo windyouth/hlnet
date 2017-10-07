@@ -32,6 +32,9 @@ typedef struct _list
     //int (*list_init)(struct _list *list);
 }list;
 
+#define 	list_size(list) 	((list)->__list_size) 		//链表大小
+
+//遍历链表
 #define list_foreach(__plist__, plist_item) \
             for(plist_item = (__plist__)->head;\
                         plist_item != NULL;\
@@ -43,8 +46,6 @@ void list_init(list *list);
 void list_free_shalow(list *list);//destroy linkedlist. member is stack mem.
 
 void list_free_deep(list *list);//destroy linkedlist. member is heap mem.
-
-size_t list_size(list *list);//return list's size.
 
 int list_push_back(list *list, void *item);//insert item at tail.
 

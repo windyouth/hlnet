@@ -43,12 +43,6 @@ void list_free_deep(list *list)
     list->__list_size = 0;
 }
 
-size_t list_size(list *list)
-{
-    assert(list != NULL && list->inited == 1);
-    return list->__list_size;
-}
-
 int list_push_back(list *list, void *item)
 {
     assert(list != NULL && list->inited == 1);

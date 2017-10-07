@@ -19,15 +19,15 @@ typedef enum _thread_state
 	THREAD_STATE_STOPPED = 3
 }thread_state_e;
 
-thread_state_e			g_thread_state = THREAD_STATE_RUNNING;	//线程状态
+thread_state_e		g_thread_state = THREAD_STATE_RUNNING;	//线程状态
 
-map						*g_net_client_msg = NULL;				//网络消息映射(TCP用户端口)
-map						*g_net_manage_msg = NULL;				//网络消息映射(TCP管理端口)
-map						*g_net_udp_msg = NULL;					//网络消息映射(UDP端口)
+map					*g_net_client_msg = NULL;				//网络消息映射(TCP用户端口)
+map					*g_net_manage_msg = NULL;				//网络消息映射(TCP管理端口)
+map					*g_net_udp_msg = NULL;					//网络消息映射(UDP端口)
 
-char					*g_udp_buffer = NULL;					//UDP缓冲区
+char				*g_udp_buffer = NULL;					//UDP缓冲区
 
-static schedule_t		*g_schedule = NULL;						//协程调度器
+static schedule_t	*g_schedule = NULL;						//协程调度器
 
 
 //网络消息分发(客户端)

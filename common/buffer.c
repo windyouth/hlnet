@@ -1,7 +1,10 @@
 #include <assert.h>
 #include "buffer.h"
+#include "../c-stl/list.h"
 
 #define			BUFFER_ORIGINAL_SIZE			256
+
+list			*g_buffer_store = NULL;			//缓冲区仓库
 
 //初始化缓冲区
 int buffer_init(buffer *buf, uint32_t size)
@@ -103,5 +106,12 @@ int buffer_write_int(buffer *buf, int num)
 	seek_write(buf, sizeof(int));
 }
 
-
+//取得一个缓冲区
+buffer *extract_buffer()
+{
+	return NULL;
+}
+//回收一个缓冲区
+void recycle_buffer(buffer *buf)
+{}
 

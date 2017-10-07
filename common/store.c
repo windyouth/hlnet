@@ -1,23 +1,34 @@
+#include <assert.h>
 #include "store.h"
+#include "../common/common.h"
 
 //创建仓库
 list *create_store()
 {
-	return NULL;
+	list *store = (list *)malloc(sizeof(list));
+	if (store) list_init(store);
+
+	return store;
 }
 
 //取得内存块
-void *extract_chunk(list *store, uint32_t need)
+void *extract_chunk(list *store, uint need)
 {
-	return NULL;
+	//参数检查
+	assert(store);
+	if (!store) return PARAM_ERROR;
+
+	if (list_size(store) > 0) 
+		return list_remove_first(store);
+
+	return malloc(sizeof(list_item) + need);
 }
 
 //回收内存块
-void recycle_chunk(list *store, void *block)
+void recycle_chunk(list *store, void *chunk)
 {
-}
+	assert(store && chunk);
+	if (!store || !chunk) return;
 
-//关闭仓库
-void destroy_store(list *store)
-{
+	list_push_back(store, chunk);
 }
