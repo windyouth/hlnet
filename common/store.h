@@ -6,16 +6,16 @@
 #include "../common/algorithm.h"
 
 //销毁仓库
-#define destroy_store(store) do 		\
-{										\
-	list_free_deep(store);				\
-	safe_free(store);					\
+#define destroy_store(store) do 						\
+{														\
+	list_free_deep(store);								\
+	safe_free(store);									\
 } while(0)
 
 //回收内存块
-#define recycle_chunk(store, chunk) do 		\
-{											\
-	list_push_back(store, chunk);			\
+#define recycle_chunk(store, chunk) do 					\
+{														\
+	list_push_back(store, chunk - sizeof(list_item));	\
 } while(0)
 
 //创建仓库

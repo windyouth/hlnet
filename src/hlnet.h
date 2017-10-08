@@ -4,7 +4,7 @@
 #include "../common/common.h"
 
 
-#define				MAX_UDP_LENGTH				2048					//UDP数据包最大长度
+#define				MAX_UDP_LENGTH				2048				//UDP数据包最大长度
 
 
 //监听方式

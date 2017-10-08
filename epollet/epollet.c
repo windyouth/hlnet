@@ -325,13 +325,13 @@ static void tcp_accept(int fd)
 	struct sockaddr_in cli_addr;
 	client_t *client = NULL;
 	int len = sizeof(struct sockaddr_in);
-	int sock_fd;
-	struct epoll_event ev;
-	
+	int sock_fd, res;
+	link_hander hander;
+
 	//循环接收，收完为止。
-	do
+	for (;;)
 	{
-		int sock_fd = accept(fd, (struct sockaddr *)&cli_addr, &len);
+		sock_fd = accept(fd, (struct sockaddr *)&cli_addr, &len);
 		if (sock_fd < 0) break;
 		
 		client = extract_client();
@@ -341,8 +341,14 @@ static void tcp_accept(int fd)
 		client->ip = cli_addr.sin_addr.s_addr;
 		client->parent = fd;
 
-		epollet_add(sock_fd, client, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET);
-	}while (1);
+		res = epollet_add(sock_fd, client, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET);
+		if (res == 0)
+		{
+			//通知应用层
+			hander = (fd == g_client_tcp_fd ? g_client_link : g_manage_link);
+			hander(client->id, client->ip);
+		}			
+	}
 }
 
 //epollet运行函数

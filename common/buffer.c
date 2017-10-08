@@ -120,17 +120,18 @@ buffer *extract_buffer()
 		}
 	}
 
-	buffer *buf = extract_chunk(g_buffer_store, sizeof(buffer));
+	buffer *buf = (buffer *)extract_chunk(g_buffer_store, sizeof(buffer));
 	if (!buf) return NULL;
 
 	if (buffer_init(buf, BUFFER_ORIGINAL_SIZE) != SUCCESS)
 	{
-		buffer_free(buf);
+		recycle_chunk(g_buffer_store, buf);
 		return NULL;
 	}
 
 	return buf;
 }
+
 //回收一个缓冲区
 void recycle_buffer(buffer *buf)
 {

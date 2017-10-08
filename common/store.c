@@ -19,8 +19,16 @@ void *extract_chunk(list *store, uint need)
 	if (!store) return PARAM_ERROR;
 
 	if (list_size(store) > 0) 
-		return list_remove_first(store);
+	{
+		list_item *item = list_remove_first(store); 
+		if (!item) return NULL;
 
-	return malloc(sizeof(list_item) + need);
+		return item + sizeof(list_item);
+	}
+
+	void *chunk = malloc(sizeof(list_item) + need);
+	if (!chunk) return NULL;
+
+	return chunk + sizeof(list_item);
 }
 
