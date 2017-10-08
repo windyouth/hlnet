@@ -24,11 +24,3 @@ void *extract_chunk(list *store, uint need)
 	return malloc(sizeof(list_item) + need);
 }
 
-//回收内存块
-void recycle_chunk(list *store, void *chunk)
-{
-	assert(store && chunk);
-	if (!store || !chunk) return;
-
-	list_push_back(store, chunk);
-}

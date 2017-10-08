@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "buffer.h"
+#include "store.h"
 #include "../c-stl/list.h"
 
 #define			BUFFER_ORIGINAL_SIZE			256
@@ -109,9 +110,34 @@ int buffer_write_int(buffer *buf, int num)
 //取得一个缓冲区
 buffer *extract_buffer()
 {
-	return NULL;
+	//双if判断，保证线程安全。
+	if (!g_buffer_store)
+	{
+		if (!g_buffer_store)
+		{
+			g_buffer_store = create_store();
+			if (!g_buffer_store) return NULL;
+		}
+	}
+
+	buffer *buf = extract_chunk(g_buffer_store, sizeof(buffer));
+	if (!buf) return NULL;
+
+	if (buffer_init(buf, BUFFER_ORIGINAL_SIZE) != SUCCESS)
+	{
+		buffer_free(buf);
+		return NULL;
+	}
+
+	return buf;
 }
 //回收一个缓冲区
 void recycle_buffer(buffer *buf)
-{}
+{
+	assert(!buf);
+	if (!buf) return;
+
+	buffer_reset(buf);
+	recycle_chunk(g_buffer_store, buf);
+}
 

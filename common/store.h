@@ -12,11 +12,15 @@
 	safe_free(store);					\
 } while(0)
 
+//回收内存块
+#define recycle_chunk(store, chunk) do 		\
+{											\
+	list_push_back(store, chunk);			\
+} while(0)
+
 //创建仓库
 list *create_store();
 //取得内存块
 void *extract_chunk(list *store, uint need);
-//回收内存块
-void recycle_chunk(list *store, void *chunk);
 
 #endif
