@@ -29,7 +29,7 @@ int epollet_add(int fd, void *data_ptr, int flag);
 int epollet_run(void *arg);
 
 //关闭套接字
-void close_client(client_t *cli);
+void close_socket(client_t *cli);
 
 //全局变量
 extern int 				g_client_tcp_fd;		//监听的套接字ID(用户端)
@@ -47,5 +47,6 @@ extern shut_hander		g_manage_shut;			//断开事件函数指针(管理端)
 
 extern udp_reader		g_udp_reader;			//udp读取函数指针
 
+extern uint8_t			g_is_keep_alive;		//是否保持长连接
 
 #endif //_EPOLLET_H_

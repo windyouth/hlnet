@@ -40,6 +40,7 @@ typedef struct _read_status
 typedef struct _client
 {
 	as_list_item;
+	uint64_t			alive_time;		//上次活跃时间
 	uint32_t			id;				//套接字对应的内部使用索引号
 	int					fd;				//socket文件描述符
 	uint32_t			ip;				//客户端IP地址
@@ -47,6 +48,7 @@ typedef struct _client
 	read_status_t		status;			//读状态
 	buffer				*in;			//读缓冲区
 	buffer				*out;			//写缓冲区
+	uint8_t				is_safe;		//是否通过安全认证
 }client_t, *pclient;
 
 //初始化客户端结构体

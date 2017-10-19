@@ -33,6 +33,8 @@ shut_hander			g_manage_shut = NULL;					//断开事件函数指针(管理端)
 
 udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 
+uint8_t				g_is_keep_alive = NO;					//是否保持长连接
+
 
 //创建一个tcp套接字并监听端口
 int create_tcp_socket(uint16_t port)
@@ -230,12 +232,13 @@ int epollet_add(int fd, void *data_ptr, int flag)
 //		   =0 内核缓冲区已经读空
 //		   <0 网络异常，关闭套接字
 //-----------------------------------------------------------
-int read_data(struct epoll_event *ev, client_t *cli, buffer *global_buf)
+int read_data(struct epoll_event *ev, buffer *global_buf)
 {
 	//参数检查
-	assert(ev && cli && global_buf);
-	if (!ev || !cli || !global_buf) return PARAM_ERROR;
+	assert(ev && global_buf);
+	if (!ev || !global_buf) return PARAM_ERROR;
 
+	client_t *cli = (client_t *)ev->data.ptr;
 	int len = cli->status.need;
 
 	//调整缓冲区结构
@@ -243,7 +246,12 @@ int read_data(struct epoll_event *ev, client_t *cli, buffer *global_buf)
 	if (res < 0)
 	{
 		//由于是边缘触发，为防止该套接字变僵尸，直接删除之。
-		close_client((client_t *)ev->data.ptr);
+		close_socket(cli);
+		//只有客户端没有设置keep_alive时，为短连接，此时需要提前回收。
+		//其他情况都是长连接，由keep_alive对象中的代码来进行回收。
+		if (!g_is_keep_alive) 
+			recycle_client(cli);
+
 		return res;
 	}
 
@@ -255,7 +263,10 @@ int read_data(struct epoll_event *ev, client_t *cli, buffer *global_buf)
 	res = circle_recv(ev->data.fd, write_ptr(cli->in), len);
 	if (res < 0) 
 	{
-		close_socket(ev);
+		close_socket(cli);
+		if (!g_is_keep_alive) 
+			recycle_client(cli);
+		
 		return res;
 	}
 
@@ -272,7 +283,10 @@ int read_data(struct epoll_event *ev, client_t *cli, buffer *global_buf)
 		cmd_head_t *head = (cmd_head_t *)(cli->in->buf);
 		if (head->data_size > MAX_CMDDATA_LEN) 
 		{
-			close_client((client_t *)ev->data.ptr);
+			close_socket(cli);
+			if (!g_is_keep_alive) 
+				recycle_client(cli);
+
 			return FAILURE;
 		}
 
@@ -306,16 +320,18 @@ int read_data(struct epoll_event *ev, client_t *cli, buffer *global_buf)
 //tcp事件读取函数
 static void tcp_read(struct epoll_event *ev)
 {
+	client_t *cli = (client_t *)ev->data.ptr;
 	//对端关闭连接或者其他错误，关闭套接字。
 	if (ev->events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 	{
-		close_client((client_t *)ev->data.ptr);
+		close_socket(cli);
+		if (!g_is_keep_alive) 
+			recycle_client(cli);
 	}
 
-	client_t *client = (client_t *)ev->data.ptr;
-	buffer *cur_buf = (client->parent == g_client_tcp_fd) ? g_client_buf : g_manage_buf;
+	buffer *cur_buf = (cli->parent == g_client_tcp_fd) ? g_client_buf : g_manage_buf;
 
-	while (read_data(ev, client->in, cur_buf) > 0);
+	while (read_data(ev, cur_buf) > 0);
 }
 
 //接收tcp连接
@@ -396,7 +412,7 @@ int epollet_run(void *arg)
 }
 
 //关闭套接字
-void close_client(client_t *cli)
+void close_socket(client_t *cli)
 {
 	//检查参数
 	assert(cli);
@@ -420,5 +436,5 @@ void close_client(client_t *cli)
 
 	//关闭套接字并将客户端结构回收
 	close(cli->fd);
-	recycle_client(cli);
+	cli->fd = INVALID_SOCKET;
 }

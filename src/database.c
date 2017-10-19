@@ -3,7 +3,7 @@
 #include "log.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
-#include "../common/buffer_store.h"
+#include "../common/buffer.h"
 #include "../uthread/uthread.h"
 
 

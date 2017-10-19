@@ -3,7 +3,7 @@
 #include <time.h>
 #include "log.h"
 #include "../common/common.h"
-#include "../common/buffer_store.h"
+#include "../common/buffer.h"
 #include "../c-stl/queue.h"
 #include "../uthread/uthread.h"
 
