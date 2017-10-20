@@ -18,14 +18,23 @@ void check_alive(int num)
 	//遍历链表
 	list_foreach(g_client_alive, item)
 	{
+		//参数检查与转换
 		if (!item) continue;
-
 		cli = (client_t *)item;
 
-		//socket已经被断开或者活跃时间超时
-		if (cli->fd == INVALID_SOCKET || 
-			now - cli->alive_time > ALIVE_INTERVAL)			
+		//socket已经被断开
+		if (cli->fd == INVALID_SOCKET)
 		{
+			recycle_client(cli);
+			list_remove(g_client_alive, item);
+			continue;
+		} 
+
+		//socket没有被断开，但活跃时间超时
+		//允许的未活跃时间最多为60秒
+		if (now - cli->alive_time > ALIVE_INTERVAL)			
+		{
+			close_socket(cli);
 			recycle_client(cli);
 			list_remove(g_client_alive, item);
 		}
