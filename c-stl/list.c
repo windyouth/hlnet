@@ -56,12 +56,13 @@ int list_push_back(list *list, void *item)
     {
         list->head = __item;
         list->tail = __item;
+		__item->next = NULL;
     }
     else
     {
-        list->tail->next = __item;
         __item->prev = list->tail;
         __item->next = NULL;
+        list->tail->next = __item;
         list->tail = __item;
     }
     ++(list->__list_size);
@@ -102,6 +103,30 @@ int list_insert_before(list *list, int index, void *item)
     }
     ++(list->__list_size);
     return OP_LIST_SUCCESS;
+}
+
+//移除节点
+int *list_remove(list *list, list_item *item)
+{
+	assert(list && list->inited == 1 && list->__list_size > 0 && item);
+	if (!list || list->inited != 1 || list->__list_size <= 0 || !item) 
+		return OP_LIST_FAIL;
+
+	//item是头节点
+	if (list->head == item)
+	{
+		list->head = item->next;
+		//既是头节点，又是尾节点
+		if (list->tail == item)
+			list->tail = NULL;
+	}
+	else
+	{
+		//是中间结点或者尾节点
+		item->prev->next = item->next;
+	}
+
+	return OP_LIST_SUCCESS;
 }
 
 list_item *list_remove_last(list *list)

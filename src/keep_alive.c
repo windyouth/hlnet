@@ -1,9 +1,36 @@
-#include <time.h>
+#include <sys/time.h>
+#include <signal.h>
 #include "keep_alive.h"
 #include "../epollet/epollet.h"
 #include "../c-stl/list.h"
 
+#define			ALIVE_INTERVAL			30				//检查的间隔时间
+
 list				*g_client_alive = NULL;				//活跃的客户端链表
+
+//检查连接的活跃时间
+void check_alive(int num)
+{
+	list_item *item = NULL;
+	client_t *cli = NULL;
+	uint64_t now = time(0);
+	
+	//遍历链表
+	list_foreach(g_client_alive, item)
+	{
+		if (!item) continue;
+
+		cli = (client_t *)item;
+
+		//socket已经被断开或者活跃时间超时
+		if (cli->fd == INVALID_SOCKET || 
+			now - cli->alive_time > ALIVE_INTERVAL)			
+		{
+			recycle_client(cli);
+			list_remove(g_client_alive, item);
+		}
+	}
+}
 
 //启动心跳检测
 int keep_alive()
@@ -16,6 +43,17 @@ int keep_alive()
 	g_is_keep_alive = YES;
 
 	//开启定时器
+	signal(SIGALRM, check_alive);
+
+	struct itimerval tick;
+	memset(&tick, 0, sizeof(tick));
+	tick.it_value.tv_sec = ALIVE_INTERVAL;
+	tick.it_interval.tv_sec = ALIVE_INTERVAL;
+
+	int res = setitimer(ITIMER_REAL, &tick, NULL);
+	if (res) return FAILURE;
+
+	return SUCCESS;
 }
 
 //添加到心跳检测池
