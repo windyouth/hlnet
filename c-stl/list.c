@@ -131,9 +131,10 @@ int list_remove(list *list, list_item *item)
 		//是中间结点或者尾节点
 		item->prev->next = item->next;
 		item->next->prev = item->prev;
-		item->next = NULL;
-		item->prev = NULL;
 	}
+
+	item->next = NULL;
+	item->prev = NULL;
 
 	return OP_LIST_SUCCESS;
 }
