@@ -31,7 +31,7 @@ void check_alive(int num)
 		} 
 
 		//socket没有被断开，但活跃时间超时
-		//允许的未活跃时间最多为60秒
+		//允许的未活跃时间为30~60秒
 		if (now - cli->alive_time > ALIVE_INTERVAL)			
 		{
 			close_socket(cli);

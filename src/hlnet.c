@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include "hlnet.h"
+#include "keep_alive.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
 #include "../epollet/epollet.h"
@@ -29,6 +30,20 @@ char				*g_udp_buffer = NULL;					//UDP缓冲区
 
 static schedule_t	*g_schedule = NULL;						//协程调度器
 
+//处理内核消息
+static void kernel_message(int client_id, cmd_head_t *head, char *data)
+{
+	switch (head->cmd_code)
+	{
+		case CMD_KERNEL_HEARTBEAT:
+		{
+			/* 暂时无事可做 */
+		}
+		break;
+		default:
+		break;
+	}
+}
 
 //网络消息分发(客户端)
 void issue_client_msg(void *arg)
@@ -46,6 +61,17 @@ void issue_client_msg(void *arg)
 			buffer_read(g_client_buf, head, sizeof(*head));
 			buffer_read(g_client_buf, data, head->head.data_size);
 
+			//更新活跃时间
+			alive(head->client_id);
+
+			//如果是内核消息
+			if (head->head.cmd_code <= CMD_KERNEL_END)
+			{
+				kernel_message(head->client_id, &(head->head), data);
+				continue;
+			}
+
+			//取出消息处理函数派发消息
 			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
 			hander = map_get(g_net_client_msg, cmd, strlen(cmd));
 			if (hander)
@@ -74,15 +100,22 @@ void issue_manage_msg(void *arg)
 			buffer_read(g_manage_buf, head, sizeof(*head));
 			buffer_read(g_manage_buf, data, head->head.data_size);
 
+			//更新活跃时间
+			alive(head->client_id);
+
+			//如果是内核消息
+			if (head->head.cmd_code <= CMD_KERNEL_END)
+			{
+				kernel_message(head->client_id, &(head->head), data);
+				continue;
+			}
+
+			//取出消息处理函数派发消息
 			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
 			hander = map_get(g_net_manage_msg, cmd, strlen(cmd));
 			if (hander)
 			{
 				hander(head->client_id, &(head->head), data);
-			}
-			else
-			{
-				//打印日志,报告有未注册的网络消息
 			}
 		}
 

@@ -360,6 +360,9 @@ static void tcp_accept(int fd)
 		res = epollet_add(sock_fd, client, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET);
 		if (res == 0)
 		{
+			//添加到心跳检测
+			if (fd == g_manage_tcp_fd || g_is_keep_alive == YES)
+				add_alive(client->id);
 			//通知应用层
 			hander = (fd == g_client_tcp_fd ? g_client_link : g_manage_link);
 			hander(client->id, client->ip);
