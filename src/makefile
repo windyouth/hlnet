@@ -1,5 +1,5 @@
 target = ../lib/libmain.a
-head = hlnet.h
+head = $(wildcard *.h)
 src = $(wildcard *.c)
 obj_name = $(src:%.c=%.o)
 obj_dir = ../obj
@@ -11,7 +11,7 @@ flag += -I../common -I../epollet -I../uthread -I../c-stl
 all: $(target) copy
 
 copy: $(head)
-	cp $< ../bin/include
+	cp $^ ../bin/include
 
 $(target): $(obj)
 	ar rcs $@ $^

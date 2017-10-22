@@ -198,7 +198,10 @@ int create_tcp_manage(uint16_t port)
 	uthread_add(issue_id);
 
 	g_manage_tcp_fd = fd;
-	return epollet_add(g_manage_tcp_fd, NULL, EPOLLIN | EPOLLET);
+	if (0 != epollet_add(g_manage_tcp_fd, NULL, EPOLLIN | EPOLLET))
+		return FAILURE;
+
+	return keep_alive();
 }
 
 //创建udp相关
@@ -239,17 +242,17 @@ int serv_create()
 int serv_ctl(sock_type_e sock_type, short port)
 {
 	//tcp客户端
-	if (sock_type == SOCKTYPE_TCP_CLIENT)		
+	if (sock_type == socktype_client)		
 	{
 		return create_tcp_client(port);
 	}
 	//tcp管理端	
-	else if (sock_type == SOCKTYPE_TCP_MANAGE)	
+	else if (sock_type == socktype_manage)	
 	{
 		return create_tcp_manage(port);
 	}
 	//udp端口
-	else if (sock_type == SOCKTYPE_UDP)				
+	else if (sock_type == socktype_udp)				
 	{
 		return create_udp(port);
 	}
@@ -275,9 +278,9 @@ int reg_link_event(sock_type_e type, link_hander func)
 {
 	if (!func) return PARAM_ERROR;
 
-	if (type == SOCKTYPE_TCP_CLIENT)
+	if (type == socktype_client)
 		g_client_link = func;
-	else if (type == SOCKTYPE_TCP_MANAGE)
+	else if (type == socktype_manage)
 		g_manage_link = func;
 	else
 		return PARAM_ERROR;
@@ -290,9 +293,9 @@ int reg_shut_event(sock_type_e type, shut_hander func)
 {
 	if (!func) return PARAM_ERROR;
 
-	if (type == SOCKTYPE_TCP_CLIENT)
+	if (type == socktype_client)
 		g_client_shut = func;
-	else if (type == SOCKTYPE_TCP_MANAGE)
+	else if (type == socktype_manage)
 		g_manage_shut = func;
 	else
 		return PARAM_ERROR;
@@ -311,12 +314,12 @@ int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func)
 
 	switch (sock_type)
 	{
-		case SOCKTYPE_TCP_CLIENT:
+		case socktype_client:
 			{
 				dst_map = g_net_client_msg;
 			}
 			break;
-		case SOCKTYPE_TCP_MANAGE:
+		case socktype_manage:
 			{
 				dst_map = g_net_manage_msg;
 			}

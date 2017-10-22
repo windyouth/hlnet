@@ -8,11 +8,11 @@
 
 
 //监听方式
-typedef enum 
+typedef enum _sock_type 
 {
-	SOCKTYPE_TCP_CLIENT = 1,			//tcp方式(用户端)
-	SOCKTYPE_TCP_MANAGE = 2,			//tcp方式(管理端)
-	SOCKTYPE_UDP = 3					//udp方式
+	socktype_client = 1,			//tcp方式(用户端)
+	socktype_manage = 2,			//tcp方式(管理端)
+	socktype_udp = 3				//udp方式
 }sock_type_e;
 
 //创建服务器
@@ -28,7 +28,7 @@ int reg_link_event(sock_type_e type, link_hander func);
 int reg_shut_event(sock_type_e type, shut_hander func);
 
 //注册TCP消息
-int reg_tcp_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func);
+int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func);
 //注册UDP消息
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
 
