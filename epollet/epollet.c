@@ -66,7 +66,7 @@ int create_tcp_socket(uint16_t port)
 	int res = bind(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (res == FAILURE)
 	{
-		closesocket(sock_fd);
+		close(sock_fd);
 		sock_fd = INVALID_SOCKET;
 		return INVALID_SOCKET;
 	}
@@ -74,7 +74,7 @@ int create_tcp_socket(uint16_t port)
 	//监听端口
 	if (listen(sock_fd, 32) == FAILURE)
 	{
-		closesocket(sock_fd);
+		close(sock_fd);
 		sock_fd = INVALID_SOCKET;
 		return INVALID_SOCKET;
 	}
@@ -107,7 +107,7 @@ int create_udp_socket(uint16_t port)
 	int res = bind(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (res == FAILURE)
 	{
-		closesocket(sock_fd);
+		close(sock_fd);
 		sock_fd = INVALID_SOCKET;
 		return INVALID_SOCKET;
 	}

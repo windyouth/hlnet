@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <time.h>
+#include "stdarg.h"
 #include "log.h"
 #include "../common/common.h"
 #include "../common/buffer.h"
@@ -48,7 +49,7 @@ int init_log(char *path, log_level_e level)
 	int res = queue_init(g_log_queue, 256);
 	if (res != OP_QUEUE_SUCCESS) return FAILURE;
 
-	return buffer_store_init();
+	return SUCCESS;
 }
 
 //添加日志
@@ -96,7 +97,7 @@ void write_log(void *arg)
 		//如果为空，让出协程控制权
 		if (queue_empty(g_log_queue))	
 		{
-			uthread_yield((schedule_t *)arg);
+			//uthread_yield((schedule_t *)arg);
 			continue;
 		}
 
@@ -104,7 +105,7 @@ void write_log(void *arg)
 		item = (buffer *)queue_pop(g_log_queue);
 		if (!item) 
 		{
-			uthread_yield((schedule_t *)arg);
+			//uthread_yield((schedule_t *)arg);
 			continue;
 		}
 

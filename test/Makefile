@@ -12,5 +12,9 @@ test-uthread: test-uthread.c ../uthread/uthread.c cpu_mem_stat.c ../c-stl/array.
 				../common/algorithm.h
 	$(compiler) -g -o test-uthread test-uthread.c ../uthread/uthread.c cpu_mem_stat.c ../c-stl/array.c \
 				../common/algorithm.h
+
+unit_test: unit_test.c
+	$(compiler) -o $@ $^ -L../bin/lib -lhlnet
+
 clean:
 	rm -f $(targets) 

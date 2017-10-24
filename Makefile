@@ -1,7 +1,8 @@
 target = bin/lib/libhlnet.so
 
-flag += -Llib
-flag += -lmain -lcommon -lcstl -luthread -lepollet
+obj = $(wildcard obj/*.o)
+
+flag += -lpthread
 # -fPIC 告诉编绎器产生与位置无关代码，为共享库.so所必须。 
 flag += -fPIC -shared
 
@@ -18,7 +19,6 @@ bin_dir = ./bin
 #创建目录
 #如果不想像clean一样写成目标依赖项的形式，就必须这样写。
 ifneq ($(MAKECMDGOALS), clean)
-$(shell mkdir -p $(lib_dir))
 $(shell mkdir -p $(obj_dir)) 
 $(shell mkdir -p $(bin_dir))
 $(shell mkdir -p $(bin_dir)/include)
@@ -30,7 +30,7 @@ endif
 all: $(target)
 
 $(target): main common cstl uthread epollet
-	gcc -o $@ $(flag)
+	gcc -o $@ $(obj) $(flag)
 
 main:
 	make -C $(main_dir)
@@ -48,10 +48,6 @@ epollet:
 	make -C $(epollet_dir)
 
 clean: 
-	rm -f lib/* obj/* bin/include/* bin/lib/*
-	make -C $(main_dir) clean
-	make -C $(common_dir) clean
-	make -C $(uthread_dir) clean
-	make -C $(cstl_dir) clean
-	make -C $(epollet_dir) clean
-	rm -rf $(lib_dir) $(obj_dir) $(bin_dir)
+	#rm -f lib/* obj/* bin/include/* bin/lib/*
+	#make -C $(epollet_dir) clean
+	rm -rf $(obj_dir) $(bin_dir)

@@ -1,4 +1,3 @@
-target = ../lib/libuthread.a
 src = $(wildcard *.c)
 obj_name = $(src:%.c=%.o)
 obj_dir = ../obj
@@ -6,13 +5,11 @@ obj = $(addprefix $(obj_dir)/, $(obj_name))
 flag += -fPIC
 flag += -std=gnu99
 
-all: $(target)
+all: $(obj)
 
-$(target): $(obj)
-	ar rcs $@ $^
+# 编绎静态库
+#libuthread.a: $(obj)
+#	ar rcs $@ $^
 
 $(obj_dir)/%.o: %.c
 	gcc -c $< -o $@ $(flag)
-
-clean:
-	rm -f $(target)

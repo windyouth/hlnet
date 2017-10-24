@@ -77,10 +77,6 @@ int start_db_thread()
 	if (!g_dbmsg_map) return MEM_ERROR;
 	if (map_init(g_dbmsg_map) != OP_MAP_SUCCESS) return MEM_ERROR;
 
-	//初始化缓冲区仓库
-	res = buffer_store_init();
-	if (res != SUCCESS) return res;
-
 	//创建线程
 	res = pthread_create(g_thread, NULL, dbthread_run, 0);
 	if (res != 0)
