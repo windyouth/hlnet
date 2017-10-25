@@ -2,6 +2,15 @@ target = bin/lib/libhlnet.so
 
 obj = $(wildcard obj/*.o)
 
+#如果不加入调试信息，按O2级别优化代码。
+debug = 
+ifneq ($(debug),)
+debug_flag = $(debug)
+else
+debug_flag = -O2
+endif
+
+
 flag += -lpthread
 # -fPIC 告诉编绎器产生与位置无关代码，为共享库.so所必须。 
 flag += -fPIC -shared
@@ -30,22 +39,22 @@ endif
 all: $(target)
 
 $(target): main common cstl uthread epollet
-	gcc -o $@ $(obj) $(flag)
+	gcc -o $@ $(obj) $(flag) $(debug_flag)
 
 main:
-	make -C $(main_dir)
+	make -C $(main_dir) debug_flag=$(debug_flag)
 
 common:
-	make -C $(common_dir)
+	make -C $(common_dir) debug_flag=$(debug_flag)
 
 uthread:
-	make -C $(uthread_dir)
+	make -C $(uthread_dir) debug_flag=$(debug_flag)
 
 cstl:
-	make -C $(cstl_dir)
+	make -C $(cstl_dir) debug_flag=$(debug_flag)
 
 epollet:
-	make -C $(epollet_dir)
+	make -C $(epollet_dir) debug_flag=$(debug_flag)
 
 clean: 
 	#rm -f lib/* obj/* bin/include/* bin/lib/*

@@ -4,6 +4,7 @@ obj_dir = ../obj
 obj = $(addprefix $(obj_dir)/, $(obj_name))
 flag += -fPIC
 flag += -std=gnu99
+debug_flag = 
 
 all: $(obj)
 
@@ -12,4 +13,4 @@ all: $(obj)
 #	ar rcs $@ $^
 
 $(obj_dir)/%.o: %.c
-	gcc -c $< -o $@ $(flag)
+	gcc -c $< -o $@ $(flag) $(debug_flag)

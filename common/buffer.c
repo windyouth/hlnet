@@ -84,12 +84,14 @@ int buffer_write(buffer *buf, char* src, uint32_t len)
 	assert(buf && src);
 	if (!buf || !src) return PARAM_ERROR;
 
-	int res = buffer_rectify(buf, len);
+	int res = buffer_rectify(buf, len + 1);
 	if (res != SUCCESS) return res;
 
 	memcpy(write_ptr(buf), src, len);
-
 	seek_write(buf, len);
+
+	//写结束符
+	*write_ptr(buf) = 0;
 }
 
 //往缓冲区写数字
@@ -98,13 +100,16 @@ int buffer_write_int(buffer *buf, int num)
 	assert(buf);
 	if (!buf) return PARAM_ERROR;
 
-	int res = buffer_rectify(buf, sizeof(int));
+	int res = buffer_rectify(buf, sizeof(int) + 1);
 	if (res != SUCCESS) return res;
 
 	int *int_ptr = (int *)write_ptr(buf);
 	*int_ptr = num;
 
 	seek_write(buf, sizeof(int));
+
+	//写结束符
+	*write_ptr(buf) = 0;
 }
 
 //取得一个缓冲区

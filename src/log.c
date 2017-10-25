@@ -69,21 +69,24 @@ int add_log(log_level_e level, const char *file, const char *func, int line,
 
 	//写日期
 	time_t now = time(0);
-	snprintf(write_ptr(buf), 32, "%Y-%m-%d %H:%M:%S, ", localtime(&now));
-	seek_write(buf, strlen(write_ptr(buf)));
+	strftime(write_ptr(buf), 32, "%Y-%m-%d %H:%M:%S, ", localtime(&now));
+	res = strlen(write_ptr(buf));
+	seek_write(buf, res);
 
 	//写参数
 	snprintf(write_ptr(buf), 128, "%s, %s, %d: [%s]", file, func, line, g_level_string[level]);
-	seek_write(buf, strlen(write_ptr(buf)));
+	res = strlen(write_ptr(buf));
+	seek_write(buf, res);
 	
 	//写内容
 	va_list va;
 	va_start(va, format);
 	vsnprintf(write_ptr(buf), buffer_surplus(buf) - 2, format, va);
 	va_end(va);
-	seek_write(buf, strlen(write_ptr(buf)));
+	res = strlen(write_ptr(buf));
+	seek_write(buf, res);
 	//写结束换行符
-	buffer_write(buf, '\n', 1);
+	buffer_write(buf, "\n", 1);
 
 	queue_push(g_log_queue, buf);
 }
@@ -97,16 +100,24 @@ void write_log(void *arg)
 		//如果为空，让出协程控制权
 		if (queue_empty(g_log_queue))	
 		{
-			//uthread_yield((schedule_t *)arg);
+#ifdef TEST
+			break;
+#else
+			uthread_yield((schedule_t *)arg);
 			continue;
+#endif
 		}
 
 		//从队列中弹出一条数据
 		item = (buffer *)queue_pop(g_log_queue);
 		if (!item) 
 		{
-			//uthread_yield((schedule_t *)arg);
+#ifdef TEST
+			break;
+#else
+			uthread_yield((schedule_t *)arg);
 			continue;
+#endif
 		}
 
 		if (g_log_file)
