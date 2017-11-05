@@ -13,7 +13,7 @@ typedef struct _dbqueue_item
 
 
 //启动数据库线程
-int start_db_thread();
+int start_database();
 //注册数据库消息
 int reg_db_msg(uint16_t msg, dbmsg_hander func);
 //投递数据库消息

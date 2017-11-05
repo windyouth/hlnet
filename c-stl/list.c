@@ -49,7 +49,7 @@ int list_push_back(list *list, void *item)
     if(item == NULL)
     {
         fprintf(stderr,"list insert item is null!\n");
-        return OP_LIST_FAIL;
+        return OP_LIST_FAILURE;
     }
     list_item *__item = (list_item*)item;
     if(list->head == NULL)
@@ -75,13 +75,13 @@ int list_insert_before(list *list, int index, void *item)
     if(item == NULL)
     {
         fprintf(stderr,"list insert item is null!\n");
-        return OP_LIST_FAIL;
+        return OP_LIST_FAILURE;
     }
     list_item *target = list_find_by_index(list, index);
     if(target == NULL)
     {
         fprintf(stderr,"list insert target index out of bound!\n");
-        return OP_LIST_FAIL;//index out of bound.
+        return OP_LIST_FAILURE;//index out of bound.
     }
 
     list_item *p = (list_item*)item;
@@ -110,7 +110,7 @@ int list_remove(list *list, list_item *item)
 {
 	assert(list && list->inited == 1 && list->__list_size > 0 && item);
 	if (!list || list->inited != 1 || list->__list_size <= 0 || !item) 
-		return OP_LIST_FAIL;
+		return OP_LIST_FAILURE;
 
 	//item是头节点
 	if (list->head == item)

@@ -40,7 +40,7 @@ int init_log(char *path, log_level_e level)
 	snprintf(g_log_path, PATH_LENGTH, path);
 	g_log_level = level;
 
-	g_log_file = fopen(g_log_path, "w+");
+	g_log_file = fopen(g_log_path, "a");
 	if (!g_log_file) return IO_ERROR; 
 	
 	//初始化日志队列
@@ -69,12 +69,12 @@ int add_log(log_level_e level, const char *file, const char *func, int line,
 
 	//写日期
 	time_t now = time(0);
-	strftime(write_ptr(buf), 32, "%Y-%m-%d %H:%M:%S, ", localtime(&now));
+	strftime(write_ptr(buf), 32, "%Y-%m-%d %H:%M:%S ", localtime(&now));
 	res = strlen(write_ptr(buf));
 	seek_write(buf, res);
 
 	//写参数
-	snprintf(write_ptr(buf), 128, "%s, %s, %d: [%s]", file, func, line, g_level_string[level]);
+	snprintf(write_ptr(buf), 128, "[%s %s %d][%s]: ", file, func, line, g_level_string[level]);
 	res = strlen(write_ptr(buf));
 	seek_write(buf, res);
 	
@@ -100,24 +100,16 @@ void write_log(void *arg)
 		//如果为空，让出协程控制权
 		if (queue_empty(g_log_queue))	
 		{
-#ifdef TEST
-			break;
-#else
 			uthread_yield((schedule_t *)arg);
 			continue;
-#endif
 		}
 
 		//从队列中弹出一条数据
 		item = (buffer *)queue_pop(g_log_queue);
 		if (!item) 
 		{
-#ifdef TEST
-			break;
-#else
 			uthread_yield((schedule_t *)arg);
 			continue;
-#endif
 		}
 
 		if (g_log_file)

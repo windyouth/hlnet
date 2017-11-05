@@ -140,7 +140,7 @@ buffer *extract_buffer()
 //回收一个缓冲区
 void recycle_buffer(buffer *buf)
 {
-	assert(!buf);
+	assert(buf);
 	if (!buf) return;
 
 	buffer_reset(buf);

@@ -1,10 +1,10 @@
-#include "list.h"
+#include "../bin/include/list.h"
 
 #include<stdio.h>
 
 typedef struct sutd
 {
-    AS_LIST_ITEM;
+    as_list_item;
     int id;
     char *name;
 }stud_t;
@@ -43,17 +43,18 @@ int main(int argc, char **argv)
     if(ret == OP_LIST_FAILURE) return -1;
 
     //ret = list_push_back(&list, stud4);
-    //if(ret == OP_LIST_FAILURE) return -1;  
+    //if(ret == OP_LIST_FAILUREURE) return -1;  
 
-    list_insert_before(&list1, 3, &stud4);
+    list_insert_before(&list1, 2, &stud4);
 
     list_item *temp = NULL;
-    list_for_each(&list1, temp)
+    list_foreach(&list1, temp)
     {
-	stud_t *p = (stud_t*)temp;
+		stud_t *p = (stud_t*)temp;
         printf("id=%d, name=%s\n",p->id, p->name);
     }
 
     list_free_shalow(&list1);
+
     return 0;
 }

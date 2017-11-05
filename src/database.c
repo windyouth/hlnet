@@ -62,7 +62,7 @@ void *dbthread_run(void *args)
 }
 
 //启动数据库线程
-int start_db_thread()
+int start_database()
 {
 	//申请内存
 	g_dbmsg_queue = (queue *)malloc(sizeof(queue));

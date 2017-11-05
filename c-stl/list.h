@@ -15,7 +15,7 @@
 #define as_list_item list_item __list_item
 
 #define OP_LIST_SUCCESS (1)
-#define OP_LIST_FAIL (-1)
+#define OP_LIST_FAILURE (-1)
 
 typedef struct _list_item
 {

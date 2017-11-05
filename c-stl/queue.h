@@ -29,7 +29,7 @@ typedef struct _queue
 #define			NO						0
 
 #define queue_size(queue)	(queue)->size						//取得队列大小
-#define queue_empty(queue)	((queue)->size > 0 ? YES : NO)		//判断队列是否为空
+#define queue_empty(queue)	((queue)->size == 0 ? YES : NO)		//判断队列是否为空
 #define queue_front(queue)	(queue)->table[head]				//返回队列第一个元素
 #define queue_back(queue)	(queue)->table[tail]				//返回队列最后一个元素
 
