@@ -5,7 +5,7 @@
 
 #define			BUFFER_ORIGINAL_SIZE			256
 
-list			*g_buffer_store = NULL;			//缓冲区仓库
+store_t			*g_buffer_store = NULL;			//缓冲区仓库
 
 //初始化缓冲区
 int buffer_init(buffer *buf, uint32_t size)
@@ -120,12 +120,12 @@ buffer *extract_buffer()
 	{
 		if (!g_buffer_store)
 		{
-			g_buffer_store = create_store();
+			g_buffer_store = create_store(sizeof(buffer));
 			if (!g_buffer_store) return NULL;
 		}
 	}
 
-	buffer *buf = (buffer *)extract_chunk(g_buffer_store, sizeof(buffer));
+	buffer *buf = (buffer *)extract_chunk(g_buffer_store);
 	if (!buf) return NULL;
 
 	if (buffer_init(buf, BUFFER_ORIGINAL_SIZE) != SUCCESS)
