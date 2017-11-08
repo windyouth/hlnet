@@ -2,6 +2,7 @@
 #include "../bin/include/log.h"
 #include "../common/common.h"
 #include "../common/store.h"
+#include "../common/buffer.h"
 
 #define hello(str) do 		\
 {							\
@@ -37,8 +38,12 @@ void store_test()
 	void *chunk4 = extract_chunk(store);
 	recycle_chunk(store, chunk1);
 	recycle_chunk(store, chunk2);
+	recycle_chunk(store, chunk3);
+	recycle_chunk(store, chunk4);
 	void *chunk5 = extract_chunk(store);
 	void *chunk6 = extract_chunk(store);
+	void *chunk7 = extract_chunk(store);
+	void *chunk8 = extract_chunk(store);
 
 	printf("chunk1: %p\n", chunk1);
 	printf("chunk2: %p\n", chunk2);
@@ -46,12 +51,50 @@ void store_test()
 	printf("chunk4: %p\n", chunk4);
 	printf("chunk5: %p\n", chunk5);
 	printf("chunk6: %p\n", chunk6);
+	printf("chunk7: %p\n", chunk7);
+	printf("chunk8: %p\n", chunk8);
+}
+
+void buffer_test()
+{
+	//取得一个缓冲区
+	buffer *buf = extract_buffer();
+	if (!buf) return;
+
+	//申请大小
+	int res = buffer_rectify(buf, 256);
+	if (res != SUCCESS) return;
+
+	//写数据
+	snprintf(write_ptr(buf), 128, "hello world");
+	int len = strlen(write_ptr(buf));
+	//定位指针
+	seek_write(buf, len);
+
+	char *str1;
+	buffer_read(buf, str1, len);
+	puts(str1);
+
+	buffer_write_int(buf, 5201314);
+	str1 = "姚子淑我想你！";
+	len = strlen(str1);
+	buffer_write(buf, str1, len);
+	int *code;
+	buffer_read(buf, code, sizeof(int));
+	printf("code: %d\n", *code);
+	char *str2;
+	buffer_read(buf, str2, len);
+	puts(str2);
+
+	//回收缓冲区
+	recycle_buffer(buf);
 }
 
 int main()
 {
 	//log_test();
-	store_test();
+	//store_test();
+	buffer_test();
 
 	return 0;
 }

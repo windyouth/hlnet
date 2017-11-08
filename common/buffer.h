@@ -24,17 +24,20 @@
 #define seek_read(buf, off) do						\
 {													\
 	(buf)->read += (off);							\
-	if ((buf)->read == (buf)->end) 					\
-		buf->read = 0;								\
+	if ((buf)->read == (buf)->end &&				\
+		(buf)->read != (buf)->write) 				\
+		(buf)->read = 0;							\
 	(buf)->len -= off;								\
 }while (0)
 
 //偏移写指针
 #define seek_write(buf, off) do						\
 {													\
-	(buf)->write += off;							\
 	(buf)->len += off;								\
+	(buf)->write += off;							\
 	(buf)->end = max((buf)->write, (buf)->end);		\
+	if ((buf)->write == (buf)->size)				\
+		(buf)->write = 0;							\
 }while (0)
 
 //从缓冲区读数据
@@ -67,14 +70,14 @@ typedef struct _buffer
 	uint32_t	write;			//写索引
 	uint32_t	len;			//数据已占用的总长度
 	uint32_t	size;			//缓冲区大小
-	uint32_t	end;			//尾索引
+	uint32_t	end;			//尾索引,最大值刚好为size
 	char		*buf;			//起始地址指针
 }buffer, *pbuffer;
 
 
 //初始化缓冲区
 int buffer_init(buffer *buf, uint32_t size);
-//调整缓冲区
+//检查并调整缓冲区,使之具备need大小的空闲空间
 int buffer_rectify(buffer *buf, uint32_t need);
 //往缓冲区写
 int buffer_write(buffer *buf, char *src, uint32_t len);

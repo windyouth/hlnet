@@ -47,25 +47,28 @@ int buffer_realloc(buffer *buf, uint32_t new_size)
 	return SUCCESS;
 }
 
-//调整缓冲区
+//检查并调整缓冲区,使之具备need大小的空闲空间
 int buffer_rectify(buffer *buf, uint32_t need)
 {
 	if (!buf || need == 0) return PARAM_ERROR;
 
 	uint32_t new_size = buf->size + max(buf->size / 2, need * 10);
 
+	//剩余空间不足,则重新申请大小
 	if (buf->len + need > buf->size ||
 		buf->write < buf->read && buf->write + need > buf->read)
 	{
 		return buffer_realloc(buf, new_size);	
 	}
 	
-	if (buf->write > buf->read && buf->write + need >= buf->size)
+	//允许刚好写满
+	if (buf->write > buf->read && buf->write + need > buf->size)
 	{
 		if (buf->read >= need)
 		{
 			//保存最后位置
 			buf->end = buf->write;
+			//写指针移到开头
 			buf->write = 0;
 			return SUCCESS;
 		}
@@ -108,7 +111,8 @@ int buffer_write_int(buffer *buf, int num)
 
 	seek_write(buf, sizeof(int));
 
-	//写结束符
+	//写结束符，但不偏移写指针。
+	//这样结束符在读的时候起作用，但写的时候不产生影响。
 	*write_ptr(buf) = 0;
 }
 
