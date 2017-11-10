@@ -1,5 +1,13 @@
 targets = queue_test test-array test-uthread
 compiler = gcc -std=gnu99
+
+define = 
+ifneq ($(define), )
+define_flag = $(define)
+else
+define_flag = HELLO_WORLD
+endif
+
 all: queue_test test-array test-uthread
 
 queue_test: queue_test.c  ../c-stl/queue.c ../common/algorithm.h
@@ -17,10 +25,7 @@ test-uthread: test-uthread.c ../uthread/uthread.c cpu_mem_stat.c ../c-stl/array.
 				../common/algorithm.h
 
 unit_test: unit_test.c
-	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g
-
-buffer_test: buffer_test.c
-	$(compiler) -o $@ $< -L../bin/lib -lhlnet -g
+	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
 clean:
 	rm -f $(targets) 

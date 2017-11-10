@@ -39,10 +39,11 @@ int buffer_realloc(buffer *buf, uint32_t new_size)
 			buf->buf[--index] = buf->buf[i--];
 
 		buf->read = index;
+		buf->end = new_size;
 	}
 
 	//重置参数
-	buf->end = buf->size = new_size;
+	buf->size = new_size;
 
 	return SUCCESS;
 }
@@ -66,10 +67,9 @@ int buffer_rectify(buffer *buf, uint32_t need)
 	{
 		if (buf->read >= need)
 		{
-			//保存最后位置
-			buf->end = buf->write;
 			//写指针移到开头
 			buf->write = 0;
+			
 			return SUCCESS;
 		}
 		else

@@ -90,11 +90,83 @@ void buffer_test()
 	recycle_buffer(buf);
 }
 
+void rectify_test()
+{
+	//取得一个缓冲区
+	buffer *buf = extract_buffer();
+	if (!buf) return;
+
+	buf->read = 200;
+	buf->write = 180;
+	buf->end = 250;
+	buf->len = 230;
+
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_rectify(buf, 16);
+	puts("------------buffer_rectify(buf, 16)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_rectify(buf, 20);
+	puts("------------buffer_rectify(buf, 20)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+#ifdef RECTIFY22
+	buffer_rectify(buf, 22);
+	puts("------------buffer_rectify(buf, 22)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+#endif
+
+#ifdef RECTIFY100
+	buffer_rectify(buf, 100);
+	puts("------------buffer_rectify(buf, 100)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+#endif
+
+	puts("-----------------------------------------------------");
+
+	buf->read = 57;
+	buf->write = 200;
+	buf->end = 200;
+	buf->len = 143;
+	
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_rectify(buf, 56);
+	puts("------------buffer_rectify(buf, 56)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_rectify(buf, 57);
+	puts("------------buffer_rectify(buf, 57)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buf->read = 55;
+	buf->write = 200;
+	buf->len = 145;
+	puts("------------buf->read = 55-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_rectify(buf, 57);
+	puts("------------buffer_rectify(buf, 57)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+}
+
 int main()
 {
 	//log_test();
 	//store_test();
-	buffer_test();
+	//buffer_test();
+	rectify_test();
 
 	return 0;
 }

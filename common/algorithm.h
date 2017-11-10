@@ -3,8 +3,8 @@
 
 #include <string.h>
 
-#define			max(x, y)					x > y ? x : y
-#define 		min(x, y)					x < y ? x : y
+#define			max(x, y)					(x > y ? x : y)
+#define 		min(x, y)					(x < y ? x : y)
 
 #define			zero(ptr)					memset(ptr, 0, sizeof(*ptr))
 #define			zero_array(ptr, len)		memset(ptr, 0, len)
