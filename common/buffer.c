@@ -48,9 +48,10 @@ int buffer_realloc(buffer *buf, uint32_t new_size)
 	return SUCCESS;
 }
 
-//检查并调整缓冲区,使之具备need大小的空闲空间
+//检查并调整缓冲区,使之具备need大小的连续空闲空间
 int buffer_rectify(buffer *buf, uint32_t need)
 {
+	//检查参数
 	if (!buf || need == 0) return PARAM_ERROR;
 
 	uint32_t new_size = buf->size + max(buf->size / 2, need * 10);
@@ -63,12 +64,14 @@ int buffer_rectify(buffer *buf, uint32_t need)
 	}
 	
 	//允许刚好写满
-	if (buf->write > buf->read && buf->write + need > buf->size)
+	if (buf->write >= buf->read && buf->write + need > buf->size)
 	{
 		if (buf->read >= need)
 		{
 			//写指针移到开头
 			buf->write = 0;
+			//尾部空缺计入len
+			buf->len += (buf->size - buf->end);
 			
 			return SUCCESS;
 		}

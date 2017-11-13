@@ -65,13 +65,25 @@ void buffer_test()
 	int res = buffer_rectify(buf, 256);
 	if (res != SUCCESS) return;
 
+	buf->write = 244;
+	buf->read = 0;
+	buf->len = 244;
+	buf->end = 244;
+
 	//写数据
+	/*
 	snprintf(write_ptr(buf), 128, "hello world");
 	int len = strlen(write_ptr(buf));
 	//定位指针
 	seek_write(buf, len);
+	*/
+	char *src = "hello world";
+	int len = strlen(src);
+	buffer_write(buf, src, len);
 
 	char *str1;
+	buf->read += 244;
+	buf->len -= 244;
 	buffer_read(buf, str1, len);
 	puts(str1);
 
@@ -79,6 +91,7 @@ void buffer_test()
 	str1 = "姚子淑我想你！";
 	len = strlen(str1);
 	buffer_write(buf, str1, len);
+
 	int *code;
 	buffer_read(buf, code, sizeof(int));
 	printf("code: %d\n", *code);
@@ -95,6 +108,19 @@ void rectify_test()
 	//取得一个缓冲区
 	buffer *buf = extract_buffer();
 	if (!buf) return;
+
+	buf->read = 0;
+	buf->write = 245;
+	buf->end = 245;
+	buf->len = 245;
+
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_rectify(buf, 12);
+	puts("------------buffer_rectify(buf, 12)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
 
 	buf->read = 200;
 	buf->write = 180;
@@ -161,12 +187,53 @@ void rectify_test()
 			buf->read, buf->write, buf->end, buf->len, buf->size);
 }
 
+//写测试
+void buffer_write_test()
+{
+	//取得一个缓冲区
+	buffer *buf = extract_buffer();
+	if (!buf) return;
+
+	buf->write = 244;
+	buf->read = 0;
+	buf->len = 244;
+	buf->end = 244;
+
+	//连续写
+	char *src = "hello world";
+	int len = strlen(src);
+	buffer_write(buf, src, len);
+
+	buffer_write_int(buf, 5201314);
+	src = "姚子淑我想你！";
+	len = strlen(src);
+	buffer_write(buf, src, len);
+
+	//连续读
+	char *str1;
+	buf->read += 244;
+	buf->len -= 244;
+	buffer_read(buf, str1, 11);
+	puts(str1);
+	
+	int *code;
+	buffer_read(buf, code, sizeof(int));
+	printf("code: %d\n", *code);
+	char *str2;
+	buffer_read(buf, str2, len);
+	puts(str2);
+
+	//回收缓冲区
+	recycle_buffer(buf);
+}
+
 int main()
 {
 	//log_test();
 	//store_test();
 	//buffer_test();
-	rectify_test();
+	//rectify_test();
+	buffer_write_test();
 
 	return 0;
 }
