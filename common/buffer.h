@@ -24,10 +24,14 @@
 #define seek_read(buf, off) do						\
 {													\
 	(buf)->read += (off);							\
-	if ((buf)->read >= (buf)->end &&				\
+	(buf)->len -= (off);							\
+	/* 												\
+	 * 读和写如果长度没有前后一致，					\
+	 * 此处不保证正确执行。 						\
+	 */    											\
+	if ((buf)->read == (buf)->end && 				\
 		(buf)->read != (buf)->write) 				\
 		(buf)->read = 0;							\
-	(buf)->len -= off;								\
 }while (0)
 
 //偏移写指针
@@ -68,7 +72,7 @@ typedef struct _buffer
 {
 	uint32_t	read;			//读索引
 	uint32_t	write;			//写索引
-	uint32_t	len;			//数据已占用的总长度
+	int32_t		len;			//数据已占用的总长度，包含尾部可能出现的空长度
 	uint32_t	size;			//缓冲区大小
 	uint32_t	end;			//尾索引，内容的最末位置，最大值刚好为size
 	char		*buf;			//起始地址指针

@@ -227,13 +227,77 @@ void buffer_write_test()
 	recycle_buffer(buf);
 }
 
+void buffer_read_test()
+{
+	//取得一个缓冲区
+	buffer *buf = extract_buffer();
+	if (!buf) return;
+
+	buf->write = 244;
+	buf->read = 244;
+	buf->end = 244;
+	buf->len = 0;
+
+	char *src = "hello world";
+	int len1 = strlen(src);
+	buffer_write(buf, src, len1);
+
+	puts("------------buffer_write(hello world)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	src = "I love yaozishu forever";
+	int len2 = strlen(src);
+	buffer_write(buf, src, len2);
+
+	puts("------------buffer_write(I love yaozishu forever)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	char *dst;
+	buffer_read(buf, dst, len1);
+	puts(dst);
+
+	puts("------------buffer_read(buf, dst, len)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_read(buf, dst, len2);
+	puts(dst);
+
+	puts("------------buffer_read(buf, dst, len)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buf->write = 248;
+	buf->read = 248;
+	buf->end = 255;
+	buf->len = 1;
+	
+	char *src3 = "yao dan";
+	int len3 = strlen(src3);
+	buffer_write(buf, src3, len3);
+
+	puts("------------buffer_write(yao dan)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+
+	buffer_read(buf, dst, len3);
+	puts(dst);
+
+	puts("------------buffer_read(yao dan)-----------");
+	printf("read: %d, write: %d, end: %d, len: %d, size: %d\n", 
+			buf->read, buf->write, buf->end, buf->len, buf->size);
+}
+
 int main()
 {
 	//log_test();
 	//store_test();
 	//buffer_test();
 	//rectify_test();
-	buffer_write_test();
+	//buffer_write_test();
+	buffer_read_test();
 
 	return 0;
 }
