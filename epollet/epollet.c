@@ -211,6 +211,8 @@ int epollet_create()
 
 	g_events = (struct epoll_event *)malloc(sizeof(struct epoll_event) * MAX_EVENT_COUNT);
 	if (!g_events) return MEM_ERROR;
+
+	return client_store_init();
 }
 
 //epollet添加函数
@@ -239,10 +241,9 @@ int read_data(struct epoll_event *ev, buffer *global_buf)
 	if (!ev || !global_buf) return PARAM_ERROR;
 
 	client_t *cli = (client_t *)ev->data.ptr;
-	int len = cli->status.need;
 
 	//调整缓冲区结构
-	int res = buffer_rectify(cli->in, len);
+	int res = buffer_rectify(cli->in, cli->status.need);
 	if (res < 0)
 	{
 		//由于是边缘触发，为防止该套接字变僵尸，直接删除之。
@@ -255,11 +256,15 @@ int read_data(struct epoll_event *ev, buffer *global_buf)
 		return res;
 	}
 
-	//写客户端ID
+	//刚开始接收数据，先写客户端ID
 	if (cli->in->len == 0)
+	{
 		buffer_write_int(cli->in, cli->id);
+		cli->status.need -= sizeof(uint32_t);
+	}
 
 	//接收数据
+	int len = cli->status.need;
 	res = circle_recv(ev->data.fd, write_ptr(cli->in), len);
 	if (res < 0) 
 	{

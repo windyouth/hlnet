@@ -1,7 +1,7 @@
 #ifndef _EPOLLET_H_
 #define	_EPOLLET_H_ 1
 
-#include "client_store.h"
+#include "client.h"
 
 
 //创建一个tcp套接字并监听端口

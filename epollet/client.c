@@ -1,4 +1,4 @@
-#include "client_store.h"
+#include "client.h"
 #include "../c-stl/array.h"
 
 
@@ -48,7 +48,7 @@ int client_store_init()
 
 	array_init(g_client_store, 2048);
 
-	return 0;
+	return SUCCESS;
 }
 
 //释放客户端仓库
@@ -97,5 +97,5 @@ client_t *get_client(uint32_t id)
 	assert(id < array_size(g_client_store));
 	if (id >= array_size(g_client_store)) return NULL;
 
-	return (client_t *)array_find(g_client_store, id);
+	return (client_t *)array_item(g_client_store, id);
 }

@@ -20,8 +20,8 @@ typedef struct _array
 
 //数组大小
 #define 			array_size(array) 				(array)->size
-//根据索引查询
-#define 			array_find(array, index)		(array)->table[index]	
+//根据索引取得元素
+#define 			array_item(array, index)		(array)->table[index]	
 
 #define array_foreach(array, temp, from)							\
            for(int i = (from);										\

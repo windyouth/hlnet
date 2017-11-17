@@ -3,6 +3,7 @@
 #include "../common/common.h"
 #include "../common/store.h"
 #include "../common/buffer.h"
+#include "../epollet/client.h"
 
 #define hello(str) do 		\
 {							\
@@ -290,6 +291,15 @@ void buffer_read_test()
 			buf->read, buf->write, buf->end, buf->len, buf->size);
 }
 
+void client_test()
+{
+	int res = client_store_init();
+	if (res != SUCCESS) return;
+
+	client_t *cli = extract_client();
+	if (!cli) return;
+}
+
 int main()
 {
 	//log_test();
@@ -297,7 +307,8 @@ int main()
 	//buffer_test();
 	//rectify_test();
 	//buffer_write_test();
-	buffer_read_test();
+	//buffer_read_test();
+	client_test();
 
 	return 0;
 }
