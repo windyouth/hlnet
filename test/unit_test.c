@@ -296,8 +296,37 @@ void client_test()
 	int res = client_store_init();
 	if (res != SUCCESS) return;
 
-	client_t *cli = extract_client();
-	if (!cli) return;
+	client_t *cli1 = extract_client();
+	client_t *cli2 = extract_client();
+	client_t *cli3 = extract_client();
+	client_t *cli4 = extract_client();
+	recycle_client(cli1);
+	recycle_client(cli2);
+	recycle_client(cli3);
+	recycle_client(cli4);
+	client_t *cli5 = extract_client();
+	client_t *cli6 = extract_client();
+	client_t *cli7 = extract_client();
+	client_t *cli8 = extract_client();
+
+	printf("cli1: %p, id: %d \n", cli1, cli1->id);
+	printf("cli2: %p, id: %d \n", cli2, cli2->id);
+	printf("cli3: %p, id: %d \n", cli3, cli3->id);
+	printf("cli4: %p, id: %d \n", cli4, cli4->id);
+	printf("cli5: %p, id: %d \n", cli5, cli5->id);
+	printf("cli6: %p, id: %d \n", cli6, cli6->id);
+	printf("cli7: %p, id: %d \n", cli7, cli7->id);
+	printf("cli8: %p, id: %d \n", cli8, cli8->id);
+
+	recycle_client(cli3);
+	cli7 = extract_client();
+	recycle_client(cli4);
+	cli8 = extract_client();
+
+	printf("get_client(cli7->id) = %p, cli7->id = %d \n", 
+			get_client(cli7->id), cli7->id);
+	printf("get_client(cli8->id) = %p, cli8->id = %d \n", 
+			get_client(cli8->id), cli8->id);
 }
 
 int main()

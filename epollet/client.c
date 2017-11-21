@@ -43,7 +43,7 @@ int client_store_init()
 	list_init(g_client_free);
 
 	//初始化仓库数组
-	g_client_store = (list *)malloc(sizeof(array));
+	g_client_store = (array *)malloc(sizeof(array));
 	if (!g_client_store) return MEM_ERROR;
 
 	array_init(g_client_store, 2048);
@@ -54,8 +54,11 @@ int client_store_init()
 //释放客户端仓库
 void client_store_free()
 {
+	//释放数组
+	array_free_deep(g_client_store);
+	safe_free(g_client_store);
 	//释放空闲链表
-	list_free_deep(g_client_free);
+	list_free_shalow(g_client_free);
 	safe_free(g_client_free);
 }
 
@@ -84,7 +87,7 @@ client_t *extract_client()
 //回收一个客户端
 void recycle_client(client_t *cli)
 {
-	assert(!cli);
+	assert(cli);
 	if (!cli) return;
 
 	client_reset(cli);

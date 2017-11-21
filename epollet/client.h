@@ -16,8 +16,8 @@
 //释放客户端结构
 #define client_free(cli) do								\
 {														\
-	safe_free(cli->in);									\
-	safe_free(cli->out);								\
+	buffer_free(cli->in);									\
+	buffer_free(cli->out);								\
 	safe_free(cli);										\
 }while (0)
 
