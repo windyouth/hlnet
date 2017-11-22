@@ -10,7 +10,6 @@ else
 debug_flag = -O2
 endif
 
-
 flag += -lpthread
 # -fPIC 告诉编绎器产生与位置无关代码，为共享库.so所必须。 
 flag += -fPIC -shared

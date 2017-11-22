@@ -74,7 +74,7 @@ int add_log(log_level_e level, const char *file, const char *func, int line,
 	seek_write(buf, res);
 
 	//写参数
-	snprintf(write_ptr(buf), 128, "[%s %s %d][%s]: ", file, func, line, g_level_string[level]);
+	snprintf(write_ptr(buf), 128, "{%s %s() %d}[%s]: ", file, func, line, g_level_string[level]);
 	res = strlen(write_ptr(buf));
 	seek_write(buf, res);
 	

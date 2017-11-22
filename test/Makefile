@@ -19,10 +19,9 @@ list_test: test-list.c
 array_test: test-array.c ../c-stl/array.c
 	$(compiler) test-array.c ../c-stl/array.c -o test-array -g
 
-test-uthread: test-uthread.c ../uthread/uthread.c cpu_mem_stat.c ../c-stl/array.c \
+test-uthread: test-uthread.c ../uthread/uthread.c ../c-stl/array.c \
 				../common/algorithm.h
-	$(compiler) -g -o test-uthread test-uthread.c ../uthread/uthread.c cpu_mem_stat.c ../c-stl/array.c \
-				../common/algorithm.h
+	$(compiler) -g -o test-uthread test-uthread.c ../uthread/uthread.c ../c-stl/array.c ../common/algorithm.h
 
 unit_test: unit_test.c
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)

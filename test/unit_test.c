@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <pthread.h>
 #include "../bin/include/log.h"
 #include "../common/common.h"
 #include "../common/store.h"
 #include "../common/buffer.h"
 #include "../epollet/client.h"
+#include "../src/database.h"
 
 #define hello(str) do 		\
 {							\
@@ -23,8 +25,6 @@ void log_test()
 	log(loglevel_warning, "我爱%s%d年！", girl, 10000);
 	log(loglevel_debug, "我爱%s%d年！", girl, 10000);
 	log(loglevel_info, "我爱%s%d年！", girl, 10000);
-	
-	write_log(NULL);
 }
 
 void store_test()
@@ -329,6 +329,33 @@ void client_test()
 			get_client(cli8->id), cli8->id);
 }
 
+/* 数据库线程测试 */
+void dbtest()
+{
+	log_test();
+	start_database();
+
+	sleep(5);
+}
+
+void *pthread_run(void *args)
+{
+	puts("线程运行");
+}
+
+pthread_t				g_thread_test = -1;
+void pthread_test()
+{
+	int res; // = pthread_create(&g_thread_test, NULL, pthread_run, NULL);
+	if (res != 0) 
+		puts("创建线程失败");
+	else
+	{
+		sleep(2);
+		printf("主线程ID：%d\n", (unsigned)pthread_self());
+	}
+}
+
 int main()
 {
 	//log_test();
@@ -337,7 +364,9 @@ int main()
 	//rectify_test();
 	//buffer_write_test();
 	//buffer_read_test();
-	client_test();
+	//client_test();
+	dbtest();
+	//pthread_test();
 
 	return 0;
 }

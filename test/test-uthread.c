@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cpu_mem_stat.h"
+//#include "cpu_mem_stat.h"
 
+/*
 void show_cpu_mem_stat()
 {
 	cpu_stat stat_c;
@@ -19,12 +20,13 @@ void show_cpu_mem_stat()
 	printf("mem total: %u, mem free: %u, mem use_rate: %.2f\% \n", stat_m.total, stat_m.free, (float)(stat_m.total - stat_m.free) / stat_m.total * 100 );
 
 }
+*/
 
 void func1(void * arg)
 {
     puts("1");
     puts("11");
-	show_cpu_mem_stat();
+	//show_cpu_mem_stat();
     puts("111");
     puts("1111");
 }
@@ -36,7 +38,7 @@ void func2(void * arg)
     puts(str);
     uthread_yield((schedule_t *)arg);
     puts(str);
-	show_cpu_mem_stat();
+	//show_cpu_mem_stat();
     puts(str);
 }
 
@@ -47,7 +49,7 @@ void func3(void *arg)
     puts(str);
     uthread_yield((schedule_t *)arg);
     puts(str);
-	show_cpu_mem_stat();
+	//show_cpu_mem_stat();
     puts(str);
 
 }
@@ -58,7 +60,7 @@ void func4(void *arg)
 	{
 		//uthread_sleep((schedule_t*)arg, 1000);
 		printf("i = %d\n", i);
-		show_cpu_mem_stat();
+		//show_cpu_mem_stat();
 		usleep(100000);
 
     	uthread_yield((schedule_t *)arg);

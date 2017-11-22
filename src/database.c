@@ -51,6 +51,10 @@ void issue_db_msg(void *arg)
 //运行函数
 void *dbthread_run(void *args)
 {
+	//创建协程调度器
+	g_schedule = schedule_create();
+	if (!g_schedule) return FAILURE;
+
 	//创建协程
 	int id = uthread_create(g_schedule, issue_db_msg);
 	if (id < 0) return FAILURE;
@@ -78,7 +82,7 @@ int start_database()
 	if (map_init(g_dbmsg_map) != OP_MAP_SUCCESS) return MEM_ERROR;
 
 	//创建线程
-	res = pthread_create(g_thread, NULL, dbthread_run, 0);
+	res = pthread_create(&g_thread, NULL, dbthread_run, NULL);
 	if (res != 0)
 	{
 		return FAILURE;
