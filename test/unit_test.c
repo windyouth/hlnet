@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include <pthread.h>
 #include "../bin/include/log.h"
 #include "../common/common.h"
@@ -329,15 +330,6 @@ void client_test()
 			get_client(cli8->id), cli8->id);
 }
 
-/* 数据库线程测试 */
-void dbtest()
-{
-	log_test();
-	start_database();
-
-	sleep(5);
-}
-
 void *pthread_run(void *args)
 {
 	puts("线程运行");
@@ -355,6 +347,68 @@ void pthread_test()
 		printf("主线程ID：%d\n", (unsigned)pthread_self());
 	}
 }
+
+#define			DB_LOGIN		0x000A			//登录消息号
+
+//登录结构体
+typedef struct 
+{
+	char		account[32];
+	char		password[32];
+}login_info;
+
+//处理数据库消息
+int deal_db_msg(char *data, uint32_t len)
+{
+	assert(data && len == sizeof(login_info));
+	if (!data || len != sizeof(login_info)) return PARAM_ERROR;
+
+	login_info *login = (login_info *)data;
+
+	puts("收到数据如下:");
+	printf("账号：%s \n", login->account);
+	printf("密码：%s \n", login->password);
+
+	return SUCCESS;
+}
+
+/* 数据库线程测试 */
+void dbtest()
+{
+	//初始化数据库
+	init_database();
+	//注册数据库消息
+	reg_db_msg(DB_LOGIN, deal_db_msg);
+	//启动数据库线程
+	start_database();
+
+	//构造测试数据
+	int len = sizeof(cmd_head_t) + sizeof(login_info);
+	char *buf = (char *)malloc(len);
+	if (!buf)
+	{	
+		puts("malloc failed");
+		return;
+	}
+
+	zero_array(buf, len);
+	cmd_head_t *head = (cmd_head_t *)buf;
+	login_info *data = (login_info *)(head + 1);
+
+	head->data_size = sizeof(login_info);
+	head->cmd_code = DB_LOGIN;
+	head->proto_ver = 10000;
+
+	snprintf(data->account, 32, "fuck001");
+	snprintf(data->password, 32, "abc123");
+
+	post_db_msg(DB_LOGIN, (char *)data, sizeof(*data));
+
+	while (1)
+		usleep(10);
+}
+
+
 
 int main()
 {

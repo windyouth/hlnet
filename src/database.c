@@ -1,8 +1,8 @@
 #include <pthread.h>
 #include "database.h"
-#include "log.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
+#include "../common/internal.h"
 #include "../common/buffer.h"
 #include "../uthread/uthread.h"
 
@@ -19,12 +19,14 @@ void issue_db_msg(void *arg)
 {
 	buffer *msg = NULL;
 	int *cmd = NULL;
+	msg_func_item *func_item;
 	dbmsg_hander hander;
 	for (;;)
 	{
 		//如果为空，让出协程控制权
 		if (queue_empty(g_dbmsg_queue))	
 		{
+			usleep(10);
 			uthread_yield((schedule_t *)arg);
 			continue;
 		}
@@ -39,9 +41,12 @@ void issue_db_msg(void *arg)
 		buffer_read(msg, cmd, sizeof(int));
 
 		//根据命令码查出函数并调用
-		hander = map_get(g_dbmsg_map, *cmd, sizeof(int));
-		if (hander)
+		func_item = (msg_func_item *)map_get(g_dbmsg_map, cmd, sizeof(int));
+		if (func_item && func_item->msg_func)
+		{
+			hander = (dbmsg_hander)func_item->msg_func;
 			hander(read_ptr(msg), msg->len);
+		}
 		
 		//回收利用
 		recycle_buffer(msg);
@@ -58,15 +63,13 @@ void *dbthread_run(void *args)
 	//创建协程
 	int id = uthread_create(g_schedule, issue_db_msg);
 	if (id < 0) return FAILURE;
-	id = uthread_create(g_schedule, write_log);
-	if (id < 0) return FAILURE;
 	
 	//调度器运行
 	uthread_run(g_schedule);
 }
 
-//启动数据库线程
-int start_database()
+//初始化数据库
+int init_database()
 {
 	//申请内存
 	g_dbmsg_queue = (queue *)malloc(sizeof(queue));
@@ -81,9 +84,14 @@ int start_database()
 	if (!g_dbmsg_map) return MEM_ERROR;
 	if (map_init(g_dbmsg_map) != OP_MAP_SUCCESS) return MEM_ERROR;
 
+	return SUCCESS;
+}
+
+//启动数据库线程
+int start_database()
+{
 	//创建线程
-	res = pthread_create(&g_thread, NULL, dbthread_run, NULL);
-	if (res != 0)
+	if (0 != pthread_create(&g_thread, NULL, dbthread_run, NULL))
 	{
 		return FAILURE;
 	}
@@ -97,11 +105,14 @@ int start_database()
 //注册数据库消息
 int reg_db_msg(uint16_t msg, dbmsg_hander func)
 {
-	char *key = (char *)malloc(8);
-	zero_array(key, 8);
-	sprintf(key, "%u", msg);
+	int *key = (int *)malloc(sizeof(int));
+	*key = msg;
 
-	if (map_put(g_dbmsg_map, key, strlen(key), func) != OP_MAP_SUCCESS)
+	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
+	if (!item) return MEM_ERROR;
+
+	item->msg_func = func;
+	if (map_put(g_dbmsg_map, key, sizeof(int), item) != OP_MAP_SUCCESS)
 		return FAILURE;
 
 	return SUCCESS;

@@ -94,7 +94,7 @@ void uthread_resume(schedule_t *schedule, int id);
 /* decription: 协程休眠
  * parameter: millisec-要休眠的毫秒数
  */
-void uthread_sleep(schedule_t* schedule, int msec);
+/*void uthread_sleep(schedule_t* schedule, int msec);*/
 
 
 #endif

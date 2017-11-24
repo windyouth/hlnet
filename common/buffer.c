@@ -98,6 +98,8 @@ int buffer_write(buffer *buf, char* src, uint32_t len)
 
 	//写结束符
 	*write_ptr(buf) = 0;
+
+	return SUCCESS;
 }
 
 //往缓冲区写数字
@@ -117,6 +119,8 @@ int buffer_write_int(buffer *buf, int num)
 	//写结束符，但不偏移写指针。
 	//这样结束符在读的时候起作用，但写的时候不产生影响。
 	*write_ptr(buf) = 0;
+
+	return SUCCESS;
 }
 
 //取得一个缓冲区

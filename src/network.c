@@ -4,6 +4,8 @@
 #include <sys/epoll.h>
 #include "network.h"
 #include "keep_alive.h"
+#include "log.h"
+#include "../common/internal.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
 #include "../epollet/epollet.h"
@@ -12,6 +14,7 @@
 
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
 
+/*
 //线程状态
 typedef enum _thread_state
 {
@@ -19,6 +22,7 @@ typedef enum _thread_state
 	threadstate_stopping = 2,
 	threadstate_stopped = 3
 }thread_state_e;
+*/
 
 map					*g_net_client_msg = NULL;				//网络消息映射(TCP用户端口)
 map					*g_net_manage_msg = NULL;				//网络消息映射(TCP管理端口)
@@ -48,6 +52,7 @@ void issue_client_msg(void *arg)
 {
 	packet_head_t *head = NULL;
 	char *data = NULL;
+	msg_func_item *func_item;
 	tcpmsg_hander hander;
 	char cmd[8];
 
@@ -71,9 +76,10 @@ void issue_client_msg(void *arg)
 
 			//取出消息处理函数派发消息
 			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
-			hander = map_get(g_net_client_msg, cmd, strlen(cmd));
-			if (hander)
+			func_item = (msg_func_item *)map_get(g_net_client_msg, cmd, strlen(cmd));
+			if (func_item && func_item->msg_func)
 			{
+				hander = (tcpmsg_hander)func_item->msg_func;
 				hander(head->client_id, &(head->head), data);
 			}
 		}
@@ -87,6 +93,7 @@ void issue_manage_msg(void *arg)
 {
 	packet_head_t *head = NULL;
 	char *data = NULL;
+	msg_func_item *func_item;
 	tcpmsg_hander hander;
 	char cmd[8];
 
@@ -110,9 +117,10 @@ void issue_manage_msg(void *arg)
 
 			//取出消息处理函数派发消息
 			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
-			hander = map_get(g_net_manage_msg, cmd, strlen(cmd));
-			if (hander)
+			func_item = (msg_func_item *)map_get(g_net_manage_msg, cmd, strlen(cmd));
+			if (func_item && func_item->msg_func)
 			{
+				hander = (tcpmsg_hander)func_item->msg_func;
 				hander(head->client_id, &(head->head), data);
 			}
 		}
@@ -144,7 +152,7 @@ static void udp_read(int fd)
 	if (head->data_size + sizeof(*head) != size)
 		return;
 
-	hander(addr.sin_addr.s_addr, addr.sin_port, g_udp_buffer, g_udp_buffer + sizeof(*head));
+	hander(addr.sin_addr.s_addr, addr.sin_port, (cmd_head_t *)g_udp_buffer, g_udp_buffer + sizeof(*head));
 }
 
 //创建tcp客户端相关
@@ -262,9 +270,12 @@ int net_ctl(sock_type_e sock_type, short port)
 int net_run()
 {
 	//创建协程
-	int epollet_id = uthread_create(g_schedule, epollet_run);
-	if (epollet_id < 0) return FAILURE;
+	int id = uthread_create(g_schedule, epollet_run);
+	if (id < 0) return FAILURE;
 	
+	id = uthread_create(g_schedule, write_log);
+	if (id < 0) return FAILURE;
+
 	//调度器运行
 	uthread_run(g_schedule);
 }
@@ -324,7 +335,11 @@ int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func)
 			return PARAM_ERROR;
 	}
 
-	if (map_put(dst_map, key, strlen(key), func) != OP_MAP_SUCCESS)
+	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
+	if (!item) return MEM_ERROR;
+
+	item->msg_func = func;
+	if (map_put(dst_map, key, strlen(key), item) != OP_MAP_SUCCESS)
 		return FAILURE;
 
 	return SUCCESS;
@@ -337,7 +352,13 @@ int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 	zero_array(key, 8);
 	sprintf(key, "%u", msg);
 
-	return (map_put(g_net_udp_msg, key, strlen(key), func) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
+	
+	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
+	if (!item) return MEM_ERROR;
+
+	item->msg_func = func;
+
+	return (map_put(g_net_udp_msg, key, strlen(key), item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
 }
 
 //发送数据(tcp)

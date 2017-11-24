@@ -61,7 +61,7 @@ void func4(void *arg)
 		//uthread_sleep((schedule_t*)arg, 1000);
 		printf("i = %d\n", i);
 		//show_cpu_mem_stat();
-		usleep(100000);
+		usleep(1);
 
     	uthread_yield((schedule_t *)arg);
 	}

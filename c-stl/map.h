@@ -6,7 +6,7 @@
 #include<stdlib.h>
 
 /** special macro to specify a struct to be an entry of a map **/
-#define as_map_item map_entry __map_entry
+#define 		as_map_item 				map_entry __map_entry
 
 /** return value indicates operating map success or fail **/
 #define 		OP_MAP_SUCCESS 				(0)

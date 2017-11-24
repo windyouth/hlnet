@@ -26,7 +26,7 @@ int epollet_create();
 //epollet添加函数
 int epollet_add(int fd, void *data_ptr, int flag);
 //epollet运行函数
-int epollet_run(void *arg);
+void epollet_run(void *arg);
 
 //关闭套接字
 void close_socket(client_t *cli);

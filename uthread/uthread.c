@@ -146,7 +146,9 @@ void uthread_run(schedule_t *sche)
 	while (sche->active_count)
 	{
 		for (id = 0; id < sche->max_index; ++id)
+		{
 			uthread_resume(sche, id);
+		}
 	}
 }
 
@@ -154,6 +156,7 @@ void uthread_run(schedule_t *sche)
  * decription: 协程休眠
  * parameter: millisec-要休眠的毫秒数 
  */
+/*
 void uthread_sleep(schedule_t* schedule, int msec)
 {
 	struct timeval start, now;
@@ -169,6 +172,6 @@ void uthread_sleep(schedule_t* schedule, int msec)
 				(start.tv_sec * 1000 + start.tv_usec / 1000);
 	}
 }
-
+*/
 
 #endif

@@ -73,6 +73,7 @@ void map_init_custom(map *map, size_t spar, unsigned int (*hashfunc)(char*,int))
 //--------------------------------------------------------
 // 对于冲突的key,放在上一个key的next指针上。
 // 数据结构：数组 + 链表。key必须是在堆上的一个字符串
+// value亦必须是指向堆上的指针
 //--------------------------------------------------------
 int map_put(map *map, char *key, int key_size, void *value)
 {
@@ -116,6 +117,7 @@ int map_put(map *map, char *key, int key_size, void *value)
     }
     ++(map->__map_size);
     ++(map->puts);
+
     return OP_MAP_SUCCESS;
 }
 

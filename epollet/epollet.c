@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 #include "epollet.h"
+#include "../common/internal.h"
 #include "../uthread/uthread.h"
 
 
@@ -136,7 +137,6 @@ int circle_send(int fd, char *buf, int len)
 		{
 			if (errno == EAGAIN)
 			{
-				//uthread_sleep(g_schedule, 1000);
 				continue;
 			}
 			if (errno == EINTR)
@@ -376,7 +376,7 @@ static void tcp_accept(int fd)
 }
 
 //epollet运行函数
-int epollet_run(void *arg)
+void epollet_run(void *arg)
 {
 	int i, count;
 
