@@ -16,6 +16,7 @@ int client_init(client_t *cli, int size)
 	if (!cli || size <= 0) return PARAM_ERROR;
 
 	zero(cli);
+	cli->fd = INVALID_SOCKET;
 	cli->status.part = READ_PART_HEAD;
 	cli->status.need = sizeof(packet_head_t);
 
@@ -36,6 +37,9 @@ int client_init(client_t *cli, int size)
 //初始化客户端仓库
 int client_store_init()
 {
+	if (g_client_free || g_client_store)
+		return REPEAT_ERROR;
+
 	//初始化空闲链表
 	g_client_free = (list *)malloc(sizeof(list));
 	if (!g_client_free) return MEM_ERROR;

@@ -100,6 +100,7 @@ void write_log(void *arg)
 		//如果为空，让出协程控制权
 		if (queue_empty(g_log_queue))	
 		{
+			usleep(10);	/* 事关整个线程的休眠 */
 			uthread_yield((schedule_t *)arg);
 			continue;
 		}

@@ -4,13 +4,17 @@
 #include "../epollet/epollet.h"
 #include "../c-stl/list.h"
 
-#define			ALIVE_INTERVAL			30				//检查的间隔时间
+#define			ALIVE_INTERVAL			3				//检查的间隔时间
 
 list				*g_client_alive = NULL;				//活跃的客户端链表
 
 //检查连接的活跃时间
 void check_alive(int num)
 {
+#ifdef TEST
+	puts("check_alive...");
+#endif
+
 	list_item *item = NULL;
 	client_t *cli = NULL;
 	uint64_t now = time(0);
@@ -21,12 +25,18 @@ void check_alive(int num)
 		//参数检查与转换
 		if (!item) continue;
 		cli = (client_t *)item;
+#ifdef TEST
+		printf("进入链表检查，client_id: %d\n", cli->id);
+#endif
 
 		//socket已经被断开
 		if (cli->fd == INVALID_SOCKET)
 		{
-			recycle_client(cli);
 			list_remove(g_client_alive, item);
+			recycle_client(cli);
+#ifdef TEST
+		printf("cli->fd == INVALID_SOCKET断开，client_id: %d\n", cli->id);
+#endif
 			continue;
 		} 
 
@@ -35,8 +45,11 @@ void check_alive(int num)
 		if (now - cli->alive_time > ALIVE_INTERVAL)			
 		{
 			close_socket(cli);
-			recycle_client(cli);
 			list_remove(g_client_alive, item);
+			recycle_client(cli);
+#ifdef TEST
+		printf("超时被断开，client_id: %d \n", cli->id);
+#endif
 		}
 	}
 }

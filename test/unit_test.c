@@ -7,6 +7,7 @@
 #include "../common/buffer.h"
 #include "../epollet/client.h"
 #include "../src/database.h"
+#include "../src/keep_alive.h"
 
 #define hello(str) do 		\
 {							\
@@ -349,6 +350,7 @@ void pthread_test()
 }
 
 #define			DB_LOGIN		0x000A			//登录消息号
+#define			DB_REGISTER		0xFFFF			//注册消息号
 
 //登录结构体
 typedef struct 
@@ -357,17 +359,47 @@ typedef struct
 	char		password[32];
 }login_info;
 
-//处理数据库消息
-int deal_db_msg(char *data, uint32_t len)
+//注册结构体
+typedef struct
+{
+	char		account[32];
+	char		password[32];
+	char		name[8];
+	uchar		sex;
+	char 		addr[64];
+	char		remark[64];
+}reg_info;
+
+//处理登录数据库消息
+int deal_login_msg(char *data, uint32_t len)
 {
 	assert(data && len == sizeof(login_info));
 	if (!data || len != sizeof(login_info)) return PARAM_ERROR;
 
 	login_info *login = (login_info *)data;
 
-	puts("收到数据如下:");
+	puts("收到登录数据如下:");
 	printf("账号：%s \n", login->account);
 	printf("密码：%s \n", login->password);
+
+	return SUCCESS;
+}
+
+//处理注册数据库消息
+int deal_reg_msg(char *data, uint32_t len)
+{
+	assert(data && len == sizeof(reg_info));
+	if (!data || len != sizeof(reg_info)) return PARAM_ERROR;
+
+	reg_info *reg = (reg_info *)data;
+
+	puts("收到注册数据如下:");
+	printf("账号：%s \n", reg->account);
+	printf("密码：%s \n", reg->password);
+	printf("姓名：%s \n", reg->name);
+	printf("性别：%s \n", reg->sex == 1 ? "男" : "女");
+	printf("地址：%s \n", reg->addr);
+	printf("备注：%s \n", reg->remark);
 
 	return SUCCESS;
 }
@@ -378,37 +410,78 @@ void dbtest()
 	//初始化数据库
 	init_database();
 	//注册数据库消息
-	reg_db_msg(DB_LOGIN, deal_db_msg);
+	reg_db_msg(DB_LOGIN, deal_login_msg);
+	reg_db_msg(DB_REGISTER, deal_reg_msg);
 	//启动数据库线程
 	start_database();
 
 	//构造测试数据
-	int len = sizeof(cmd_head_t) + sizeof(login_info);
-	char *buf = (char *)malloc(len);
-	if (!buf)
+	login_info *login_buf = (login_info *)malloc(sizeof(login_info));
+	reg_info *reg_buf = (reg_info *)malloc(sizeof(reg_info));
+	if (!login_buf || !reg_buf)
 	{	
 		puts("malloc failed");
 		return;
 	}
 
-	zero_array(buf, len);
-	cmd_head_t *head = (cmd_head_t *)buf;
-	login_info *data = (login_info *)(head + 1);
+	zero_array(login_buf, sizeof(login_info));
+	zero_array(reg_buf, sizeof(reg_info));
 
-	head->data_size = sizeof(login_info);
-	head->cmd_code = DB_LOGIN;
-	head->proto_ver = 10000;
+	snprintf(login_buf->account, 32, "fuck001");
+	snprintf(login_buf->password, 32, "abc123");
 
-	snprintf(data->account, 32, "fuck001");
-	snprintf(data->password, 32, "abc123");
+	snprintf(reg_buf->account, 32, "fuck002");
+	snprintf(reg_buf->password, 32, "abc456");
+	snprintf(reg_buf->name, 8, "门罗");
+	reg_buf->sex = 1;
+	snprintf(reg_buf->addr, 64, "美国佐治亚州红脖子俱乐部");
+	snprintf(reg_buf->remark, 64, "hi everybody, I am from American.");
 
-	post_db_msg(DB_LOGIN, (char *)data, sizeof(*data));
+	post_db_msg(DB_LOGIN, (char *)login_buf, sizeof(*login_buf));
+	post_db_msg(DB_REGISTER, (char *)reg_buf, sizeof(*reg_buf));
+	post_db_msg(DB_LOGIN, (char *)login_buf, sizeof(*login_buf));
+	post_db_msg(DB_REGISTER, (char *)reg_buf, sizeof(*reg_buf));
+	post_db_msg(DB_LOGIN, (char *)login_buf, sizeof(*login_buf));
+	post_db_msg(DB_REGISTER, (char *)reg_buf, sizeof(*reg_buf));
+	post_db_msg(DB_LOGIN, (char *)login_buf, sizeof(*login_buf));
+	post_db_msg(DB_REGISTER, (char *)reg_buf, sizeof(*reg_buf));
+	post_db_msg(DB_LOGIN, (char *)login_buf, sizeof(*login_buf));
+	post_db_msg(DB_REGISTER, (char *)reg_buf, sizeof(*reg_buf));
 
 	while (1)
 		usleep(10);
 }
 
+//心跳模块测试
+void alive_test()
+{
+	if (SUCCESS != keep_alive())
+	{
+		puts("初始化心跳模块失败");
+		return;
+	}
 
+	if (SUCCESS != client_store_init())
+	{
+		puts("初始化客户端仓库失败");
+		return;
+	}
+
+	client_t *cli1 = extract_client();
+	client_t *cli2 = extract_client();
+	client_t *cli3 = extract_client();
+	client_t *cli4 = extract_client();
+	client_t *cli5 = extract_client();
+
+	add_alive(cli1->id);
+	add_alive(cli2->id);
+	add_alive(cli3->id);
+	add_alive(cli4->id);
+	add_alive(cli5->id);
+
+	while (1)
+		usleep(10);
+}
 
 int main()
 {
@@ -419,8 +492,9 @@ int main()
 	//buffer_write_test();
 	//buffer_read_test();
 	//client_test();
-	dbtest();
+	//dbtest();
 	//pthread_test();
+	alive_test();
 
 	return 0;
 }

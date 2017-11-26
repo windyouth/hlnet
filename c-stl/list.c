@@ -48,7 +48,6 @@ int list_push_back(list *list, void *item)
     assert(list != NULL && list->inited == 1);
     if(item == NULL)
     {
-        fprintf(stderr,"list insert item is null!\n");
         return OP_LIST_FAILURE;
     }
     list_item *__item = (list_item*)item;
