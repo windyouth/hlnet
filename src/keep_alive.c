@@ -11,32 +11,25 @@ list				*g_client_alive = NULL;				//活跃的客户端链表
 //检查连接的活跃时间
 void check_alive(int num)
 {
-#ifdef TEST
-	puts("check_alive...");
-#endif
-
 	list_item *item = NULL;
 	client_t *cli = NULL;
 	uint64_t now = time(0);
 	
 	//遍历链表
-	list_foreach(g_client_alive, item)
+	item = g_client_alive->head;
+	while (item != NULL)
 	{
 		//参数检查与转换
 		if (!item) continue;
 		cli = (client_t *)item;
-#ifdef TEST
-		printf("进入链表检查，client_id: %d\n", cli->id);
-#endif
 
 		//socket已经被断开
 		if (cli->fd == INVALID_SOCKET)
 		{
 			list_remove(g_client_alive, item);
+			item = item->next;
 			recycle_client(cli);
-#ifdef TEST
-		printf("cli->fd == INVALID_SOCKET断开，client_id: %d\n", cli->id);
-#endif
+
 			continue;
 		} 
 
@@ -46,11 +39,13 @@ void check_alive(int num)
 		{
 			close_socket(cli);
 			list_remove(g_client_alive, item);
+			item = item->next;
 			recycle_client(cli);
-#ifdef TEST
-		printf("超时被断开，client_id: %d \n", cli->id);
-#endif
+
+			continue;
 		}
+
+		item = item->next;
 	}
 }
 

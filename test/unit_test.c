@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <pthread.h>
+#include <sys/time.h>
+#include <signal.h>
 #include "../bin/include/log.h"
 #include "../common/common.h"
 #include "../common/store.h"
@@ -452,6 +454,12 @@ void dbtest()
 		usleep(10);
 }
 
+client_t *g_client1;
+client_t *g_client2;
+client_t *g_client3;
+client_t *g_client4;
+client_t *g_client5;
+
 //心跳模块测试
 void alive_test()
 {
@@ -467,17 +475,39 @@ void alive_test()
 		return;
 	}
 
-	client_t *cli1 = extract_client();
-	client_t *cli2 = extract_client();
-	client_t *cli3 = extract_client();
-	client_t *cli4 = extract_client();
-	client_t *cli5 = extract_client();
+	g_client1 = extract_client();
+	g_client2 = extract_client();
+	g_client3 = extract_client();
+	g_client4 = extract_client();
+	g_client5 = extract_client();
 
-	add_alive(cli1->id);
-	add_alive(cli2->id);
-	add_alive(cli3->id);
-	add_alive(cli4->id);
-	add_alive(cli5->id);
+	g_client1->fd = 1001;
+	g_client2->fd = 1002;
+	g_client3->fd = 1003;
+	g_client4->fd = 1004;
+	g_client5->fd = 1005;
+
+	add_alive(g_client1->id);
+	add_alive(g_client2->id);
+	add_alive(g_client3->id);
+	add_alive(g_client4->id);
+	add_alive(g_client5->id);
+
+	alive(g_client1->id);
+	alive(g_client2->id);
+	alive(g_client3->id);
+	alive(g_client4->id);
+	alive(g_client5->id);
+	
+	safe(g_client1->id);
+	safe(g_client3->id);
+	safe(g_client5->id);
+
+	printf("g_client1 safe: %d \n", is_safe(g_client1->id));
+	printf("g_client2 safe: %d \n", is_safe(g_client2->id));
+	printf("g_client3 safe: %d \n", is_safe(g_client3->id));
+	printf("g_client4 safe: %d \n", is_safe(g_client4->id));
+	printf("g_client5 safe: %d \n", is_safe(g_client5->id));
 
 	while (1)
 		usleep(10);
