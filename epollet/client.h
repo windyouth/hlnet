@@ -10,6 +10,8 @@
 {														\
 	cli->status.part = READ_PART_HEAD;					\
 	cli->status.need = sizeof(packet_head_t);			\
+	cli->fd = INVALID_SOCKET;  							\
+	cli->is_safe = NO;									\
 	buffer_reset(cli->in);								\
 	buffer_reset(cli->out);								\
 }while (0)

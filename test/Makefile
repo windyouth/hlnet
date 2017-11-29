@@ -26,5 +26,8 @@ test-uthread: test-uthread.c ../uthread/uthread.c ../c-stl/array.c \
 unit_test: unit_test.c
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
+main: main.c
+	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
+
 clean:
 	rm -f $(targets) 

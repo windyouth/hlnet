@@ -16,11 +16,11 @@ typedef enum _sock_type
 }sock_type_e;
 
 //创建服务器
-int net_create();
+int serv_create();
 //添加服务器参数
-int net_ctl(sock_type_e sock_type, short port);
+int serv_ctl(sock_type_e sock_type, short port);
 //运行服务器
-int net_run();
+int serv_run();
 
 //注册连接事件处理函数
 int reg_link_event(sock_type_e type, link_hander func);

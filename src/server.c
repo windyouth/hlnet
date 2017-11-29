@@ -2,7 +2,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
-#include "network.h"
+#include "server.h"
 #include "keep_alive.h"
 #include "log.h"
 #include "../common/internal.h"
@@ -233,7 +233,7 @@ int create_udp(uint16_t port)
 }
 
 //创建服务器
-int net_create()
+int serv_create()
 {
 	//构造调度器
 	g_schedule  = schedule_create();
@@ -243,7 +243,7 @@ int net_create()
 }
 
 //添加服务器参数
-int net_ctl(sock_type_e sock_type, short port)
+int serv_ctl(sock_type_e sock_type, short port)
 {
 	//tcp客户端
 	if (sock_type == socktype_client)		
@@ -267,7 +267,7 @@ int net_ctl(sock_type_e sock_type, short port)
 }
 
 //运行服务器
-int net_run()
+int serv_run()
 {
 	//创建协程
 	int id = uthread_create(g_schedule, epollet_run);
