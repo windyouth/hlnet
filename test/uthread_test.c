@@ -33,34 +33,30 @@ void func1(void * arg)
 
 void func2(void * arg)
 {
-	char *str = "22";
-    puts(str);
-    puts(str);
-    uthread_yield((schedule_t *)arg);
-    puts(str);
-	//show_cpu_mem_stat();
-    puts(str);
+	char *str = "你很22";
+	while (1)
+	{
+		printf("func2, %s \n", str);
+		sleep(1);
+	    uthread_yield((schedule_t *)arg);
+	}
 }
 
 void func3(void *arg)
 {
 	char *str = "3333";
-    puts(str);
-    puts(str);
-    uthread_yield((schedule_t *)arg);
-    puts(str);
-	//show_cpu_mem_stat();
-    puts(str);
-
+	while (1)
+	{
+		printf("func3, %s \n", str);
+    	uthread_yield((schedule_t *)arg);
+	}
 }
 
 void func4(void *arg)
 {
 	for (int i = 1; i > 0; ++i)
 	{
-		//uthread_sleep((schedule_t*)arg, 1000);
-		printf("i = %d\n", i);
-		//show_cpu_mem_stat();
+		printf("func4, i = %d\n", i);
 		usleep(1);
 
     	uthread_yield((schedule_t *)arg);

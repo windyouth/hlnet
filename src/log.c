@@ -97,6 +97,9 @@ void write_log(void *arg)
 	buffer *item = NULL;
 	for (;;)
 	{
+#ifdef TEST
+			puts("执行write_log()");
+#endif
 		//如果为空，让出协程控制权
 		if (queue_empty(g_log_queue))	
 		{

@@ -63,7 +63,7 @@ int create_tcp_socket(uint16_t port)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;						//ipv4
 	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_addr = *(get_addr());
 	int res = bind(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (res == FAILURE)
 	{
@@ -104,7 +104,7 @@ int create_udp_socket(uint16_t port)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;						//ipv4
 	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_addr = *(get_addr());
 	int res = bind(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (res == FAILURE)
 	{
@@ -382,6 +382,9 @@ void epollet_run(void *arg)
 
 	for (;;)
 	{
+#ifdef TEST
+			puts("执行epollet_run()");
+#endif
 		//超时时间：0 立即返回，-1 无限期阻塞。
 		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, 0);
 		

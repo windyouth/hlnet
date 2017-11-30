@@ -50,7 +50,7 @@ typedef int (*dbmsg_hander)(char *data, uint32_t len);
 
 typedef			unsigned char		uchar;			//无符号8位整数
 
-//#define			TEST			//测试宏
+#define			TEST			//测试宏
 
 #endif //_COMMON_H_
 

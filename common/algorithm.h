@@ -19,4 +19,7 @@
 	}											\
 }while(0)
 
+//取得本机IP地址，网络序
+struct in_addr *get_addr();
+
 #endif //_ALGORITHM_H_

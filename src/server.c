@@ -58,8 +58,14 @@ void issue_client_msg(void *arg)
 
 	for (;;)
 	{
+#ifdef TEST
+			//puts("执行issue_client_msg()");
+#endif
 		while (g_client_buf->len > 0)
 		{
+#ifdef TEST
+			//puts("issue_client_msg()进入while循环");
+#endif
 			//从全局缓冲区读数据
 			buffer_read(g_client_buf, head, sizeof(*head));
 			buffer_read(g_client_buf, data, head->head.data_size);
@@ -82,10 +88,13 @@ void issue_client_msg(void *arg)
 				hander = (tcpmsg_hander)func_item->msg_func;
 				hander(head->client_id, &(head->head), data);
 			}
-		}
+		} //end while
 
+#ifdef TEST
+		//puts("issue_client_msg()让出协程");
+#endif
 		uthread_yield((schedule_t *)arg);
-	}
+	}//end for
 }
 
 //网络消息分发(管理端)
@@ -172,9 +181,11 @@ int create_tcp_client(uint16_t port)
 	g_client_buf = (buffer *)malloc(sizeof(buffer));
 	if (!g_client_buf) return MEM_ERROR;
 		
+#ifndef TEST
 	//创建协程
 	int issue_id = uthread_create(g_schedule, issue_client_msg);
 	if (issue_id < 0) return FAILURE;
+#endif
 
 	g_client_tcp_fd = fd;
 	return epollet_add(g_client_tcp_fd, NULL, EPOLLIN | EPOLLET);
@@ -386,7 +397,7 @@ int tcp_send(uint32_t client_id, uint16_t cmd, char *data, uint32_t len)
 		buffer_write(cli->out, data, len);
 	}
 
-	//发送
+	//发送，如果没有发成功，由后续的epoll写事件发送。
 	res = circle_send(cli->fd, read_ptr(cli->out), cli->out->len);
 	if (res > 0) buffer_reset(cli->out);
 
