@@ -6,7 +6,7 @@
 #include "../common/common.h"
 #include "../common/buffer.h"
 #include "../c-stl/queue.h"
-#include "../uthread/uthread.h"
+#include "../coroutine/coroutine.h"
 
 #define				DEFAULT_LOG_LENGTH				256
 

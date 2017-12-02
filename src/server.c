@@ -9,7 +9,7 @@
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
 #include "../epollet/epollet.h"
-#include "../uthread/uthread.h"
+#include "../coroutine/coroutine.h"
 
 
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
@@ -24,13 +24,13 @@ typedef enum _thread_state
 }thread_state_e;
 */
 
-map					*g_net_client_msg = NULL;				//网络消息映射(TCP用户端口)
-map					*g_net_manage_msg = NULL;				//网络消息映射(TCP管理端口)
-map					*g_net_udp_msg = NULL;					//网络消息映射(UDP端口)
+map						*g_net_client_msg = NULL;			//网络消息映射(TCP用户端口)
+map						*g_net_manage_msg = NULL;			//网络消息映射(TCP管理端口)
+map						*g_net_udp_msg = NULL;				//网络消息映射(UDP端口)
 
-char				*g_udp_buffer = NULL;					//UDP缓冲区
+char					*g_udp_buffer = NULL;				//UDP缓冲区
 
-static schedule_t	*g_schedule = NULL;						//协程调度器
+static struct schedule	*g_schedule = NULL;					//协程调度器
 
 //处理内核消息
 static void kernel_message(int client_id, cmd_head_t *head, char *data)

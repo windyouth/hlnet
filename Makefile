@@ -16,7 +16,7 @@ flag += -fPIC -shared
 
 common_dir = ./common
 epollet_dir = ./epollet
-uthread_dir = ./uthread
+coroutine_dir = ./coroutine
 cstl_dir = ./c-stl
 main_dir = ./src
 
@@ -33,11 +33,11 @@ $(shell mkdir -p $(bin_dir)/include)
 $(shell mkdir -p $(bin_dir)/lib)
 endif
 
-.PHONY: main common cstl uthread epollet
+.PHONY: main common cstl coroutine epollet
 
 all: $(target)
 
-$(target): main common cstl uthread epollet
+$(target): main common cstl coroutine epollet
 	gcc -o $@ $(obj) $(flag) $(debug_flag)
 
 main:
@@ -46,8 +46,8 @@ main:
 common:
 	make -C $(common_dir) debug_flag=$(debug_flag)
 
-uthread:
-	make -C $(uthread_dir) debug_flag=$(debug_flag)
+coroutine:
+	make -C $(coroutine_dir) debug_flag=$(debug_flag)
 
 cstl:
 	make -C $(cstl_dir) debug_flag=$(debug_flag)

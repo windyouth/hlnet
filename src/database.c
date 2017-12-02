@@ -4,14 +4,14 @@
 #include "../c-stl/map.h"
 #include "../common/internal.h"
 #include "../common/buffer.h"
-#include "../uthread/uthread.h"
+#include "../coroutine/coroutine.h"
 
 
-pthread_t				g_thread = -1;
-static schedule_t		*g_schedule = NULL;						//协程调度器
+pthread_t					g_thread = -1;
+static struct schedule		*g_schedule = NULL;						//协程调度器
 
-queue					*g_dbmsg_queue = NULL;
-map						*g_dbmsg_map = NULL;					//数据库消息映射
+queue						*g_dbmsg_queue = NULL;
+map							*g_dbmsg_map = NULL;					//数据库消息映射
 
 
 //数据库消息分发
@@ -57,11 +57,11 @@ void issue_db_msg(void *arg)
 void *dbthread_run(void *args)
 {
 	//创建协程调度器
-	g_schedule = schedule_create();
+	g_schedule = coroutine_open();
 	if (!g_schedule) return FAILURE;
 
 	//创建协程
-	int id = uthread_create(g_schedule, issue_db_msg);
+	int id = coroutine_new(g_schedule, issue_db_msg, NULL);
 	if (id < 0) return FAILURE;
 	
 	//调度器运行
