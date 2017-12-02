@@ -2,6 +2,7 @@
 #define	_EPOLLET_H_ 1
 
 #include "client.h"
+#include "../coroutine/coroutine.h"
 
 
 //创建一个tcp套接字并监听端口
@@ -26,7 +27,7 @@ int epollet_create();
 //epollet添加函数
 int epollet_add(int fd, void *data_ptr, int flag);
 //epollet运行函数
-void epollet_run(void *arg);
+void epollet_run(struct schedule *sche, void *arg);
 
 //关闭套接字
 void close_socket(client_t *cli);

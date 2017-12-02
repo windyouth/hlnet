@@ -14,15 +14,6 @@
 
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
 
-/*
-//线程状态
-typedef enum _thread_state
-{
-	threadstate_running = 1,
-	threadstate_stopping = 2,
-	threadstate_stopped = 3
-}thread_state_e;
-*/
 
 map						*g_net_client_msg = NULL;			//网络消息映射(TCP用户端口)
 map						*g_net_manage_msg = NULL;			//网络消息映射(TCP管理端口)
@@ -48,7 +39,7 @@ static void kernel_message(int client_id, cmd_head_t *head, char *data)
 }
 
 //网络消息分发(客户端)
-void issue_client_msg(void *arg)
+void issue_client_msg(struct schedule *sche, void *arg)
 {
 	packet_head_t *head = NULL;
 	char *data = NULL;
@@ -58,14 +49,8 @@ void issue_client_msg(void *arg)
 
 	for (;;)
 	{
-#ifdef TEST
-			//puts("执行issue_client_msg()");
-#endif
 		while (g_client_buf->len > 0)
 		{
-#ifdef TEST
-			//puts("issue_client_msg()进入while循环");
-#endif
 			//从全局缓冲区读数据
 			buffer_read(g_client_buf, head, sizeof(*head));
 			buffer_read(g_client_buf, data, head->head.data_size);
@@ -90,15 +75,12 @@ void issue_client_msg(void *arg)
 			}
 		} //end while
 
-#ifdef TEST
-		//puts("issue_client_msg()让出协程");
-#endif
-		uthread_yield((schedule_t *)arg);
+		coroutine_yield(sche);
 	}//end for
 }
 
 //网络消息分发(管理端)
-void issue_manage_msg(void *arg)
+void issue_manage_msg(struct schedule *sche, void *arg)
 {
 	packet_head_t *head = NULL;
 	char *data = NULL;
@@ -108,6 +90,9 @@ void issue_manage_msg(void *arg)
 
 	for (;;)
 	{
+#ifdef TEST
+			puts("执行issue_manage_msg()");
+#endif
 		while (g_manage_buf->len > 0)
 		{
 			//从全局缓冲区读数据
@@ -134,7 +119,7 @@ void issue_manage_msg(void *arg)
 			}
 		}
 
-		uthread_yield((schedule_t *)arg);
+		coroutine_yield(sche);
 	}
 }
 
@@ -181,11 +166,9 @@ int create_tcp_client(uint16_t port)
 	g_client_buf = (buffer *)malloc(sizeof(buffer));
 	if (!g_client_buf) return MEM_ERROR;
 		
-#ifndef TEST
 	//创建协程
-	int issue_id = uthread_create(g_schedule, issue_client_msg);
+	int issue_id = coroutine_new(g_schedule, issue_client_msg, NULL);
 	if (issue_id < 0) return FAILURE;
-#endif
 
 	g_client_tcp_fd = fd;
 	return epollet_add(g_client_tcp_fd, NULL, EPOLLIN | EPOLLET);
@@ -209,7 +192,7 @@ int create_tcp_manage(uint16_t port)
 	if (!g_manage_buf) return MEM_ERROR;
 
 	//创建协程
-	int issue_id = uthread_create(g_schedule, issue_manage_msg);
+	int issue_id = coroutine_new(g_schedule, issue_manage_msg, NULL);
 	if (issue_id < 0) return FAILURE;
 
 	g_manage_tcp_fd = fd;
@@ -247,7 +230,7 @@ int create_udp(uint16_t port)
 int serv_create()
 {
 	//构造调度器
-	g_schedule  = schedule_create();
+	g_schedule  = coroutine_open();
 	if (!g_schedule) return FAILURE;
 
 	return epollet_create();
@@ -281,14 +264,17 @@ int serv_ctl(sock_type_e sock_type, short port)
 int serv_run()
 {
 	//创建协程
-	int id = uthread_create(g_schedule, epollet_run);
-	if (id < 0) return FAILURE;
-	
-	id = uthread_create(g_schedule, write_log);
+	int id = coroutine_new(g_schedule, epollet_run, NULL);
 	if (id < 0) return FAILURE;
 
+	if (g_log_path)
+	{	
+		id = coroutine_new(g_schedule, write_log, NULL);
+		if (id < 0) return FAILURE;
+	}
+
 	//调度器运行
-	uthread_run(g_schedule);
+	coroutine_run(g_schedule);
 }
 
 //注册连接消息函数

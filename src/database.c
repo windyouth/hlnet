@@ -15,7 +15,7 @@ map							*g_dbmsg_map = NULL;					//数据库消息映射
 
 
 //数据库消息分发
-void issue_db_msg(void *arg)
+void issue_db_msg(struct schedule *sche, void *arg)
 {
 	buffer *msg = NULL;
 	int *cmd = NULL;
@@ -27,7 +27,8 @@ void issue_db_msg(void *arg)
 		if (queue_empty(g_dbmsg_queue))	
 		{
 			usleep(10);
-			uthread_yield((schedule_t *)arg);
+			//切换协程
+			coroutine_yield(sche);
 			continue;
 		}
 
@@ -35,7 +36,7 @@ void issue_db_msg(void *arg)
 		msg = (buffer *)queue_pop(g_dbmsg_queue);
 		if (!msg) 
 		{
-			uthread_yield((schedule_t *)arg);
+			coroutine_yield(sche);
 			continue;
 		}
 		buffer_read(msg, cmd, sizeof(int));
@@ -65,7 +66,7 @@ void *dbthread_run(void *args)
 	if (id < 0) return FAILURE;
 	
 	//调度器运行
-	uthread_run(g_schedule);
+	coroutine_run(g_schedule);
 }
 
 //初始化数据库

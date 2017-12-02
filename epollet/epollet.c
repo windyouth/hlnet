@@ -7,7 +7,6 @@
 #include <errno.h>
 #include "epollet.h"
 #include "../common/internal.h"
-#include "../coroutine/coroutine.h"
 
 
 #define				MAX_EVENT_COUNT			1024			//一次能接收的最多事件个数
@@ -376,15 +375,12 @@ static void tcp_accept(int fd)
 }
 
 //epollet运行函数
-void epollet_run(void *arg)
+void epollet_run(struct schedule *sche, void *arg)
 {
 	int i, count;
 
 	for (;;)
 	{
-#ifdef TEST
-			puts("执行epollet_run()");
-#endif
 		//超时时间：0 立即返回，-1 无限期阻塞。
 		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, 0);
 		
@@ -405,7 +401,7 @@ void epollet_run(void *arg)
 				}
 				else
 				{
-					tcp_read(g_events + i);
+					//tcp_read(g_events + i);
 				}
 			}
 			//写事件
@@ -416,9 +412,11 @@ void epollet_run(void *arg)
 					circle_send(g_events[i].data.fd, read_ptr(cli->out), cli->out->len);
 			}
 		}
-
+		
+		/* 事关整个线程的休眠 */
+		usleep(10);	
 		//切换协程
-		uthread_yield((schedule_t *)arg);
+		coroutine_yield(sche);
 	}//end for
 }
 

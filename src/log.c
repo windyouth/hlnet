@@ -6,7 +6,6 @@
 #include "../common/common.h"
 #include "../common/buffer.h"
 #include "../c-stl/queue.h"
-#include "../coroutine/coroutine.h"
 
 #define				DEFAULT_LOG_LENGTH				256
 
@@ -92,19 +91,15 @@ int add_log(log_level_e level, const char *file, const char *func, int line,
 }
 
 //写日志
-void write_log(void *arg)
+void write_log(struct schedule *sche, void *arg)
 {
 	buffer *item = NULL;
 	for (;;)
 	{
-#ifdef TEST
-			puts("执行write_log()");
-#endif
 		//如果为空，让出协程控制权
 		if (queue_empty(g_log_queue))	
 		{
-			usleep(10);	/* 事关整个线程的休眠 */
-			uthread_yield((schedule_t *)arg);
+			coroutine_yield(sche);
 			continue;
 		}
 
@@ -112,7 +107,7 @@ void write_log(void *arg)
 		item = (buffer *)queue_pop(g_log_queue);
 		if (!item) 
 		{
-			uthread_yield((schedule_t *)arg);
+			coroutine_yield(sche);
 			continue;
 		}
 

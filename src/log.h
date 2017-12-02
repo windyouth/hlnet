@@ -1,6 +1,8 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
+#include "../coroutine/coroutine.h"
+
 //调用接口
 #define	log(level, format, ...) do 											\
 {																			\
@@ -22,8 +24,10 @@ int init_log(char *path, log_level_e level);
 int add_log(log_level_e level, const char *file, const char *func, int line, 
 			  const char *format, ...);
 //写日志
-void write_log(void *arg);
+void write_log(struct schedule *sche, void *arg);
 //释放日志
 void free_log();
+
+extern char				*g_log_path;				//日志文件路径
 
 #endif
