@@ -35,28 +35,31 @@ void main()
 	bzero(&addr, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(PORT_CLIENT);
-	addr.sin_addr = *(get_addr());
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	//addr.sin_addr = *(get_addr());
+	//char *ip = "0.0.0.0";
+	//inet_aton(ip, &(addr.sin_addr));
 
 	if (FAILURE == connect(fd, (struct sockaddr *)&addr, sizeof(addr)))
 	{
 		puts("connect server failed");
 		exit(1);
 	}
-
-	sleep(10);
+	puts("connect success");
 
 	login_info login;
 	bzero(&login, sizeof(login));
 	snprintf(login.account, 32, "fuck001");
 	snprintf(login.password, 32, "abc123");
-	
+
 	int len;
-	if (len = send(fd, &login, sizeof(login), 0) < 0)
+	if ((len = send(fd, &login, sizeof(login), 0)) < 0)
 	{
 		puts("send data failed");
 		exit(1);
 	}
 	printf("发送成功，发送字节数：%d \n", len);
 
+	//sleep(3600);
 	close(fd);
 }

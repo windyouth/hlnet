@@ -28,7 +28,10 @@ unit_test: unit_test.c
 main: main.c
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
-client: client.c
+client: client.c ../common/algorithm.c
+	$(compiler) -o $@ $^ -g -D $(define_flag)
+
+epollet_test: epollet_test.c
 	$(compiler) -o $@ $^ -g -D $(define_flag)
 
 clean:

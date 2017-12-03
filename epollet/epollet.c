@@ -1,10 +1,13 @@
 #include <netinet/in.h>
-#include <sys/types.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <assert.h>
 #include <string.h>
-#include <errno.h>
+#include <sys/types.h>
 #include "epollet.h"
 #include "../common/internal.h"
 
@@ -35,18 +38,25 @@ udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 
 uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 
+//设备套接字为非阻塞
+int set_nonblock(int fd)
+{
+	int opt = fcntl(fd, F_GETFL);
+	if (opt < 0) return FAILURE;
+
+	opt = opt|O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, opt) < 0)
+		return FAILURE;
+}
 
 //创建一个tcp套接字并监听端口
 int create_tcp_socket(uint16_t port)
 {
-	int sock_fd = INVALID_SOCKET;
-
 	//创建socket
-	sock_fd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
-	if (sock_fd == INVALID_SOCKET)
-	{
-		return FAILURE;
-	}
+	int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock_fd == INVALID_SOCKET) return FAILURE;
+
+	set_nonblock(sock_fd);
 	
 	//TIME_WAIT过程中可重用该socket
 	int sockopt = 1;
@@ -59,10 +69,11 @@ int create_tcp_socket(uint16_t port)
 
 	//绑定端口
 	struct sockaddr_in addr;
-	memset(&addr, 0, sizeof(addr));
+	bzero(&addr, sizeof(addr));
 	addr.sin_family = AF_INET;						//ipv4
 	addr.sin_port = htons(port);
-	addr.sin_addr = *(get_addr());
+	//addr.sin_addr = *(get_addr());
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	int res = bind(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (res == FAILURE)
 	{
@@ -205,7 +216,7 @@ int circle_recv(int fd, char *buf, int len)
 //epollet创建函数
 int epollet_create()
 {
-	g_epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+	g_epoll_fd = epoll_create(1024);
 	if (g_epoll_fd <= 0) return FAILURE;
 
 	g_events = (struct epoll_event *)malloc(sizeof(struct epoll_event) * MAX_EVENT_COUNT);
@@ -378,6 +389,8 @@ static void tcp_accept(int fd)
 void epollet_run(struct schedule *sche, void *arg)
 {
 	int i, count;
+	char empty[16];
+	send(0, empty, sizeof(empty), MSG_DONTWAIT);
 
 	for (;;)
 	{
@@ -387,31 +400,36 @@ void epollet_run(struct schedule *sche, void *arg)
 		//分发处理
 		for (i = 0; i < count; ++i)
 		{
-			//读事件
-			if (g_events[i].events & EPOLLIN)
+#ifdef TEST
+			printf("g_epoll_fd: %d, g_client_tcp_fd: %d, recv_fd：%d \n", 
+					g_epoll_fd, g_client_tcp_fd, g_events[i].data.fd);
+#endif
+			if (g_events[i].data.fd == g_client_tcp_fd || 
+				g_events[i].data.fd == g_manage_tcp_fd)
 			{
-				if (g_events[i].data.fd == g_client_tcp_fd || 
-					g_events[i].data.fd == g_manage_tcp_fd)
-				{
-					tcp_accept(g_events[i].data.fd);
-				}
-				else if (g_events[i].data.fd == g_udp_fd)
-				{
-					g_udp_reader(g_events[i].data.fd);
-				}
-				else
-				{
-					//tcp_read(g_events + i);
-				}
+				tcp_accept(g_events[i].data.fd);
 			}
-			//写事件
-			else if (g_events[i].events & EPOLLOUT)
+			else if (g_events[i].data.fd == g_udp_fd)
 			{
-				client_t *cli = g_events[i].data.ptr;
-				if (cli->out->len > 0)
-					circle_send(g_events[i].data.fd, read_ptr(cli->out), cli->out->len);
+				g_udp_reader(g_events[i].data.fd);
 			}
-		}
+			else if (g_events[i].data.fd > g_epoll_fd)
+			{
+				//读事件
+			 	if (g_events[i].events & EPOLLIN)
+				{
+					tcp_read(g_events + i);
+				}
+				//写事件
+				else if (g_events[i].events & EPOLLOUT)
+				{
+					client_t *cli = g_events[i].data.ptr;
+					if (cli->out->len > 0)
+						circle_send(g_events[i].data.fd, read_ptr(cli->out), 
+									cli->out->len);
+				}
+			}//end if
+		}//end for
 		
 		/* 事关整个线程的休眠 */
 		usleep(10);	
