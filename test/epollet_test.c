@@ -59,7 +59,7 @@ void main()
 	socklen_t cli_len;
 	char buf[5120];
 	char empty[16];
-	send(0, empty, sizeof(empty), MSG_DONTWAIT);
+	//send(0, empty, sizeof(empty), MSG_DONTWAIT);
 	for (;;)
 	{
 		fd_count = epoll_wait(epoll_fd, events, 20, 500);

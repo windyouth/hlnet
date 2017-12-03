@@ -171,7 +171,7 @@ int create_tcp_client(uint16_t port)
 	if (issue_id < 0) return FAILURE;
 
 	g_client_tcp_fd = fd;
-	return epollet_add(g_client_tcp_fd, NULL, EPOLLIN | EPOLLET);
+	return SUCCESS;
 }
 
 //创建tcp管理端相关
@@ -196,8 +196,6 @@ int create_tcp_manage(uint16_t port)
 	if (issue_id < 0) return FAILURE;
 
 	g_manage_tcp_fd = fd;
-	if (0 != epollet_add(g_manage_tcp_fd, NULL, EPOLLIN | EPOLLET))
-		return FAILURE;
 
 	return keep_alive();
 }

@@ -60,6 +60,6 @@ void main()
 	}
 	printf("发送成功，发送字节数：%d \n", len);
 
-	//sleep(3600);
+	sleep(1);
 	close(fd);
 }

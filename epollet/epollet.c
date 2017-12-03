@@ -58,6 +58,7 @@ int create_tcp_socket(uint16_t port)
 
 	set_nonblock(sock_fd);
 	
+	/*
 	//TIME_WAIT过程中可重用该socket
 	int sockopt = 1;
 	setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&sockopt, sizeof(sockopt));
@@ -66,6 +67,15 @@ int create_tcp_socket(uint16_t port)
 	ling.l_onoff = 1;
 	ling.l_linger = 0;
 	setsockopt(sock_fd, SOL_SOCKET, SO_LINGER, (const char *)&ling, sizeof(ling));
+	*/
+
+	//注册epoll事件
+	if (0 != epollet_add(sock_fd, NULL, EPOLLIN | EPOLLET))
+	{
+		close(sock_fd);
+		sock_fd = INVALID_SOCKET;
+		return INVALID_SOCKET;
+	}
 
 	//绑定端口
 	struct sockaddr_in addr;
@@ -217,7 +227,7 @@ int circle_recv(int fd, char *buf, int len)
 int epollet_create()
 {
 	g_epoll_fd = epoll_create(1024);
-	if (g_epoll_fd <= 0) return FAILURE;
+	if (g_epoll_fd == INVALID_SOCKET) return FAILURE;
 
 	g_events = (struct epoll_event *)malloc(sizeof(struct epoll_event) * MAX_EVENT_COUNT);
 	if (!g_events) return MEM_ERROR;
@@ -394,8 +404,7 @@ void epollet_run(struct schedule *sche, void *arg)
 
 	for (;;)
 	{
-		//超时时间：0 立即返回，-1 无限期阻塞。
-		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, 0);
+		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, 10);
 		
 		//分发处理
 		for (i = 0; i < count; ++i)
