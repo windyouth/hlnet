@@ -143,19 +143,49 @@ int deal_reg_msg(int client_id, cmd_head_t *head, char *data)
 int main()
 {
 	//创建服务器
-	serv_create();
+	if (SUCCESS != serv_create())
+		puts("serv_create failure");
+	else
+		puts("serv_create success");
+
 	//监听端口
-	serv_ctl(socktype_client, PORT_CLIENT);
+	if (SUCCESS != serv_ctl(socktype_client, PORT_CLIENT))
+		puts("serv_ctl failure");
+	else
+		puts("serv_ctl success");
+
 	//注册连接函数
-	reg_link_event(socktype_client, my_link_hander);
+	if (SUCCESS != reg_link_event(socktype_client, my_link_hander))
+		puts("reg_link_event failure");
+	else
+		puts("reg_link_event success");
+
 	//注册断开函数
-	reg_shut_event(socktype_client, my_shut_hander);
+	if (SUCCESS != reg_shut_event(socktype_client, my_shut_hander))
+		puts("reg_shut_event failure");
+	else
+		puts("reg_shut_event success");
+
 	//注册网络消息
-	reg_net_msg(socktype_client, DB_LOGIN, deal_login_msg);
-	reg_net_msg(socktype_client, DB_REGISTER, deal_reg_msg);
+	if (SUCCESS != reg_net_msg(socktype_client, DB_LOGIN, deal_login_msg))
+		puts("reg_net_msg failure");
+	else
+		puts("reg_net_msg success");
+
+	if (SUCCESS != reg_net_msg(socktype_client, DB_REGISTER, deal_reg_msg))
+		puts("reg_net_msg failure");
+	else
+		puts("reg_net_msg success");
+
 	//初始化日志
-	init_log(".log.txt", loglevel_error);
+	/*
+	if (SUCCESS != init_log(".log.txt", loglevel_error))
+		puts("init_log failure");
+	else
+		puts("init_log success");
+	*/
 	//运行服务器
+	puts("serv_run...");
 	serv_run();
 
 	return 0;

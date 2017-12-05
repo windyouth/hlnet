@@ -32,7 +32,10 @@ client: client.c ../common/algorithm.c
 	$(compiler) -o $@ $^ -g -D $(define_flag)
 
 epollet_test: epollet_test.c
-	$(compiler) -o $@ $^ -g -D $(define_flag)
+	$(compiler) -o $@ $< -g -D $(define_flag)
+
+myepoll: myepoll.c
+	$(compiler) -o $@ $< -g -D $(define_flag)
 
 clean:
 	rm -f $(targets) 

@@ -58,7 +58,7 @@ int create_tcp_socket(uint16_t port)
 
 	set_nonblock(sock_fd);
 	
-	/*
+	
 	//TIME_WAIT过程中可重用该socket
 	int sockopt = 1;
 	setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&sockopt, sizeof(sockopt));
@@ -67,7 +67,6 @@ int create_tcp_socket(uint16_t port)
 	ling.l_onoff = 1;
 	ling.l_linger = 0;
 	setsockopt(sock_fd, SOL_SOCKET, SO_LINGER, (const char *)&ling, sizeof(ling));
-	*/
 
 	//注册epoll事件
 	if (0 != epollet_add(sock_fd, NULL, EPOLLIN | EPOLLET))
@@ -242,8 +241,8 @@ int epollet_add(int fd, void *data_ptr, int flag)
 	zero(&ev);
 
 	ev.events = flag; //EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
-	ev.data.fd = fd;
 	ev.data.ptr = data_ptr;
+	ev.data.fd = fd;
 
 	return epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
 }
@@ -404,7 +403,7 @@ void epollet_run(struct schedule *sche, void *arg)
 
 	for (;;)
 	{
-		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, 10);
+		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, -1);
 		
 		//分发处理
 		for (i = 0; i < count; ++i)

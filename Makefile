@@ -1,5 +1,5 @@
+compiler = gcc -std=gnu99
 target = bin/lib/libhlnet.so
-
 obj = $(wildcard obj/*.o)
 
 #如果不加入调试信息，按O2级别优化代码。
@@ -38,7 +38,7 @@ endif
 all: $(target)
 
 $(target): main common cstl coroutine epollet
-	gcc -o $@ $(obj) $(flag) $(debug_flag)
+	$(compiler) -o $@ $(obj) $(flag) $(debug_flag)
 
 main:
 	make -C $(main_dir) debug_flag=$(debug_flag)
