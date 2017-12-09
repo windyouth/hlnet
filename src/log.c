@@ -64,7 +64,7 @@ int add_log(log_level_e level, const char *file, const char *func, int line,
 
 	int res = buffer_rectify(buf, DEFAULT_LOG_LENGTH);
 	if (res != SUCCESS) return res;
-	zero_array(write_ptr(buf), DEFAULT_LOG_LENGTH);
+	bzero(write_ptr(buf), DEFAULT_LOG_LENGTH);
 
 	//写日期
 	time_t now = time(0);

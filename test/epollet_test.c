@@ -66,7 +66,6 @@ void main()
 	struct epoll_event ev;*/
 	
 	struct epoll_event ev;
-	ev.data.ptr = NULL;
 	ev.data.fd = listen_fd;
 	ev.events = EPOLLIN | EPOLLET;
 	epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, listen_fd, &ev);

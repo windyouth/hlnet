@@ -426,8 +426,8 @@ void dbtest()
 		return;
 	}
 
-	zero_array(login_buf, sizeof(login_info));
-	zero_array(reg_buf, sizeof(reg_info));
+	bzero(login_buf, sizeof(login_info));
+	bzero(reg_buf, sizeof(reg_info));
 
 	snprintf(login_buf->account, 32, "fuck001");
 	snprintf(login_buf->password, 32, "abc123");

@@ -178,12 +178,11 @@ int main()
 		puts("reg_net_msg success");
 
 	//初始化日志
-	/*
 	if (SUCCESS != init_log(".log.txt", loglevel_error))
 		puts("init_log failure");
 	else
 		puts("init_log success");
-	*/
+
 	//运行服务器
 	puts("serv_run...");
 	serv_run();

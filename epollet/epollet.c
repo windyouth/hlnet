@@ -58,7 +58,6 @@ int create_tcp_socket(uint16_t port)
 
 	set_nonblock(sock_fd);
 	
-	
 	//TIME_WAIT过程中可重用该socket
 	int sockopt = 1;
 	setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&sockopt, sizeof(sockopt));
@@ -67,14 +66,6 @@ int create_tcp_socket(uint16_t port)
 	ling.l_onoff = 1;
 	ling.l_linger = 0;
 	setsockopt(sock_fd, SOL_SOCKET, SO_LINGER, (const char *)&ling, sizeof(ling));
-
-	//注册epoll事件
-	if (0 != epollet_add(sock_fd, NULL, EPOLLIN | EPOLLET))
-	{
-		close(sock_fd);
-		sock_fd = INVALID_SOCKET;
-		return INVALID_SOCKET;
-	}
 
 	//绑定端口
 	struct sockaddr_in addr;
@@ -118,6 +109,8 @@ int create_udp_socket(uint16_t port)
 	int sockopt = 1;
 	setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&sockopt, sizeof(sockopt));
 	
+	
+
 	//绑定端口
 	struct sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
@@ -133,6 +126,68 @@ int create_udp_socket(uint16_t port)
 	}
 
 	return sock_fd;
+}
+
+//将套接字添加进epoll监听链表
+int epoll_add(int fd, int flag)
+{
+	struct epoll_event ev;
+	zero(&ev);
+	ev.events = flag;
+	ev.data.fd = fd;
+
+	return epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
+}
+
+//创建客户端监听套接字
+int create_client_fd(uint16_t port)
+{
+	g_client_tcp_fd = create_tcp_socket(port);
+	if (g_client_tcp_fd == INVALID_SOCKET) return FAILURE;
+
+	//注册epoll事件
+	if (0 != epoll_add(g_client_tcp_fd, EPOLLIN | EPOLLET))
+	{
+		close(g_client_tcp_fd);
+		g_client_tcp_fd = INVALID_SOCKET;
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+//创建管理端监听套接字
+int create_manage_fd(uint16_t port)
+{
+	g_manage_tcp_fd = create_tcp_socket(port);
+	if (g_manage_tcp_fd == INVALID_SOCKET) return FAILURE;
+
+	//注册epoll事件
+	if (0 != epoll_add(g_manage_tcp_fd, EPOLLIN | EPOLLET))
+	{
+		close(g_manage_tcp_fd);
+		g_manage_tcp_fd = INVALID_SOCKET;
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+//创建UDP套接字
+int create_udp_fd(uint16_t port)
+{
+	g_udp_fd = create_tcp_socket(port);
+	if (g_udp_fd == INVALID_SOCKET) return FAILURE;
+
+	//注册epoll事件
+	if (0 != epoll_add(g_udp_fd, EPOLLIN))
+	{
+		close(g_udp_fd);
+		g_udp_fd = INVALID_SOCKET;
+		return FAILURE;
+	}
+
+	return SUCCESS;
 }
 
 //--------------------------------------------------------------------
@@ -234,19 +289,6 @@ int epollet_create()
 	return client_store_init();
 }
 
-//epollet添加函数
-int epollet_add(int fd, void *data_ptr, int flag)
-{
-	struct epoll_event ev;
-	zero(&ev);
-
-	ev.events = flag; //EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
-	ev.data.ptr = data_ptr;
-	ev.data.fd = fd;
-
-	return epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
-}
-
 //-----------------------------------------------------------
 // description: 从内核中读数据
 // return: >0 正常读数据
@@ -284,7 +326,7 @@ int read_data(struct epoll_event *ev, buffer *global_buf)
 
 	//接收数据
 	int len = cli->status.need;
-	res = circle_recv(ev->data.fd, write_ptr(cli->in), len);
+	res = circle_recv(cli->fd, write_ptr(cli->in), len);
 	if (res < 0) 
 	{
 		close_socket(cli);
@@ -351,6 +393,7 @@ static void tcp_read(struct epoll_event *ev)
 		close_socket(cli);
 		if (!g_is_keep_alive) 
 			recycle_client(cli);
+		return;
 	}
 
 	buffer *cur_buf = (cli->parent == g_client_tcp_fd) ? g_client_buf : g_manage_buf;
@@ -380,8 +423,13 @@ static void tcp_accept(int fd)
 		client->fd = sock_fd;
 		client->ip = cli_addr.sin_addr.s_addr;
 		client->parent = fd;
-
-		res = epollet_add(sock_fd, client, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET);
+	
+		//注册epoll事件
+		struct epoll_event ev;
+		zero(&ev);
+		ev.events = EPOLLIN | EPOLLOUT | EPOLLET| EPOLLRDHUP ; 
+		ev.data.ptr = client;
+		res = epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, sock_fd, &ev);
 		if (res == 0)
 		{
 			//添加到心跳检测

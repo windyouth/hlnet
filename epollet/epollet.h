@@ -5,10 +5,12 @@
 #include "../coroutine/coroutine.h"
 
 
-//创建一个tcp套接字并监听端口
-int create_tcp_socket(uint16_t port);
-//创建udp套接字并绑定端口
-int create_udp_socket(uint16_t port);
+//创建客户端监听套接字
+int create_client_fd(uint16_t port);
+//创建管理端监听套接字
+int create_manage_fd(uint16_t port);
+//创建UDP套接字
+int create_udp_fd(uint16_t port);
 
 //--------------------------------------------------------------------
 // description: 循环发送

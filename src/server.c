@@ -154,8 +154,8 @@ int create_tcp_client(uint16_t port)
 {
 	if (g_client_tcp_fd != INVALID_SOCKET) return FAILURE;
 
-	int fd = create_tcp_socket(port);
-	if (fd < 0) return FAILURE;
+	if (SUCCESS != create_client_fd(port))
+		return FAILURE;
 
 	//初始化网络消息映射器
 	g_net_client_msg = (map *)malloc(sizeof(map));
@@ -167,10 +167,9 @@ int create_tcp_client(uint16_t port)
 	if (!g_client_buf) return MEM_ERROR;
 		
 	//创建协程
-	int issue_id = coroutine_new(g_schedule, issue_client_msg, NULL);
-	if (issue_id < 0) return FAILURE;
+	if (-1 == coroutine_new(g_schedule, issue_client_msg, NULL))
+		return FAILURE;
 
-	g_client_tcp_fd = fd;
 	return SUCCESS;
 }
 
@@ -179,8 +178,8 @@ int create_tcp_manage(uint16_t port)
 {
 	if (g_manage_tcp_fd != INVALID_SOCKET) return FAILURE;
 
-	int fd = create_tcp_socket(port);
-	if (fd < 0) return FAILURE;
+	if (SUCCESS != create_manage_fd(port))
+		return FAILURE;
 
 	//初始化网络消息映射器
 	g_net_manage_msg = (map *)malloc(sizeof(map));
@@ -192,10 +191,8 @@ int create_tcp_manage(uint16_t port)
 	if (!g_manage_buf) return MEM_ERROR;
 
 	//创建协程
-	int issue_id = coroutine_new(g_schedule, issue_manage_msg, NULL);
-	if (issue_id < 0) return FAILURE;
-
-	g_manage_tcp_fd = fd;
+	if (-1 == coroutine_new(g_schedule, issue_manage_msg, NULL))
+		return FAILURE;
 
 	return keep_alive();
 }
@@ -205,8 +202,8 @@ int create_udp(uint16_t port)
 {
 	if (g_udp_fd != INVALID_SOCKET) return FAILURE;
 
-	int fd = create_udp_socket(port);
-	if (fd < 0) return FAILURE;
+	if (SUCCESS != create_udp_fd(port))
+		return FAILURE;
 
 	//初始化网络消息映射器
 	g_net_udp_msg = (map *)malloc(sizeof(map));
@@ -220,8 +217,7 @@ int create_udp(uint16_t port)
 	//设置回调函数
 	g_udp_reader = udp_read;
 
-	g_udp_fd = fd;
-	return epollet_add(g_udp_fd, NULL, EPOLLIN);
+	return SUCCESS;
 }
 
 //创建服务器
@@ -309,7 +305,7 @@ int reg_shut_event(sock_type_e type, shut_hander func)
 int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func)
 {
 	char *key = (char *)malloc(8);
-	zero_array(key, 8);
+	bzero(key, 8);
 	sprintf(key, "%u", msg);
 
 	map *dst_map = NULL;
@@ -344,7 +340,7 @@ int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func)
 int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 {
 	char *key = (char *)malloc(8);
-	zero_array(key, 8);
+	bzero(key, 8);
 	sprintf(key, "%u", msg);
 
 	
@@ -405,7 +401,7 @@ int udp_send(uint32_t ip, uint16_t port, uint16_t cmd, char *data, uint32_t len)
 	//申请缓冲区
 	const int size = data ? sizeof(cmd_head_t) : sizeof(cmd_head_t) + len;
 	char buf[size];
-	zero_array(buf, size);
+	bzero(buf, size);
 
 	//写数据
 	cmd_head_t *head = (cmd_head_t *)buf;
