@@ -78,14 +78,14 @@ int api_test()
 	}
 	puts("reg_shut_event success");
 
-	if (SUCCESS != reg_net_msg(socktype_client, 0x00A0, my_tcpmsg_hander))
+	if (SUCCESS != reg_net_msg(socktype_client, MSG_LOGIN, my_tcpmsg_hander))
 	{
 		puts("reg_net_msg failed");
 		return -1;
 	}
 	puts("reg_net_msg success");
 
-	if (SUCCESS != reg_udp_msg(0xAABB, my_udpmsg_hander))
+	if (SUCCESS != reg_udp_msg(MSG_LOGIN, my_udpmsg_hander))
 	{
 		puts("reg_udp_msg failed");
 		return -1;
@@ -145,46 +145,33 @@ int main()
 	//创建服务器
 	if (SUCCESS != serv_create())
 		puts("serv_create failure");
-	else
-		puts("serv_create success");
 
 	//监听端口
 	if (SUCCESS != serv_ctl(socktype_client, PORT_CLIENT))
 		puts("serv_ctl failure");
-	else
-		puts("serv_ctl success");
 
 	//注册连接函数
 	if (SUCCESS != reg_link_event(socktype_client, my_link_hander))
 		puts("reg_link_event failure");
-	else
-		puts("reg_link_event success");
 
 	//注册断开函数
 	if (SUCCESS != reg_shut_event(socktype_client, my_shut_hander))
 		puts("reg_shut_event failure");
-	else
-		puts("reg_shut_event success");
 
 	//注册网络消息
-	if (SUCCESS != reg_net_msg(socktype_client, DB_LOGIN, deal_login_msg))
+	if (SUCCESS != reg_net_msg(socktype_client, MSG_LOGIN, deal_login_msg))
 		puts("reg_net_msg failure");
-	else
-		puts("reg_net_msg success");
 
-	if (SUCCESS != reg_net_msg(socktype_client, DB_REGISTER, deal_reg_msg))
+	if (SUCCESS != reg_net_msg(socktype_client, MSG_REGISTER, deal_reg_msg))
 		puts("reg_net_msg failure");
-	else
-		puts("reg_net_msg success");
 
 	//初始化日志
 	if (SUCCESS != init_log(".log.txt", loglevel_error))
 		puts("init_log failure");
-	else
-		puts("init_log success");
 
 	//运行服务器
 	puts("serv_run...");
+	puts("---------------------------------------");
 	serv_run();
 
 	return 0;

@@ -47,19 +47,29 @@ void main()
 	}
 	puts("connect success");
 
-	login_info login;
-	bzero(&login, sizeof(login));
-	snprintf(login.account, 32, "fuck001");
-	snprintf(login.password, 32, "abc123");
+	int len = sizeof(cmd_head_t) + sizeof(login_info);
+	char buf[len];
+	bzero(buf, len);
 
-	int len;
-	if ((len = send(fd, &login, sizeof(login), 0)) < 0)
+	cmd_head_t *head = (cmd_head_t *)buf;
+	head->data_size = sizeof(login_info);
+	head->cmd_code = MSG_LOGIN;
+	head->proto_ver = 5;
+
+	login_info *login = (login_info *)(head + 1);
+	bzero(login, sizeof(login));
+	snprintf(login->account, 32, "fuck001");
+	snprintf(login->password, 32, "abc123");
+
+	int res;
+	if ((res = send(fd, buf, len, 0)) < 0)
 	{
 		puts("send data failed");
 		exit(1);
 	}
-	printf("发送成功，发送字节数：%d \n", len);
+	printf("发送成功，发送字节数：%d \n", res);
 
 	usleep(1000);
+	//pause();
 	close(fd);
 }

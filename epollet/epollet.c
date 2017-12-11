@@ -302,6 +302,8 @@ int read_data(struct epoll_event *ev, buffer *global_buf)
 	if (!ev || !global_buf) return PARAM_ERROR;
 
 	client_t *cli = (client_t *)ev->data.ptr;
+	//需要的已读完，读无可读。
+	if (cli->status.need == 0) return SUCCESS;
 
 	//调整缓冲区结构
 	int res = buffer_rectify(cli->in, cli->status.need);
@@ -346,7 +348,7 @@ int read_data(struct epoll_event *ev, buffer *global_buf)
 	if (cli->status.part == READ_PART_HEAD)
 	{
 		//检查参数
-		cmd_head_t *head = (cmd_head_t *)(cli->in->buf);
+		cmd_head_t *head = (cmd_head_t *)(cli->in->buf + sizeof(uint32_t));
 		if (head->data_size > MAX_CMDDATA_LEN) 
 		{
 			close_socket(cli);
@@ -456,10 +458,6 @@ void epollet_run(struct schedule *sche, void *arg)
 		//分发处理
 		for (i = 0; i < count; ++i)
 		{
-#ifdef TEST
-			printf("g_epoll_fd: %d, g_client_tcp_fd: %d, recv_fd：%d \n", 
-					g_epoll_fd, g_client_tcp_fd, g_events[i].data.fd);
-#endif
 			if (g_events[i].data.fd == g_client_tcp_fd || 
 				g_events[i].data.fd == g_manage_tcp_fd)
 			{

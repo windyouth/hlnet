@@ -25,10 +25,10 @@ coroutine_test: coroutine_test.c ../coroutine/coroutine.c
 unit_test: unit_test.c
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
-main: main.c
+main: main.c define.h
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
-client: client.c ../common/algorithm.c
+client: client.c ../common/algorithm.c define.h
 	$(compiler) -o $@ $^ -g -D $(define_flag)
 
 epollet_test: epollet_test.c

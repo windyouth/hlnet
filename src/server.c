@@ -90,9 +90,6 @@ void issue_manage_msg(struct schedule *sche, void *arg)
 
 	for (;;)
 	{
-#ifdef TEST
-			puts("执行issue_manage_msg()");
-#endif
 		while (g_manage_buf->len > 0)
 		{
 			//从全局缓冲区读数据

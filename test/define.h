@@ -10,6 +10,9 @@
 #define			DB_LOGIN		0x000A			//登录消息号
 #define			DB_REGISTER		0xFFFF			//注册消息号
 
+#define			MSG_LOGIN		0x00AB			//登录消息号
+#define			MSG_REGISTER	0xFFFF			//注册消息号
+
 //登录结构体
 typedef struct 
 {
