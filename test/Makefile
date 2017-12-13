@@ -28,6 +28,9 @@ unit_test: unit_test.c
 main: main.c define.h
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
+demo: demo.c define.h
+	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
+
 client: client.c ../common/algorithm.c define.h
 	$(compiler) -o $@ $^ -g -D $(define_flag)
 

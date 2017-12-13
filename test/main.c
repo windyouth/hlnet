@@ -112,6 +112,9 @@ int deal_login_msg(int client_id, cmd_head_t *head, char *data)
 	printf("账号：%s \n", login->account);
 	printf("密码：%s \n", login->password);
 
+	char *rsp = "我是服务器，已收到你的登录消息。";
+	tcp_send(client_id, MSG_LOGIN, rsp, strlen(rsp));
+
 	return SUCCESS;
 }
 
@@ -143,17 +146,11 @@ int deal_reg_msg(int client_id, cmd_head_t *head, char *data)
 int main()
 {
 	//创建服务器
-	if (SUCCESS != serv_create())
-		puts("serv_create failure");
-
+	serv_create();
 	//监听端口
-	if (SUCCESS != serv_ctl(socktype_client, PORT_CLIENT))
-		puts("serv_ctl failure");
-
+	serv_ctl(socktype_client, PORT_CLIENT);
 	//注册连接函数
-	if (SUCCESS != reg_link_event(socktype_client, my_link_hander))
-		puts("reg_link_event failure");
-
+	reg_link_event(socktype_client, my_link_hander);
 	//注册断开函数
 	if (SUCCESS != reg_shut_event(socktype_client, my_shut_hander))
 		puts("reg_shut_event failure");

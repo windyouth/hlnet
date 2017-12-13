@@ -35,10 +35,10 @@ void main()
 	bzero(&addr, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(PORT_CLIENT);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	//addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	//addr.sin_addr = *(get_addr());
-	//char *ip = "0.0.0.0";
-	//inet_aton(ip, &(addr.sin_addr));
+	char *ip = "192.168.1.10";
+	inet_aton(ip, &(addr.sin_addr));
 
 	if (FAILURE == connect(fd, (struct sockaddr *)&addr, sizeof(addr)))
 	{
@@ -68,6 +68,20 @@ void main()
 		exit(1);
 	}
 	printf("发送成功，发送字节数：%d \n", res);
+
+	res = recv(fd, buf, len, 0);
+	printf("the bytes of data from server：%d \n", res);
+	if (res > 0)
+	{
+		buf[res] = 0;
+		head = (cmd_head_t *)buf;
+		char *data = (char *)(head + 1);
+		printf("the message from server：\n");
+		printf("命令码：0x00%X \n", head->cmd_code);
+		printf("协议版本号：%d \n", head->proto_ver);
+		printf("数据长度：%d \n", head->data_size);
+		printf("数据内容：%s \n", data);
+	}
 
 	usleep(1000);
 	//pause();
