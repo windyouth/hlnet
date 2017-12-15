@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <arpa/inet.h>
+#include <mysql/mysql.h>
 #include "../src/server.h"
 #include "../src/log.h"
 #include "define.h"
@@ -133,12 +134,72 @@ int deal_reg_msg(int client_id, cmd_head_t *head, char *data)
 	puts("收到注册数据如下:");
 	printf("命令码：%X \n", head->cmd_code);
 	printf("协议版本号：%d \n", head->proto_ver);
-	printf("账号：%s \n", reg->account);
-	printf("密码：%s \n", reg->password);
-	printf("姓名：%s \n", reg->name);
-	printf("性别：%s \n", reg->sex == 1 ? "男" : "女");
-	printf("地址：%s \n", reg->addr);
-	printf("备注：%s \n", reg->remark);
+	
+	return SUCCESS;
+}
+
+MYSQL		*g_link = NULL;
+MYSQL_RES	*g_result = NULL;
+MYSQL_ROW	g_row;
+
+//初始化数据库
+int init_mysql()
+{
+	g_link = mysql_init(NULL);
+	if (!g_link)
+	{
+		puts("mysql_init failure");
+		return FAILURE;
+	}
+
+	if (!mysql_real_connect(g_link, "localhost", "heluan", "heluanhl", 
+							"test", 3306, 0, 0))
+	{
+		puts("mysql_connect failure");
+		mysql_close(g_link);
+		return FAILURE;
+	}
+
+	/*
+	if (mysql_real_query(g_link, "set names utf8"))
+	{
+		mysql_close(g_link);
+		return FAILURE;
+	}*/
+
+	return SUCCESS;
+}
+
+//处理数据库注册消息
+int deal_dbmsg_reg(char *data, uint32_t len)
+{
+	assert(data && len >= sizeof(db_reg_info));
+	if (!data || len < sizeof(db_reg_info)) return PARAM_ERROR;
+
+	db_reg_info *reginfo = (db_reg_info *)data;
+	char sql[256] = { 0 };
+	snprintf(sql, 256, "call add_user('%s', '%s', '%s', '%s', '%s')", 
+			reginfo->info.account, reginfo->info.password, reginfo->info.secret_key, 
+			reginfo->info.corporation, reginfo->info.phone);
+
+	if (mysql_real_query(g_link, sql, strlen(sql)))
+	{
+		puts("mysql_real_query failure");
+		return FAILURE;
+	}
+
+	g_result = mysql_store_result(g_link);
+	if (NULL == g_result)
+	{
+		log(loglevel_error, "mysql_store_result failure, g_result == NULL");
+		return FAILURE;
+	}
+
+	puts("注册成功");
+	while (g_row = mysql_fetch_row(g_result))
+	{
+		//printf("user_id: %d");
+	}
 
 	return SUCCESS;
 }

@@ -9,7 +9,7 @@
 #include "../common/buffer.h"
 #include "../epollet/client.h"
 #include "../src/database.h"
-#include "../src/keep_alive.h"
+#include "../src/alive.h"
 
 #define hello(str) do 		\
 {							\

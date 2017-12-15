@@ -25,11 +25,16 @@ typedef struct
 {
 	char		account[32];
 	char		password[32];
-	char		name[8];
-	uchar		sex;
-	char 		addr[64];
-	char		remark[64];
+	char 		secret_key[32];
+	char 		corporation[32];
+	char 		phone[32];
 }reg_info;
 
+//数据库注册
+typedef struct
+{
+	int			client_id;
+	reg_info	info;
+}db_reg_info;
 
 #endif //_DEFINE_H_

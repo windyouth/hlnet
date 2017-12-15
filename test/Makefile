@@ -26,7 +26,7 @@ unit_test: unit_test.c
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
 main: main.c define.h
-	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
+	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g `mysql_config --cflags --libs`
 
 demo: demo.c define.h
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
