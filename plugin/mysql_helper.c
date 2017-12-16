@@ -19,7 +19,7 @@ const char *mysql_get_string(mysql_set *set, const char *field)
 		pfield = mysql_fetch_field(set->result);
 		if (pfield && (0 == strcmp(pfield->name, field)))
 		{
-			set->index = i;
+			set->index = (i + 1) % set->field_count;
 			return set->row[i];
 		}
 
