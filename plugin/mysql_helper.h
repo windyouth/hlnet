@@ -5,38 +5,39 @@
 #include <sys/types.h>
 
 //查询结果集
-typedef struct _mysql_result
+typedef struct _mysql_set
 {
 	MYSQL_RES			*result;
 	MYSQL_ROW			row;
 	uint				field_count;
 	uint 				index;					//当前读到的索引值
-}mysql_result;
+}mysql_set;
 
 //是否结束
-#define mysql_eof(query)				(query->row == NULL)
+#define mysql_eof(set)					(set->row == NULL)
 //下一行
-#define mysql_next_row(query)			(query->row = mysql_fetch_row(query->result))
+#define mysql_next_row(set)	do						\
+{													\
+	set->row = mysql_fetch_row(set->result);		\
+	set->index = 0;									\
+} while(0)
 
 //读取其他形式的值
-#define mysql_get_float(query, filed) 	(atof(mysql_get_string(query, field)))
-#define mysql_get_int(query, filed) 	(atoi(mysql_get_string(query, field)))
-#define mysql_get_int64(query, filed) 	(atol(mysql_get_string(query, field)))
-
-//写数据库操作
-#define mysql_write(mysql, sql)			mysql_real_query(mysql, sql, strlen(sql))
+#define mysql_get_float(set, filed) 	(atof(mysql_get_string(set, field)))
+#define mysql_get_int(set, filed) 		(atoi(mysql_get_string(set, field)))
+#define mysql_get_int64(set, filed) 	(atol(mysql_get_string(set, field)))
 
 //读取字符串
-const char *mysql_get_string(mysql_result *query, const char *field);
+const char *mysql_get_string(mysql_set *set, const char *field);
 //关闭结果集对象
-void mysql_result_close(mysql_result *query);
+void mysql_set_close(mysql_set *set);
 
 //创建一个mysql连接并连接服务器
 MYSQL *mysql_create(const char *host, int port, const char *user, const char *pwd, 
 	    			const char *db, int timeout);
-//执行写库操作
-//int mysql_write(MYSQL * mysql, const char *sql);
-//执行读库操作
-mysql_result *mysql_read(MYSQL * mysql, const char *sql);
+//执行写库操作,没有查询动作
+ulong mysql_dml(MYSQL * mysql, const char *sql);
+//执行有查询动作的sql语句。
+mysql_set *mysql_execute(MYSQL * mysql, const char *sql);
 
 #endif //_MYSQL_HELPER_H_

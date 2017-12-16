@@ -4,38 +4,38 @@
 #include "../bin/include/algorithm.h"
 
 //读取字符串
-const char *mysql_get_string(mysql_result *query, const char *field)
+const char *mysql_get_string(mysql_set *set, const char *field)
 {
 	//参数检查
-	assert(query && field);
-	if (!query || !field) return NULL;
+	assert(set && field);
+	if (!set || !field) return NULL;
 
 	//遍历，查找对应值
 	MYSQL_FIELD *pfield;
-	int i = query->index;
-	mysql_field_seek(query->result, i);
+	int i = set->index;
 	do
 	{
-		pfield = mysql_fetch_field(query->result);
+		mysql_field_seek(set->result, i);
+		pfield = mysql_fetch_field(set->result);
 		if (pfield && (0 == strcmp(pfield->name, field)))
 		{
-			query->index = i;
-			return query->row[i];
+			set->index = i;
+			return set->row[i];
 		}
 
-		i = ++i % query->field_count;
-	}while(i != query->index);
+		i = ++i % set->field_count;
+	}while(i != set->index);
 
 	return NULL;
 }
 
 //关闭对象
-void mysql_result_close(mysql_result *query)
+void mysql_set_close(mysql_set *set)
 {
-	if (query)
+	if (set)
 	{
-		mysql_free_result(query->result);
-		safe_free(query);
+		mysql_free_result(set->result);
+		safe_free(set);
 	}
 }
 
@@ -79,9 +79,8 @@ MYSQL *mysql_create(const char *host, int port, const char *user, const char *pw
 	return mysql;
 }
 
-/*
 //执行写库操作
-int mysql_write(MYSQL * mysql, const char *sql)
+ulong mysql_dml(MYSQL * mysql, const char *sql)
 {
 	//参数检查
 	assert(mysql && sql);
@@ -90,11 +89,11 @@ int mysql_write(MYSQL * mysql, const char *sql)
 	if (0 != mysql_real_query(mysql, sql, strlen(sql)))
 		return FAILURE;
 
-	return SUCCESS;
-}*/
+	return mysql_affected_rows(mysql);
+}
 
 //执行读库操作
-mysql_result *mysql_read(MYSQL * mysql, const char *sql)
+mysql_set *mysql_execute(MYSQL * mysql, const char *sql)
 {
 	//参数检查
 	assert(mysql && sql);
@@ -109,8 +108,8 @@ mysql_result *mysql_read(MYSQL * mysql, const char *sql)
 	if (!my_res) return NULL;
 
 	//申请内存
-	mysql_result *query = malloc(sizeof(mysql_result));	
-	if (!query)
+	mysql_set *set = malloc(sizeof(mysql_set));	
+	if (!set)
 	{
 		mysql_free_result(my_res);
 		return NULL;
@@ -118,10 +117,10 @@ mysql_result *mysql_read(MYSQL * mysql, const char *sql)
 
 	//存储参数
 	mysql_data_seek(my_res, 0);
-	query->result = my_res;
-	query->row = mysql_fetch_row(my_res);
-	query->field_count = mysql_num_fields(my_res);
-	query->index = 0;
+	set->result = my_res;
+	set->row = mysql_fetch_row(my_res);
+	set->field_count = mysql_num_fields(my_res);
+	set->index = 0;
 
-	return query;
+	return set;
 }
