@@ -25,7 +25,7 @@ coroutine_test: coroutine_test.c ../coroutine/coroutine.c
 unit_test: unit_test.c
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g -D $(define_flag)
 
-main: main.c define.h
+main: main.c define.h ../plugin/mysql_helper.c
 	$(compiler) -o $@ $^ -L../bin/lib -lhlnet -g `mysql_config --cflags --libs`
 
 demo: demo.c define.h

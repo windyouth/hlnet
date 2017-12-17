@@ -23,9 +23,9 @@ typedef struct _mysql_set
 } while(0)
 
 //读取其他形式的值
-#define mysql_get_float(set, filed) 	(atof(mysql_get_string(set, field)))
-#define mysql_get_int(set, filed) 		(atoi(mysql_get_string(set, field)))
-#define mysql_get_int64(set, filed) 	(atol(mysql_get_string(set, field)))
+#define mysql_get_float(set, field) 	(atof(mysql_get_string(set, field)))
+#define mysql_get_int(set, field) 		(atoi(mysql_get_string(set, field)))
+#define mysql_get_int64(set, field) 	(atol(mysql_get_string(set, field)))
 
 //读取字符串
 const char *mysql_get_string(mysql_set *set, const char *field);

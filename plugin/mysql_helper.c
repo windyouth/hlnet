@@ -97,7 +97,7 @@ mysql_set *mysql_execute(MYSQL * mysql, const char *sql)
 {
 	//参数检查
 	assert(mysql && sql);
-	if (!mysql || !sql) return PARAM_ERROR;
+	if (!mysql || !sql) return NULL;
 
 	//执行查询
 	if (0 != mysql_real_query(mysql, sql, strlen(sql)))

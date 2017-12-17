@@ -7,7 +7,7 @@
 #define 		PORT_MANAGE		4455
 #define 		PORT_UDP		5566
 
-#define			DB_LOGIN		0x000A			//登录消息号
+#define			DB_LOGIN		0x00AA			//登录消息号
 #define			DB_REGISTER		0xFFFF			//注册消息号
 
 #define			MSG_LOGIN		0x00AB			//登录消息号

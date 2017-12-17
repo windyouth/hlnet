@@ -5,6 +5,9 @@
 #include "../src/server.h"
 #include "../src/log.h"
 #include "define.h"
+#include "../plugin/mysql_helper.h"
+
+MYSQL				*g_mysql = NULL;			//mysql连接
 
 //连接事件
 int my_link_hander(int client_id, uint32_t ip)
@@ -97,7 +100,7 @@ int api_test()
 }
 
 //处理登录数据库消息
-int deal_login_msg(int client_id, cmd_head_t *head, char *data)
+int on_netmsg_login(int client_id, cmd_head_t *head, char *data)
 {
 	assert(data && head && head->data_size == sizeof(login_info));
 	if (!data || !head || head->data_size != sizeof(login_info)) 
@@ -119,11 +122,11 @@ int deal_login_msg(int client_id, cmd_head_t *head, char *data)
 	return SUCCESS;
 }
 
-//处理注册数据库消息
-int deal_reg_msg(int client_id, cmd_head_t *head, char *data)
+//网络消息：注册
+int on_netmsg_reg(int client_id, cmd_head_t *head, char *data)
 {
 	assert(data && head && head->data_size == sizeof(reg_info));
-	if (!data || !head || head->data_size != sizeof(login_info))
+	if (!data || !head || head->data_size != sizeof(reg_info))
 	{	
 		puts("收到注册消息，但参数不合法。");
 		return PARAM_ERROR;
@@ -132,46 +135,25 @@ int deal_reg_msg(int client_id, cmd_head_t *head, char *data)
 	reg_info *reg = (reg_info *)data;
 
 	puts("收到注册数据如下:");
-	printf("命令码：%X \n", head->cmd_code);
+	printf("命令码：0x%X \n", head->cmd_code);
 	printf("协议版本号：%d \n", head->proto_ver);
+
+	db_reg_info info;
+	info.client_id = client_id;
+	memcpy(&info.info, data, head->data_size);
+	post_db_msg(DB_REGISTER, &info, sizeof(info));
 	
 	return SUCCESS;
 }
 
-MYSQL		*g_link = NULL;
-MYSQL_RES	*g_result = NULL;
-MYSQL_ROW	g_row;
-
-//初始化数据库
-int init_mysql()
+//网络消息：登录
+int on_dbmsg_login(char *data, uint32_t len)
 {
-	g_link = mysql_init(NULL);
-	if (!g_link)
-	{
-		puts("mysql_init failure");
-		return FAILURE;
-	}
-
-	if (!mysql_real_connect(g_link, "localhost", "heluan", "heluanhl", 
-							"test", 3306, 0, 0))
-	{
-		puts("mysql_connect failure");
-		mysql_close(g_link);
-		return FAILURE;
-	}
-
-	/*
-	if (mysql_real_query(g_link, "set names utf8"))
-	{
-		mysql_close(g_link);
-		return FAILURE;
-	}*/
-
 	return SUCCESS;
 }
 
 //处理数据库注册消息
-int deal_dbmsg_reg(char *data, uint32_t len)
+int on_dbmsg_reg(char *data, uint32_t len)
 {
 	assert(data && len >= sizeof(db_reg_info));
 	if (!data || len < sizeof(db_reg_info)) return PARAM_ERROR;
@@ -182,24 +164,29 @@ int deal_dbmsg_reg(char *data, uint32_t len)
 			reginfo->info.account, reginfo->info.password, reginfo->info.secret_key, 
 			reginfo->info.corporation, reginfo->info.phone);
 
-	if (mysql_real_query(g_link, sql, strlen(sql)))
+	char rsp[128];
+	mysql_set *set = mysql_execute(g_mysql, sql);
+	if (!set)
 	{
-		puts("mysql_real_query failure");
+		printf("mysql_execute failure, errmsg: %s \n", mysql_error(g_mysql));
+
 		return FAILURE;
 	}
 
-	g_result = mysql_store_result(g_link);
-	if (NULL == g_result)
+	//从结果集中读取数据
+	while (!mysql_eof(set))
 	{
-		log(loglevel_error, "mysql_store_result failure, g_result == NULL");
-		return FAILURE;
+		snprintf(rsp, 128, "%s, user_id: %d", mysql_get_string(set, "message"), 
+				mysql_get_int(set, "user_id"));
+		puts(rsp);
+		mysql_next_row(set);
 	}
 
-	puts("注册成功");
-	while (g_row = mysql_fetch_row(g_result))
-	{
-		//printf("user_id: %d");
-	}
+	//关闭结果集
+	mysql_set_close(set);
+
+	//发送消息
+	tcp_send(reginfo->client_id, MSG_REGISTER, rsp, strlen(rsp));
 
 	return SUCCESS;
 }
@@ -217,15 +204,28 @@ int main()
 		puts("reg_shut_event failure");
 
 	//注册网络消息
-	if (SUCCESS != reg_net_msg(socktype_client, MSG_LOGIN, deal_login_msg))
+	if (SUCCESS != reg_net_msg(socktype_client, MSG_LOGIN, on_netmsg_login))
+		puts("reg_net_msg failure");
+	if (SUCCESS != reg_net_msg(socktype_client, MSG_REGISTER, on_netmsg_reg))
 		puts("reg_net_msg failure");
 
-	if (SUCCESS != reg_net_msg(socktype_client, MSG_REGISTER, deal_reg_msg))
-		puts("reg_net_msg failure");
+	//初始化数据库
+	init_database();
+	//注册数据库消息
+	if (SUCCESS != reg_db_msg(DB_LOGIN, on_dbmsg_login))
+		puts("reg_db_msg DB_LOGIN failure");
+	if (SUCCESS != reg_db_msg(DB_REGISTER, on_dbmsg_reg))
+		puts("reg_net_msg DB_REGISTER failure");
+	//启动数据库线程
+	start_database();
 
 	//初始化日志
 	if (SUCCESS != init_log(".log.txt", loglevel_error))
 		puts("init_log failure");
+
+	//初始化数据库
+	g_mysql = mysql_create("localhost", 3306, "heluan", "heluanhl", "test", 1000);
+	if (!g_mysql) puts("mysql_create failure");
 
 	//运行服务器
 	puts("serv_run...");

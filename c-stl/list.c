@@ -55,6 +55,7 @@ int list_push_back(list *list, void *item)
     {
         list->head = __item;
         list->tail = __item;
+        __item->prev = NULL;
 		__item->next = NULL;
     }
     else
@@ -135,10 +136,13 @@ int list_remove(list *list, list_item *item)
 	return OP_LIST_SUCCESS;
 }
 
+//从尾部移除
 list_item *list_remove_last(list *list)
 {
+	//参数检查
     assert(list != NULL && list->inited == 1);
-    if(list->__list_size == 0){ return NULL;}
+    if(list->__list_size == 0) return NULL;
+
     list_item *tail = list->tail;
     list->tail = tail->prev;
     if(tail->prev != NULL)
@@ -146,8 +150,14 @@ list_item *list_remove_last(list *list)
         tail->prev->next = NULL;
         tail->prev = NULL;
     }
+
     --(list->__list_size);
-    if(list->__list_size == 0){list->head = NULL; list->tail = NULL;}
+    if(list->__list_size == 0)
+	{
+		list->head = NULL; 
+		list->tail = NULL;
+	}
+
     return tail;
 }
 

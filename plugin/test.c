@@ -27,10 +27,10 @@ void main()
 	while (!mysql_eof(set))
 	{
 		//printf("phone: %s \t", mysql_get_string(set, "phone"));
-		printf("id: %s \t", mysql_get_string(set, "id"));
-		printf("account: %s \t", mysql_get_string(set, "account"));
-		printf("secret_key: %s \t", mysql_get_string(set, "secret_key"));
 		printf("corporation: %s \t", mysql_get_string(set, "corporation"));
+		printf("id: %s \t", mysql_get_string(set, "id"));
+		printf("secret_key: %s \t", mysql_get_string(set, "secret_key"));
+		printf("account: %s \t", mysql_get_string(set, "account"));
 		puts("\n--------------------------------------------------------");
 		mysql_next_row(set);
 	}
