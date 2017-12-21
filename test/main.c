@@ -134,9 +134,11 @@ int on_netmsg_reg(int client_id, cmd_head_t *head, char *data)
 
 	reg_info *reg = (reg_info *)data;
 
+	/*
 	puts("收到注册数据如下:");
 	printf("命令码：0x%X \n", head->cmd_code);
 	printf("协议版本号：%d \n", head->proto_ver);
+	*/
 
 	db_reg_info info;
 	info.client_id = client_id;
@@ -183,7 +185,7 @@ int on_dbmsg_reg(char *data, uint32_t len)
 	{
 		snprintf(rsp, 128, "%s, user_id: %d", mysql_get_string(set, "message"), 
 				mysql_get_int(set, "user_id"));
-		puts(rsp);
+		//puts(rsp);
 		mysql_next_row(set);
 	}
 

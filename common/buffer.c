@@ -71,7 +71,7 @@ int buffer_rectify(buffer *buf, uint32_t need)
 			//写指针移到开头
 			buf->write = 0;
 			//尾部空缺计入len
-			buf->len += (buf->size - buf->end);
+			buf->len += buffer_gap(buf);
 			
 			return SUCCESS;
 		}

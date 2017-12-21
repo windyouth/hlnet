@@ -6,7 +6,7 @@
 #include "algorithm.h"
 
 /*
- * description: 一个循环队列缓冲区
+ * description: 一个循环队列缓冲区，里面所写的每段数据在内存上都是连续的。
  * author: 何峦
  * email: heluan123132@163.com
  */
@@ -19,6 +19,8 @@
 
 //缓冲区剩余大小
 #define buffer_surplus(buffer) 	((buffer)->size - (buffer)->len)
+//缓冲区尾部空缺
+#define buffer_gap(buffer)		((buffer)->size - (buffer)->end)
 
 //偏移读指针
 #define seek_read(buf, off) do						\
@@ -29,16 +31,20 @@
 	 * 读和写如果长度没有前后一致，					\
 	 * 此处不保证正确执行。 						\
 	 */    											\
-	if ((buf)->read == (buf)->end && 				\
+	if ((buf)->read >= (buf)->end && 				\
 		(buf)->read != (buf)->write) 				\
+	{												\
 		(buf)->read = 0;							\
+		(buf)->len -= buffer_gap(buf);				\
+		(buf)->end = (buf)->write;					\
+	}												\
 }while (0)
 
 //偏移写指针
 #define seek_write(buf, off) do						\
 {													\
-	(buf)->len += off;								\
-	(buf)->write += off;							\
+	(buf)->len += (off);							\
+	(buf)->write += (off);							\
 	(buf)->end = max((buf)->write, (buf)->end);		\
 	if ((buf)->write == (buf)->size)				\
 		(buf)->write = 0;							\
@@ -47,6 +53,8 @@
 //从缓冲区读数据
 #define buffer_read(buf, dst, len) do 				\
 {													\
+	if ((buf)->read + (len) > (buf)->size)			\
+		seek_read(buf, (buf)->size - (buf)->read);	\
 	dst = read_ptr(buf);							\
 	seek_read(buf, len);							\
 }while (0)

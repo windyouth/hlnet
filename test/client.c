@@ -84,7 +84,6 @@ void send_reg_message(int fd)
 		printf("发送失败，res: %d\n", res);
 		return;
 	}
-	printf("发送成功，发送字节数: %d\n", res);
 
 	res = recv(fd, buf, len, 0);
 	printf("the bytes of data from server：%d \n", res);
@@ -126,9 +125,12 @@ void main()
 	}
 	puts("connect success");
 
-	send_reg_message(fd);
+	for (int i = 0; i < 20; ++i)
+	{
+		send_reg_message(fd);
 
-	usleep(1000);
+		usleep(500000);
+	}
 	//pause();
 	close(fd);
 }
