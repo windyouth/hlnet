@@ -101,6 +101,14 @@ void recycle_client(client_t *cli)
 //根据id查询客户端
 client_t *get_client(uint32_t id)
 {
+#ifdef TEST
+	if (id >= array_size(g_client_store))
+	{
+		printf("get_client assert failed, id: %d, array_size: %d \n", 
+				id, array_size(g_client_store));
+	}
+#endif
+
 	assert(id < array_size(g_client_store));
 	if (id >= array_size(g_client_store)) return NULL;
 

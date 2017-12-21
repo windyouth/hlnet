@@ -30,7 +30,7 @@ typedef struct _mysql_set
 //读取字符串
 const char *mysql_get_string(mysql_set *set, const char *field);
 //关闭结果集对象
-void mysql_set_close(mysql_set *set);
+void mysql_set_close(MYSQL *mysql, mysql_set *set);
 
 //创建一个mysql连接并连接服务器
 MYSQL *mysql_create(const char *host, int port, const char *user, const char *pwd, 

@@ -2,6 +2,28 @@
 #include "mysql_helper.h"
 #include "../bin/include/common.h"
 #include "../bin/include/algorithm.h"
+#include "../common/store.h"
+
+store_t			*g_set_store = NULL;			//数据集仓库
+
+//释放结果集
+#define			recycle_set(set)		recycle_chunk(g_set_store, set)
+
+//取得一个数据集
+mysql_set *extract_set()
+{
+	//双if判断，保证线程安全。
+	if (!g_set_store)
+	{
+		if (!g_set_store)
+		{
+			g_set_store = create_store(sizeof(mysql_set));
+			if (!g_set_store) return NULL;
+		}
+	}
+
+	return (mysql_set *)extract_chunk(g_set_store);
+}
 
 //读取字符串
 const char *mysql_get_string(mysql_set *set, const char *field)
@@ -30,12 +52,13 @@ const char *mysql_get_string(mysql_set *set, const char *field)
 }
 
 //关闭对象
-void mysql_set_close(mysql_set *set)
+void mysql_set_close(MYSQL *mysql, mysql_set *set)
 {
-	if (set)
+	if (mysql && set)
 	{
 		mysql_free_result(set->result);
-		safe_free(set);
+		recycle_set(set);
+		mysql_next_result(mysql);
 	}
 }
 
@@ -61,7 +84,7 @@ MYSQL *mysql_create(const char *host, int port, const char *user, const char *pw
 	mysql->options.connect_timeout = timeout;
 
 	//连接服务器
-	if (NULL == mysql_real_connect(mysql, host, user, pwd, db, port, NULL, 0))
+	if (NULL == mysql_real_connect(mysql, host, user, pwd, db, port, NULL, CLIENT_MULTI_STATEMENTS))
 	{
 		mysql_close(mysql);
 		return NULL;
@@ -108,7 +131,7 @@ mysql_set *mysql_execute(MYSQL * mysql, const char *sql)
 	if (!my_res) return NULL;
 
 	//申请内存
-	mysql_set *set = malloc(sizeof(mysql_set));	
+	mysql_set *set = extract_set();	
 	if (!set)
 	{
 		mysql_free_result(my_res);
