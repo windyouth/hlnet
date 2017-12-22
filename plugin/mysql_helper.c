@@ -1,8 +1,8 @@
 #include <assert.h>
 #include "mysql_helper.h"
-#include "../bin/include/common.h"
-#include "../bin/include/algorithm.h"
-#include "../common/store.h"
+#include "../hlnet/include/common.h"
+#include "../hlnet/include/algorithm.h"
+#include "../hlnet/include/store.h"
 
 store_t			*g_set_store = NULL;			//数据集仓库
 

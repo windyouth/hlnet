@@ -6,7 +6,9 @@
 #include "algorithm.h"
 
 /*
- * description: 一个循环队列缓冲区，里面所写的每段数据在内存上都是连续的。
+ * description: 一个循环队列缓冲区。
+ * 				里面所写的每段数据在内存上都是连续的，
+ * 				写和读应该步调一致，如果写两段，读一段，不保证执行正确。
  * author: 何峦
  * email: heluan123132@163.com
  */
@@ -53,8 +55,6 @@
 //从缓冲区读数据
 #define buffer_read(buf, dst, len) do 				\
 {													\
-	if ((buf)->read + (len) > (buf)->size)			\
-		seek_read(buf, (buf)->size - (buf)->read);	\
 	dst = read_ptr(buf);							\
 	seek_read(buf, len);							\
 }while (0)

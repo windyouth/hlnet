@@ -11,7 +11,7 @@ flag += -I../common -I../epollet -I../uthread -I../c-stl
 all: $(obj) copy
 
 copy: $(head)
-	cp $^ ../bin/include
+	cp $^ ../hlnet/include
 
 #%.o: %.c # %.d
 $(obj_dir)/%.o: %.c

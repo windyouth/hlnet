@@ -66,7 +66,13 @@ int buffer_rectify(buffer *buf, uint32_t need)
 	//允许刚好写满
 	if (buf->write >= buf->read && buf->write + need > buf->size)
 	{
-		if (buf->read >= need)
+		if (buf->len == 0)
+		{
+			//如果为空，直接归零重写。
+			buffer_reset(buf);
+			return SUCCESS;
+		}
+		else if (buf->read >= need)
 		{
 			//写指针移到开头
 			buf->write = 0;

@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include "define.h"
-#include "../bin/include/algorithm.h"
+#include "../hlnet/include/algorithm.h"
 
 void show_addr()
 {
@@ -86,17 +86,21 @@ void send_reg_message(int fd)
 	}
 
 	res = recv(fd, buf, len, 0);
-	printf("the bytes of data from server：%d \n", res);
+	printf("接收长度：%d \n", res);
 	if (res > 0)
 	{
 		buf[res] = 0;
 		head = (cmd_head_t *)buf;
 		char *data = (char *)(head + 1);
-		printf("the message from server：\n");
-		printf("命令码：0x%X \n", head->cmd_code);
-		printf("协议版本号：%d \n", head->proto_ver);
-		printf("数据长度：%d \n", head->data_size);
+		//printf("the message from server：\n");
+		//printf("命令码：0x%X \n", head->cmd_code);
+		//printf("协议版本号：%d \n", head->proto_ver);
+		//printf("数据长度：%d \n", head->data_size);
 		printf("数据内容：%s \n", data);
+	}
+	else
+	{
+		exit(1);
 	}
 }
 
@@ -113,10 +117,10 @@ void main()
 	bzero(&addr, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(PORT_CLIENT);
-	//addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	//addr.sin_addr = *(get_addr());
-	char *ip = "192.168.1.10";
-	inet_aton(ip, &(addr.sin_addr));
+	//char *ip = "192.168.1.10";
+	//inet_aton(ip, &(addr.sin_addr));
 
 	if (FAILURE == connect(fd, (struct sockaddr *)&addr, sizeof(addr)))
 	{
@@ -125,11 +129,11 @@ void main()
 	}
 	puts("connect success");
 
-	for (int i = 0; i < 20; ++i)
+	for (int i = 0; i < 30; ++i)
 	{
 		send_reg_message(fd);
 
-		usleep(500000);
+		usleep(100000);
 	}
 	//pause();
 	close(fd);

@@ -2,8 +2,15 @@
 #define _STORE_H_
 
 #include <sys/types.h>
+
+#ifdef _HLNET_		//如果是项目内部
 #include "../c-stl/list.h"
 #include "../common/algorithm.h"
+#else
+#include "list.h"
+#include "algorithm.h"
+#endif
+
 
 //仓库结构体
 typedef struct _store

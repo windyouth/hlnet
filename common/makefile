@@ -5,13 +5,14 @@ obj_name = $(src:%.c=%.o)
 obj_dir = ../obj
 obj = $(addprefix $(obj_dir)/, $(obj_name))
 debug_flag = 
+define_flag =
 flag += -fPIC
 
 all: $(obj) copy
 
 copy: $(head)
-	cp $^ ../bin/include
+	cp $^ ../hlnet/include
 
 $(obj_dir)/%.o: %.c
-	$(compiler) -c $< -o $@ $(flag) $(debug_flag)
+	$(compiler) -c $< -o $@ $(flag) $(debug_flag) -D $(define_flag)
 

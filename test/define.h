@@ -1,7 +1,7 @@
 #ifndef _DEFINE_H_
 #define _DEFINE_H_
 
-#include "../bin/include/common.h"
+#include "../hlnet/include/common.h"
 
 #define 		PORT_CLIENT		3366
 #define 		PORT_MANAGE		4455

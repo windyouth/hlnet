@@ -10,7 +10,7 @@ flag += -fPIC
 all: $(obj) copy
 
 copy: $(head)
-	cp $^ ../bin/include
+	cp $^ ../hlnet/include
 
 $(obj_dir)/%.o: %.c
 	$(compiler) -c $< -o $@ $(flag) $(debug_flag)

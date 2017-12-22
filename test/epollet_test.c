@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "define.h"
-#include "../bin/include/algorithm.h"
+#include "../hlnet/include/algorithm.h"
 
 #define				MAX_EVENT_COUNT			1024			//一次能接收的最多事件个数
 

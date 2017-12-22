@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <signal.h>
-#include "../bin/include/log.h"
+#include "../hlnet/include/log.h"
 #include "../common/common.h"
 #include "../common/store.h"
 #include "../common/buffer.h"
