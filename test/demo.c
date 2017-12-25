@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <arpa/inet.h>
-#include "../src/server.h"
-#include "../src/log.h"
+#include "../hlnet/include/server.h"
+#include "../hlnet/include/log.h"
 #include "define.h"
 
 //连接事件

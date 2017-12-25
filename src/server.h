@@ -1,7 +1,12 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
 
+#ifdef _HLNET_		//如果是项目内部
 #include "../common/common.h"
+#else
+#include "common.h"
+#endif
+
 
 #define				MAX_UDP_LENGTH				2048				//UDP数据包最大长度
 

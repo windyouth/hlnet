@@ -1,7 +1,11 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
+#ifdef _HLNET_
 #include "../coroutine/coroutine.h"
+#else
+#include "coroutine.h"
+#endif
 
 //调用接口
 #define	log(level, format, ...) do 											\

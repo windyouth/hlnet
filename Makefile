@@ -43,7 +43,7 @@ $(target): main common cstl coroutine epollet
 	$(compiler) -o $@ $(obj) $(flag) $(debug_flag)
 
 main:
-	make -C $(main_dir) debug_flag=$(debug_flag)
+	make -C $(main_dir) debug_flag=$(debug_flag) define_flag=$(define)
 
 common:
 	make -C $(common_dir) debug_flag=$(debug_flag) define_flag=$(define)

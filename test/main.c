@@ -197,11 +197,15 @@ int on_dbmsg_reg(char *data, uint32_t len)
 int main()
 {
 	//创建服务器
-	serv_create();
+	if (SUCCESS != serv_create())
+		puts("serv_create failure");
 	//监听端口
-	serv_ctl(socktype_client, PORT_CLIENT);
+	if (SUCCESS != serv_ctl(socktype_client, PORT_CLIENT))
+		puts("serv_ctl failure");
+
 	//注册连接函数
-	reg_link_event(socktype_client, my_link_hander);
+	if (SUCCESS != reg_link_event(socktype_client, my_link_hander))
+		puts("reg_link_event failure");
 	//注册断开函数
 	if (SUCCESS != reg_shut_event(socktype_client, my_shut_hander))
 		puts("reg_shut_event failure");
