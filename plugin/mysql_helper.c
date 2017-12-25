@@ -4,13 +4,13 @@
 #include "../hlnet/include/algorithm.h"
 #include "../hlnet/include/store.h"
 
-store_t			*g_set_store = NULL;			//数据集仓库
+static store_t			*g_set_store = NULL;			//数据集仓库
 
 //释放结果集
 #define			recycle_set(set)		recycle_chunk(g_set_store, set)
 
 //取得一个数据集
-mysql_set *extract_set()
+static mysql_set *extract_set()
 {
 	//双if判断，保证线程安全。
 	if (!g_set_store)
@@ -102,7 +102,7 @@ MYSQL *mysql_create(const char *host, int port, const char *user, const char *pw
 	return mysql;
 }
 
-//执行写库操作
+//执行写库操作,没有查询动作
 ulong mysql_dml(MYSQL * mysql, const char *sql)
 {
 	//参数检查
@@ -115,7 +115,7 @@ ulong mysql_dml(MYSQL * mysql, const char *sql)
 	return mysql_affected_rows(mysql);
 }
 
-//执行读库操作
+//执行有查询动作的sql语句。
 mysql_set *mysql_execute(MYSQL * mysql, const char *sql)
 {
 	//参数检查

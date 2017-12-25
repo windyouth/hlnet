@@ -7,11 +7,11 @@
 #include "../coroutine/coroutine.h"
 
 
-pthread_t					g_thread = -1;
+static pthread_t			g_thread = -1;
 static struct schedule		*g_schedule = NULL;						//协程调度器
 
-queue						*g_dbmsg_queue = NULL;
-map							*g_dbmsg_map = NULL;					//数据库消息映射
+static queue				*g_dbmsg_queue = NULL;
+static map					*g_dbmsg_map = NULL;					//数据库消息映射
 
 
 //数据库消息分发

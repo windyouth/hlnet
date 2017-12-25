@@ -166,10 +166,6 @@ int on_dbmsg_reg(char *data, uint32_t len)
 	snprintf(sql, 256, "call add_user('%s', '%s', '%s', '%s', '%s')", 
 			reginfo->info.account, reginfo->info.password, reginfo->info.secret_key, 
 			reginfo->info.corporation, reginfo->info.phone);
-	/*
-	snprintf(sql, 256, "insert ignore into user(account, password, secret_key, corporation, phone, create_time) values('%s', '%s', '%s', '%s', '%s', '2017-12-18 11:19:00')", 
-			reginfo->info.account, reginfo->info.password, reginfo->info.secret_key, 
-			reginfo->info.corporation, reginfo->info.phone);*/
 
 	char rsp[128];
 	mysql_set *set = mysql_execute(g_mysql, sql);

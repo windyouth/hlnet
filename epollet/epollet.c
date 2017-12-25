@@ -17,8 +17,9 @@
 
 #define				GLOBAL_BUF_ORIGIN_SIZE	4096 * 5		//全局缓冲区初始大小
 
-struct epoll_event  *g_events = NULL;						//事件数组指针 
-int 				g_epoll_fd = INVALID_SOCKET;			//epoll元套接字
+
+static struct epoll_event  	*g_events = NULL;						//事件数组指针 
+static int 					g_epoll_fd = INVALID_SOCKET;			//epoll元套接字
 
 //全局变量
 int 				g_client_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(用户端)
@@ -39,7 +40,7 @@ udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 
 //设备套接字为非阻塞
-int set_nonblock(int fd)
+static int set_nonblock(int fd)
 {
 	int opt = fcntl(fd, F_GETFL);
 	if (opt < 0) return FAILURE;
@@ -50,7 +51,7 @@ int set_nonblock(int fd)
 }
 
 //创建一个tcp套接字并监听端口
-int create_tcp_socket(uint16_t port)
+static int create_tcp_socket(uint16_t port)
 {
 	//创建socket
 	int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -94,7 +95,7 @@ int create_tcp_socket(uint16_t port)
 }
 
 //创建udp套接字并绑定端口
-int create_udp_socket(uint16_t port)
+static int create_udp_socket(uint16_t port)
 {
 	int sock_fd = INVALID_SOCKET;
 
@@ -129,7 +130,7 @@ int create_udp_socket(uint16_t port)
 }
 
 //将套接字添加进epoll监听链表
-int epoll_add(int fd, int flag)
+static int epoll_add(int fd, int flag)
 {
 	struct epoll_event ev;
 	zero(&ev);
@@ -232,7 +233,7 @@ int circle_send(int fd, char *buf, int len)
 // description: 循环接收
 // return: 实际接收的字节数，如小于零则为异常
 //--------------------------------------------------------------------
-int circle_recv(int fd, char *buf, int len)
+static int circle_recv(int fd, char *buf, int len)
 {
 	//参数检查
 	assert(fd != INVALID_SOCKET && buf && len > 0);
@@ -295,7 +296,7 @@ int epollet_create()
 //		   =0 内核缓冲区已经读空
 //		   <0 网络异常，关闭套接字
 //-----------------------------------------------------------
-int read_data(struct epoll_event *ev, buffer *global_buf)
+static int read_data(struct epoll_event *ev, buffer *global_buf)
 {
 	//参数检查
 	assert(ev && global_buf);

@@ -3,9 +3,9 @@
 #include "store.h"
 #include "../c-stl/list.h"
 
-#define			BUFFER_ORIGINAL_SIZE			256
+#define					BUFFER_ORIGINAL_SIZE				256
 
-store_t			*g_buffer_store = NULL;			//缓冲区仓库
+static store_t			*g_buffer_store = NULL;				//缓冲区仓库
 
 //初始化缓冲区
 int buffer_init(buffer *buf, uint32_t size)
@@ -24,7 +24,7 @@ int buffer_init(buffer *buf, uint32_t size)
 }
 
 //重新申请内存
-int buffer_realloc(buffer *buf, uint32_t new_size)
+static int buffer_realloc(buffer *buf, uint32_t new_size)
 {
 	if (!buf || new_size == 0) return PARAM_ERROR;
 

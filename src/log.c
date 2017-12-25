@@ -7,12 +7,12 @@
 #include "../common/buffer.h"
 #include "../c-stl/queue.h"
 
-#define				DEFAULT_LOG_LENGTH				256
+#define					DEFAULT_LOG_LENGTH					256
 
-char				*g_log_path = NULL;				//日志文件路径
-FILE				*g_log_file = NULL;				//日志文件结构
-log_level_e			g_log_level = loglevel_error;	//日志等级
-queue				*g_log_queue = NULL;			//日志队列
+char					*g_log_path = NULL;					//日志文件路径
+static FILE				*g_log_file = NULL;					//日志文件结构
+static log_level_e		g_log_level = loglevel_error;		//日志等级
+static queue			*g_log_queue = NULL;				//日志队列
 
 //日志等级字符串
 char g_level_string[4][8] = 

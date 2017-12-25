@@ -76,6 +76,9 @@ void main()
 
 ------------------------------------------------------------------------------
 
+项目中引用了开源库c-collection和coroutine的代码，并做了一些自己的补充。
+在此感谢c-collection的作者ZhangShiming和coroutine的作者云风(cloudwu)大神。
+
 作者：何峦
 QQ: 22664834
 Email: heluan123132@163.com

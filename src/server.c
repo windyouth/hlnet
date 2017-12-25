@@ -15,11 +15,11 @@
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
 
 
-map						*g_net_client_msg = NULL;			//网络消息映射(TCP用户端口)
-map						*g_net_manage_msg = NULL;			//网络消息映射(TCP管理端口)
-map						*g_net_udp_msg = NULL;				//网络消息映射(UDP端口)
+static map				*g_net_client_msg = NULL;			//网络消息映射(TCP用户端口)
+static map				*g_net_manage_msg = NULL;			//网络消息映射(TCP管理端口)
+static map				*g_net_udp_msg = NULL;				//网络消息映射(UDP端口)
 
-char					*g_udp_buffer = NULL;				//UDP缓冲区
+static char				*g_udp_buffer = NULL;				//UDP缓冲区
 
 static struct schedule	*g_schedule = NULL;					//协程调度器
 
@@ -147,7 +147,7 @@ static void udp_read(int fd)
 }
 
 //创建tcp客户端相关
-int create_tcp_client(uint16_t port)
+static int create_tcp_client(uint16_t port)
 {
 	if (g_client_tcp_fd != INVALID_SOCKET) return FAILURE;
 
@@ -171,7 +171,7 @@ int create_tcp_client(uint16_t port)
 }
 
 //创建tcp管理端相关
-int create_tcp_manage(uint16_t port)
+static int create_tcp_manage(uint16_t port)
 {
 	if (g_manage_tcp_fd != INVALID_SOCKET) return FAILURE;
 
@@ -195,7 +195,7 @@ int create_tcp_manage(uint16_t port)
 }
 
 //创建udp相关
-int create_udp(uint16_t port)
+static int create_udp(uint16_t port)
 {
 	if (g_udp_fd != INVALID_SOCKET) return FAILURE;
 

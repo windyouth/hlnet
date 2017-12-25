@@ -4,8 +4,8 @@
 
 #define			CLI_BUF_ORIGIN_SIZE			256				//客户端结构体自带缓冲区初始大小
 
-list			*g_client_free = NULL;						//空闲的客户端链表
-array			*g_client_store = NULL;						//存储所有的客户端
+static list		*g_client_free = NULL;						//空闲的客户端链表
+static array	*g_client_store = NULL;						//存储所有的客户端
 
 
 //初始化客户端结构体
