@@ -233,7 +233,7 @@ int circle_send(int fd, char *buf, int len)
 // description: 循环接收
 // return: 实际接收的字节数，如小于零则为异常
 //--------------------------------------------------------------------
-static int circle_recv(int fd, char *buf, int len)
+int circle_recv(int fd, char *buf, int len)
 {
 	//参数检查
 	assert(fd != INVALID_SOCKET && buf && len > 0);
