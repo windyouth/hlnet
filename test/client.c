@@ -3,8 +3,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/types.h>
 #include "define.h"
 #include "../hlnet/include/algorithm.h"
+#include "../hlnet/include/common.h"
 
 void show_addr()
 {
@@ -104,37 +106,57 @@ void send_reg_message(int fd)
 	}
 }
 
-void main()
+int client_tcp_socket(char *ip, ushort port)
 {
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (-1 == fd)
-	{
-		puts("socket create failed");
-		exit(1);
-	}
+	if (-1 == fd) return INVALID_SOCKET;
 
 	struct sockaddr_in addr;
 	bzero(&addr, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(PORT_CLIENT);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(port);
+	inet_aton(ip, &(addr.sin_addr));
+	//addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	//addr.sin_addr = *(get_addr());
 	//char *ip = "192.168.1.10";
 	//inet_aton(ip, &(addr.sin_addr));
 
 	if (FAILURE == connect(fd, (struct sockaddr *)&addr, sizeof(addr)))
 	{
-		puts("connect server failed");
-		exit(1);
+		close(fd);
+		return INVALID_SOCKET;
 	}
-	puts("connect success");
 
-	for (int i = 0; i < 30; ++i)
+	return fd;
+}
+
+void main()
+{
+	int i, fds[10];
+	for (i = 0; i < 10; ++i)
 	{
-		send_reg_message(fd);
-
+		fds[i] = client_tcp_socket("0.0.0.0", PORT_CLIENT);
+		if (fds[i] == INVALID_SOCKET)
+		{
+			puts("client_tcp_socket failure");
+			exit(1);
+		}
+		
 		usleep(100000);
 	}
-	//pause();
-	close(fd);
+	
+	for (i = 0; i < 10; ++i)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			send_reg_message(fds[j]);
+
+			usleep(100000);
+		}
+	}
+
+	for (i = 0; i < 10; i++)
+	{
+		close(fds[i]);
+	}
 }
