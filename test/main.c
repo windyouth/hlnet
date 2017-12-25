@@ -2,10 +2,10 @@
 #include <assert.h>
 #include <arpa/inet.h>
 #include <mysql/mysql.h>
-#include "../src/server.h"
-#include "../src/log.h"
-#include "define.h"
+#include "../hlnet/include/server.h"
+#include "../hlnet/include/log.h"
 #include "../plugin/mysql_helper.h"
+#include "define.h"
 
 MYSQL				*g_mysql = NULL;			//mysql连接
 
