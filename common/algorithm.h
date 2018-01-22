@@ -9,6 +9,14 @@
 #define			zero(ptr)					memset(ptr, 0, sizeof(*ptr))
 #define			zero_array(ptr, len)		memset(ptr, 0, len)
 
+//交换两个元素的值
+#define	swap(a, b, temp) do						\
+{												\
+	temp = a;									\
+	a = b;										\
+	b = temp;									\
+} while(0)
+
 //安全释放指针
 #define	safe_free(ptr) do						\
 {												\
