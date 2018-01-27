@@ -15,10 +15,17 @@
 #define			heap_empty(heap)	((heap)->count == 0)				//是否为空
 #define			heap_full(heap)		((heap)->count + 1 == (heap)->size)	//是否已满
 
+//遍历堆数组
+#define heap_foreach(heap, item) 		\
+			for (int i = 1; i <= (heap)->count, (item) = (heap)->table[i++];)
+
+#define 		HEAP_ITEM				\
+	ulong			key				//比较大小的依据
+
 //堆元素头
 typedef struct _heap_item
 {
-	ulong			key;			//比较大小的依据
+	HEAP_ITEM;						//比较大小的依据
 }heap_item;
 
 //堆结构体

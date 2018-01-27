@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "heap.h"
+#include "../common/algorithm.h"
 
 //初始化堆
 int heap_init(heap *heap, uint size)

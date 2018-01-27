@@ -31,6 +31,9 @@ main: main.c define.h ../plugin/mysql_helper.c
 demo: demo.c define.h
 	$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -g -D $(define_flag)
 
+timer_test: timer_test.c
+	$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -g -D $(define_flag)
+
 client: client.c ../common/algorithm.c define.h
 	$(compiler) -o $@ $^ -g -D $(define_flag)
 
