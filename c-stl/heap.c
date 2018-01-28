@@ -56,8 +56,13 @@ int heap_push(heap *heap, heap_item *item)
 //弹出元素
 heap_item *heap_pop(heap *heap)
 {
+	//参数检查
+	assert(heap && heap->count > 0);
+	if (!heap || heap->count == 0) return NULL;
+
 	heap_item *temp;
-	swap(heap->table[1], heap->table[heap->count - 1], temp);
+	swap(heap->table[1], heap->table[heap->count], temp);
+	temp = heap->table[heap->count];
 	heap->count--;
 	heap_down(heap, 1);
 
@@ -97,7 +102,7 @@ int heap_down(heap *heap, uint i)
 	while (i << 1 <= heap->count)
 	{
 		next = i << 1;
-		if (heap->table[next + 1]->key cmp heap->table[next]->key)
+		if (next < heap->count && heap->table[next + 1]->key cmp heap->table[next]->key)
 			++next;
 
 		if (heap->table[next]->key cmp heap->table[i]->key)
@@ -106,7 +111,9 @@ int heap_down(heap *heap, uint i)
 			i = next;
 		}
 		else
+		{
 			return HEAP_SUCCESS;
+		}
 	}
 
 	return HEAP_SUCCESS;

@@ -9,23 +9,22 @@
 #define			HEAP_MEM_ERROR		-3							//参数错误
 
 #define			cmp					<							//大顶堆：>; 小顶堆：<
-#define 		as_heap_item		heap_item	heap_item_		//堆元素头
 
 #define			heap_top(heap)		(heap)->table[1]					//取得顶元素
 #define			heap_empty(heap)	((heap)->count == 0)				//是否为空
 #define			heap_full(heap)		((heap)->count + 1 == (heap)->size)	//是否已满
 
 //遍历堆数组
-#define heap_foreach(heap, item) 		\
-			for (int i = 1; i <= (heap)->count, (item) = (heap)->table[i++];)
+#define heap_foreach(heap, item) 			\
+			for (int i = 1; (item) = (heap)->table[i], i <= (heap)->count; ++i)
 
-#define 		HEAP_ITEM				\
+#define 		as_heap_item				\
 	ulong			key				//比较大小的依据
 
 //堆元素头
 typedef struct _heap_item
 {
-	HEAP_ITEM;						//比较大小的依据
+	as_heap_item;						//比较大小的依据
 }heap_item;
 
 //堆结构体
