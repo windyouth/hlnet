@@ -2,7 +2,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include "heap.h"
-#include "../common/algorithm.h"
+
+//交换两个元素的值
+#define	heap_swap(a, b, temp) do				\
+{												\
+	temp = a;									\
+	a = b;										\
+	b = temp;									\
+} while(0)
 
 //初始化堆
 int heap_init(heap *heap, uint size)
@@ -50,6 +57,7 @@ int heap_push(heap *heap, heap_item *item)
 	//添加数据
 	heap->table[++heap->count] = item;
 
+	//上浮尾结点并返回
 	return heap_up(heap, heap->count);
 }
 
@@ -61,9 +69,10 @@ heap_item *heap_pop(heap *heap)
 	if (!heap || heap->count == 0) return NULL;
 
 	heap_item *temp;
-	swap(heap->table[1], heap->table[heap->count], temp);
+	heap_swap(heap->table[1], heap->table[heap->count], temp);
 	temp = heap->table[heap->count];
 	heap->count--;
+	//下沉根结点
 	heap_down(heap, 1);
 
 	return temp;
@@ -78,11 +87,12 @@ int heap_up(heap *heap, uint i)
 
 	heap_item *temp;
 
-	while (i > 1)
+	while (i > 1)	/* 如果不是根结点 */
 	{
 		if (heap->table[i]->key cmp heap->table[i >> 1]->key)
-			swap(heap->table[i], heap->table[i >> 1], temp);
+			heap_swap(heap->table[i], heap->table[i >> 1], temp);
 
+		//跳到父结点
 		i >>= 1;
 	}
 
@@ -99,15 +109,17 @@ int heap_down(heap *heap, uint i)
 	uint next;
 	heap_item *temp;
 
-	while (i << 1 <= heap->count)
+	while (i << 1 <= heap->count)	/* 如果还有子结点 */
 	{
 		next = i << 1;
+		//是否还有右叶子并比较两个叶子结点的值
 		if (next < heap->count && heap->table[next + 1]->key cmp heap->table[next]->key)
 			++next;
 
 		if (heap->table[next]->key cmp heap->table[i]->key)
 		{
-			swap(heap->table[next], heap->table[i], temp);
+			heap_swap(heap->table[next], heap->table[i], temp);
+			//转到新位置
 			i = next;
 		}
 		else
@@ -118,3 +130,5 @@ int heap_down(heap *heap, uint i)
 
 	return HEAP_SUCCESS;
 }
+
+
