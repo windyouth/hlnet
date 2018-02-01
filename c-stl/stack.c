@@ -24,7 +24,7 @@ _stack *stack_create(int size)
 	stack->size = size;
 	stack->base = stack->top = 0;
 
-	return NULL;
+	return stack;
 }
 
 //入栈
