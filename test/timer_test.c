@@ -56,7 +56,7 @@ void heap_test_data(heap *heap)
 //堆测试
 void heap_test()
 {
-	heap *heap = (struct _heap *)malloc(sizeof(struct _heap));
+	heap *heap = (struct heap *)malloc(sizeof(heap));
 	if (!heap)
 	{	
 		puts("malloc(sizeof(struct _heap)) failure");
