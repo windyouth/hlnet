@@ -37,7 +37,7 @@ typedef struct _queue
 #define queue_foreach(queue, item)													\
 			for(int i = (queue)->head; 												\
 				(item) = (queue)->table[i], i != (queue)->tail; 					\
-				i = ++i % (queue)->capacity, (item) = (queue)->table[i])
+				i = ++i % (queue)->capacity)
 
 //初始化队列
 int queue_init(queue *queue, uint32_t capacity);
