@@ -18,13 +18,24 @@
 #define heap_foreach(heap, item) 			\
 			for (int i = 1; (item) = (heap)->table[i], i <= (heap)->count; ++i)
 
-#define 		as_heap_item				\
-	ulong			key				//比较大小的依据
+//判断并调整到合适位置
+#define heap_adjust(heap, k) do 							\
+{															\
+	if (k > 1 && heap->table[k] cmp heap->table[k >> 1])	\
+		heap_up(heap, k);									\
+	else													\
+		heap_down(heap, k);									\
+} while(0)
+
+
+#define 		as_heap_item								\
+	uint			index;			/* 在数组中的索引 */	\
+	ulong			key				/* 比较大小的依据 */
 
 //堆元素头
 typedef struct _heap_item
 {
-	as_heap_item;						//比较大小的依据
+	as_heap_item;					//比较大小的依据
 }heap_item;
 
 //堆结构体
