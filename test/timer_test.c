@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../hlnet/include/heap.h"
+#include "../hlnet/include/stack.h"
+
+typedef struct student
+{
+	as_heap_item;
+	char		name[16];
+}_student;
 
 void heap_test_data(heap *heap)
 {
@@ -81,7 +88,61 @@ void heap_test()
 	}
 }
 
+//栈测试用例
+void stack_test()
+{
+	_stack *stack = stack_create(2);
+	_student stu1;
+	_student stu2;
+	_student stu3;
+	_student stu4;
+	_student stu5;
+	_student stu6;
+	_student stu7;
+	_student stu8;
+	snprintf(stu1.name, 16, "张三");
+	snprintf(stu2.name, 16, "李四");
+	snprintf(stu3.name, 16, "王五");
+	snprintf(stu4.name, 16, "孙六");
+	snprintf(stu5.name, 16, "赵七");
+	snprintf(stu6.name, 16, "王八");
+	snprintf(stu7.name, 16, "关晓彤");
+	snprintf(stu8.name, 16, "赵丽颖");
+	stu1.key = 18;
+	stu2.key = 17;
+	stu3.key = 16;
+	stu4.key = 15;
+	stu5.key = 14;
+	stu6.key = 13;
+	stu7.key = 12;
+	stu8.key = 11;
+
+	stack_push(stack, &stu1);
+	stack_push(stack, &stu2);
+	stack_push(stack, &stu3);
+	stack_push(stack, &stu4);
+	stack_push(stack, &stu5);
+	stack_push(stack, &stu6);
+	stack_push(stack, &stu7);
+	stack_push(stack, &stu8);
+
+	_student *temp;
+	stack_foreach(stack, temp)
+	{
+		printf("姓名：%s	年龄：%d \n", temp->name, temp->key);
+	}
+
+	puts("------------------------------");
+
+	while (!stack_empty(stack))
+	{
+		temp = (_student *)stack_pop(stack);
+		printf("姓名：%s	年龄：%d \n", temp->name, temp->key);
+	}
+}
+
 void main()
 {
-	heap_test();
+	//heap_test();
+	stack_test();
 }

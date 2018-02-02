@@ -59,5 +59,5 @@ void *stack_pop(_stack *stack)
 
 	if (stack_empty(stack)) return NULL;
 
-	return stack->table[stack->top--];
+	return stack->table[--stack->top];
 }
