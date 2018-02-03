@@ -53,7 +53,7 @@ int heap_push(heap *heap, heap_node *item);
 //弹出元素
 heap_node *heap_pop(heap *heap);
 //上浮
-int heap_up(heap *heap, uint i);
+int heap_up(heap *heap, uint k);
 //下沉
 int heap_down(heap *heap, uint i);
 //移除

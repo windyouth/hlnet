@@ -18,6 +18,11 @@ typedef struct _timer
 	int (*cb)(struct _timer *timer);		//回调函数
 }_timer;
 
+//创建定时器管理器
+int timer_manager();
+//取出一个定时器
+_timer *extract_timer();
+
 //添加定时器
 int add_timer(_timer *timer);
 //删除定时器

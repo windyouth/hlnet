@@ -11,6 +11,9 @@
 	b = temp;									\
 } while(0)
 
+//更新索引
+#define 	heap_update_index(heap, k)		heap->table[k]->index = k;		
+
 //初始化堆
 int heap_init(heap *heap, uint size)
 {
@@ -56,6 +59,8 @@ int heap_push(heap *heap, heap_node *item)
 
 	//添加数据
 	heap->table[++heap->count] = item;
+	//更新索引
+	heap_update_index(heap, heap->count);
 
 	//上浮尾结点并返回
 	return heap_up(heap, heap->count);
@@ -70,6 +75,10 @@ heap_node *heap_pop(heap *heap)
 
 	heap_node *temp;
 	heap_swap(heap->table[1], heap->table[heap->count], temp);
+	//更新索引
+	heap_update_index(heap, 1);
+	heap_update_index(heap, heap->count);
+
 	temp = heap->table[heap->count];
 	heap->count--;
 	//下沉根结点
@@ -79,21 +88,33 @@ heap_node *heap_pop(heap *heap)
 }
 
 //上浮
-int heap_up(heap *heap, uint i)
+int heap_up(heap *heap, uint k)
 {
 	//参数检查
-	assert(heap && i > 0);
-	if (!heap || i == 0) return HEAP_PARAM_ERROR; 
+	assert(heap && k > 0);
+	if (!heap || k == 0) return HEAP_PARAM_ERROR; 
 
 	heap_node *temp;
+	uint parent;	//父节点索引
 
-	while (i > 1)	/* 如果不是根结点 */
+	while (k > 1)	/* 如果不是根结点 */
 	{
-		if (heap->table[i]->key cmp heap->table[i >> 1]->key)
-			heap_swap(heap->table[i], heap->table[i >> 1], temp);
+		parent = k >> 1;
 
-		//跳到父结点
-		i >>= 1;
+		if (heap->table[k]->key cmp heap->table[parent]->key)
+		{
+			//跟父结点交换
+			heap_swap(heap->table[k], heap->table[parent], temp);
+			//更新索引
+			heap_update_index(heap, k);
+			heap_update_index(heap, parent);
+			//跳到父结点
+			k = parent;
+		}
+		else
+		{
+			break;
+		}
 	}
 
 	return HEAP_SUCCESS;
@@ -119,12 +140,15 @@ int heap_down(heap *heap, uint i)
 		if (heap->table[next]->key cmp heap->table[i]->key)
 		{
 			heap_swap(heap->table[next], heap->table[i], temp);
+			//更新索引
+			heap_update_index(heap, next);
+			heap_update_index(heap, i);
 			//转到新位置
 			i = next;
 		}
 		else
 		{
-			return HEAP_SUCCESS;
+			break;
 		}
 	}
 
@@ -141,6 +165,9 @@ heap_node *heap_erase(heap *heap, uint k)
 	//尾结点填充过来并重新整理顺序
 	heap_node *temp = heap->table[k];
 	heap->table[k] = heap->table[heap->count--];
+	//更新索引
+	heap_update_index(heap, k);
+	//调整顺序
 	heap_adjust(heap, k);
 
 	return temp;

@@ -37,6 +37,7 @@ const char *mysql_get_string(mysql_set *set, const char *field)
 	int i = set->index;
 	do
 	{
+		//针对顺序读取所做的专门优化，以避免每次都从头开始遍历。
 		mysql_field_seek(set->result, i);
 		pfield = mysql_fetch_field(set->result);
 		if (pfield && (0 == strcmp(pfield->name, field)))
