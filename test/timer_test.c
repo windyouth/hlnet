@@ -5,27 +5,27 @@
 
 typedef struct student
 {
-	as_heap_item;
+	as_heap_node;
 	char		name[16];
 }_student;
 
 void heap_test_data(heap *heap)
 {
-	heap_item *item1 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item2 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item3 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item4 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item5 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item6 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item7 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item8 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item9 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item10 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item11 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item12 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item13 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item14 = (heap_item *)malloc(sizeof(heap_item));
-	heap_item *item15 = (heap_item *)malloc(sizeof(heap_item));
+	heap_node *item1 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item2 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item3 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item4 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item5 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item6 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item7 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item8 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item9 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item10 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item11 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item12 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item13 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item14 = (heap_node *)malloc(sizeof(heap_node));
+	heap_node *item15 = (heap_node *)malloc(sizeof(heap_node));
 
 	item1->key = 7;
 	item2->key = 6;
@@ -74,17 +74,17 @@ void heap_test()
 
 	heap_test_data(heap);
 
-	heap_item *temp;
+	heap_node *temp;
 
 	heap_foreach(heap, temp)
-		printf("heap_item.key: %u \n", temp->key);
+		printf("heap_node.key: %u \n", temp->key);
 
 	puts("---------------------------------------------------------");
 
 	for (int i = 1; i <= 15; ++i)
 	{
 		temp = heap_pop(heap);
-		printf("heap_item.key: %u \n", temp->key);
+		printf("heap_node.key: %u \n", temp->key);
 	}
 }
 

@@ -28,33 +28,35 @@
 } while(0)
 
 
-#define 		as_heap_item								\
+#define 		as_heap_node								\
 	uint			index;			/* 在数组中的索引 */	\
 	ulong			key				/* 比较大小的依据 */
 
 //堆元素头
-typedef struct _heap_item
+typedef struct _heap_node
 {
-	as_heap_item;					//比较大小的依据
-}heap_item;
+	as_heap_node;					//比较大小的依据
+}heap_node;
 
 //堆结构体
 typedef struct _heap
 {
 	uint			size;			//大小
 	uint			count;			//堆中元素个数
-	heap_item		**table;		//存储堆元素的数组
+	heap_node		**table;		//存储堆元素的数组
 }heap;
 
 //初始化堆
 int heap_init(heap *heap, uint size);
 //加入元素
-int heap_push(heap *heap, heap_item *item);
+int heap_push(heap *heap, heap_node *item);
 //弹出元素
-heap_item *heap_pop(heap *heap);
+heap_node *heap_pop(heap *heap);
 //上浮
 int heap_up(heap *heap, uint i);
 //下沉
 int heap_down(heap *heap, uint i);
+//移除
+heap_node *heap_erase(heap *heap, uint k);
 
 #endif //_HEAP_H_

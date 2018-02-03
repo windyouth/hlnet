@@ -19,8 +19,8 @@ int heap_init(heap *heap, uint size)
 	if (!heap) return HEAP_PARAM_ERROR;
 
 	//申请内存
-	int len = size * sizeof(heap_item *);
-	heap->table = (heap_item **)malloc(len);
+	int len = size * sizeof(heap_node *);
+	heap->table = (heap_node **)malloc(len);
 	assert(heap->table != NULL);
 	if (!heap->table) return HEAP_MEM_ERROR;
 
@@ -33,7 +33,7 @@ int heap_init(heap *heap, uint size)
 }
 
 //加入元素
-int heap_push(heap *heap, heap_item *item)
+int heap_push(heap *heap, heap_node *item)
 {
 	//参数检查
 	assert(heap != NULL && item != NULL);
@@ -46,8 +46,8 @@ int heap_push(heap *heap, heap_item *item)
 	if (heap_full(heap))
 	{
 		int new_size = heap->size + heap->size / 2;
-		heap_item **new_table = (heap_item **)realloc(heap->table, 
-								new_size * sizeof(heap_item *));
+		heap_node **new_table = (heap_node **)realloc(heap->table, 
+								new_size * sizeof(heap_node *));
 		if (!new_table) return HEAP_MEM_ERROR;
 
 		heap->table = new_table;
@@ -62,13 +62,13 @@ int heap_push(heap *heap, heap_item *item)
 }
 
 //弹出元素
-heap_item *heap_pop(heap *heap)
+heap_node *heap_pop(heap *heap)
 {
 	//参数检查
 	assert(heap && heap->count > 0);
 	if (!heap || heap->count == 0) return NULL;
 
-	heap_item *temp;
+	heap_node *temp;
 	heap_swap(heap->table[1], heap->table[heap->count], temp);
 	temp = heap->table[heap->count];
 	heap->count--;
@@ -85,7 +85,7 @@ int heap_up(heap *heap, uint i)
 	assert(heap && i > 0);
 	if (!heap || i == 0) return HEAP_PARAM_ERROR; 
 
-	heap_item *temp;
+	heap_node *temp;
 
 	while (i > 1)	/* 如果不是根结点 */
 	{
@@ -107,7 +107,7 @@ int heap_down(heap *heap, uint i)
 	if (!heap || i == 0) return HEAP_PARAM_ERROR; 
 
 	uint next;
-	heap_item *temp;
+	heap_node *temp;
 
 	while (i << 1 <= heap->count)	/* 如果还有子结点 */
 	{
@@ -131,4 +131,17 @@ int heap_down(heap *heap, uint i)
 	return HEAP_SUCCESS;
 }
 
+//移除
+heap_node *heap_erase(heap *heap, uint k)
+{
+	//参数检查
+	assert(heap && k > 0);
+	if (!heap || k == 0 || k > heap->count) return NULL; 
 
+	//尾结点填充过来并重新整理顺序
+	heap_node *temp = heap->table[k];
+	heap->table[k] = heap->table[heap->count--];
+	heap_adjust(heap, k);
+
+	return temp;
+}
