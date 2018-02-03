@@ -3,16 +3,18 @@
 #include <stdlib.h>
 #include "heap.h"
 
-//交换两个元素的值
-#define	heap_swap(a, b, temp) do				\
-{												\
-	temp = a;									\
-	a = b;										\
-	b = temp;									\
-} while(0)
-
 //更新索引
 #define 	heap_update_index(heap, k)		heap->table[k]->index = k;		
+
+//交换两个元素的值
+#define	heap_swap(heap, a, b, temp) do			\
+{												\
+	temp = heap->table[a];						\
+	heap->table[a] = heap->table[b];			\
+	heap->table[b] = temp;						\
+	heap_update_index(heap, a);					\
+	heap_update_index(heap, b);					\
+} while(0)
 
 //初始化堆
 int heap_init(heap *heap, uint size)
@@ -74,13 +76,8 @@ heap_node *heap_pop(heap *heap)
 	if (!heap || heap->count == 0) return NULL;
 
 	heap_node *temp;
-	heap_swap(heap->table[1], heap->table[heap->count], temp);
-	//更新索引
-	heap_update_index(heap, 1);
-	heap_update_index(heap, heap->count);
-
-	temp = heap->table[heap->count];
-	heap->count--;
+	heap_swap(heap, 1, heap->count, temp);
+	temp = heap->table[heap->count--];
 	//下沉根结点
 	heap_down(heap, 1);
 
@@ -104,10 +101,7 @@ int heap_up(heap *heap, uint k)
 		if (heap->table[k]->key cmp heap->table[parent]->key)
 		{
 			//跟父结点交换
-			heap_swap(heap->table[k], heap->table[parent], temp);
-			//更新索引
-			heap_update_index(heap, k);
-			heap_update_index(heap, parent);
+			heap_swap(heap, k, parent, temp);
 			//跳到父结点
 			k = parent;
 		}
@@ -139,10 +133,7 @@ int heap_down(heap *heap, uint i)
 
 		if (heap->table[next]->key cmp heap->table[i]->key)
 		{
-			heap_swap(heap->table[next], heap->table[i], temp);
-			//更新索引
-			heap_update_index(heap, next);
-			heap_update_index(heap, i);
+			heap_swap(heap, next, i, temp);
 			//转到新位置
 			i = next;
 		}
