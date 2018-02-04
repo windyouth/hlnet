@@ -15,7 +15,7 @@ store_t *create_store(uint chunk_size)
 	{
 		safe_free(store);
 
-		return MEM_ERROR;
+		return NULL;
 	}
 
 	list_init(store->chunk_list);
@@ -28,7 +28,7 @@ void *extract_chunk(store_t *store)
 {
 	//参数检查
 	assert(store);
-	if (!store) return PARAM_ERROR;
+	if (!store) return NULL;
 
 	//如果有现成的，直接取出。
 	if (list_size(store->chunk_list) > 0) 

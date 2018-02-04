@@ -7,6 +7,9 @@
 #include "coroutine.h"
 #endif
 
+//是否启用日志模块
+#define					use_log				(g_log_path != NULL)
+
 //调用接口
 #define	log(level, format, ...) do 											\
 {																			\

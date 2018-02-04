@@ -258,7 +258,7 @@ int serv_run()
 	int id = coroutine_new(g_schedule, epollet_run, NULL);
 	if (id < 0) return FAILURE;
 
-	if (g_log_path)
+	if (use_log)
 	{	
 		id = coroutine_new(g_schedule, write_log, NULL);
 		if (id < 0) return FAILURE;
