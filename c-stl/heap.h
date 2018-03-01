@@ -10,7 +10,7 @@
 
 #define			cmp					<							//大顶堆：>; 小顶堆：<
 
-#define			heap_top(heap)		(heap)->table[1]					//取得顶元素
+#define			heap_top(heap)		((heap)->table[1])					//取得顶元素
 #define			heap_empty(heap)	((heap)->count == 0)				//是否为空
 #define			heap_full(heap)		((heap)->count + 1 == (heap)->size)	//是否已满
 

@@ -5,6 +5,7 @@
 #include "server.h"
 #include "alive.h"
 #include "log.h"
+#include "timer.h"
 #include "../common/internal.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
@@ -258,9 +259,17 @@ int serv_run()
 	int id = coroutine_new(g_schedule, epollet_run, NULL);
 	if (id < 0) return FAILURE;
 
+	//日志组件
 	if (use_log)
 	{	
 		id = coroutine_new(g_schedule, write_log, NULL);
+		if (id < 0) return FAILURE;
+	}
+
+	//定时器组件
+	if (use_timer)
+	{	
+		id = coroutine_new(g_schedule, check_timers, NULL);
 		if (id < 0) return FAILURE;
 	}
 
