@@ -66,8 +66,12 @@ int del_timer(_timer *timer)
 	assert(timer);
 	if (!timer) return PARAM_ERROR;
 
+	//从堆中移除
 	if (NULL == heap_erase(g_timers, timer->index))
 		return FAILURE;
+
+	//回收
+	recycle_timer(timer);
 
 	return SUCCESS;
 }
