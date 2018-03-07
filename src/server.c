@@ -6,6 +6,7 @@
 #include "alive.h"
 #include "log.h"
 #include "timer.h"
+#include "moment.h"
 #include "../common/internal.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
@@ -266,10 +267,17 @@ int serv_run()
 		if (id < 0) return FAILURE;
 	}
 
-	//定时器组件
+	//相对定时器组件
 	if (use_timer)
 	{	
 		id = coroutine_new(g_schedule, check_timers, NULL);
+		if (id < 0) return FAILURE;
+	}
+	
+	//绝对定时器组件
+	if (use_moment)
+	{	
+		id = coroutine_new(g_schedule, check_moments, NULL);
 		if (id < 0) return FAILURE;
 	}
 

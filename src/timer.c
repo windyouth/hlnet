@@ -6,7 +6,6 @@
 
 static store_t			*g_timer_store = NULL;			//定时器仓库
 heap					*g_timers = NULL;				//定时器小顶堆
-clock_t					g_now = 0;						//启动机器到现在的时间
 
 //取出定时器
 #define			extract_timer()				(_timer *)extract_chunk(g_timer_store)
@@ -33,9 +32,6 @@ int timer_manager()
 			return FAILURE;
 	}
 
-	g_now = clock();
-	if (g_now == -1) return FAILURE;
-
 	return SUCCESS;
 }
 
@@ -47,7 +43,7 @@ _timer *add_timer(int after, int repeat, timer_cb cb, void *data)
 	if (!timer) return NULL;
 
 	//设置参数
-	timer->key = g_now + after; 
+	timer->key = clock() + after; 	//以开机时间算
 	timer->after = after;
 	timer->repeat = repeat;
 	timer->cb = cb;
@@ -80,14 +76,15 @@ int del_timer(_timer *timer)
 void check_timers(struct schedule *sche, void *arg)
 {
 	struct _timer *timer = NULL;
+	clock_t now;
 
 	for (;;)
 	{
 		//更新时间
-		g_now = clock();
+		now = clock();
 
 		//是否有已超时的定时器
-		while(!heap_empty(g_timers) && heap_top(g_timers)->key < g_now) 
+		while(!heap_empty(g_timers) && heap_top(g_timers)->key < now) 
 		{
 			//执行回调函数
 			timer = (struct _timer *)heap_top(g_timers);

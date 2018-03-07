@@ -1,6 +1,6 @@
 #include <sys/time.h>
-#include <signal.h>
 #include "alive.h"
+#include "timer.h"
 #include "../epollet/epollet.h"
 #include "../c-stl/list.h"
 
@@ -9,7 +9,7 @@
 static list			*g_client_alive = NULL;				//活跃的客户端链表
 
 //检查连接的活跃时间
-void check_alive(int num)
+int check_alive(struct _timer *timer)
 {
 	list_item *item = NULL;
 	client_t *cli = NULL;
@@ -60,16 +60,9 @@ int keep_alive()
 	g_is_keep_alive = YES;
 
 	//开启定时器
-	signal(SIGALRM, check_alive);
-
-	struct itimerval tick;
-	memset(&tick, 0, sizeof(tick));
-	tick.it_value.tv_sec = ALIVE_INTERVAL;
-	tick.it_interval.tv_sec = ALIVE_INTERVAL;
-
-	int res = setitimer(ITIMER_REAL, &tick, NULL);
-	if (res) return FAILURE;
-
+	timer_manager();
+	add_timer(ALIVE_INTERVAL, -1, check_alive, NULL);
+	
 	return SUCCESS;
 }
 
