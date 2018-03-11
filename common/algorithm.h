@@ -9,6 +9,8 @@
 #define			zero(ptr)					memset(ptr, 0, sizeof(*ptr))
 #define			zero_array(ptr, len)		memset(ptr, 0, len)
 
+#define			array_size(array)			(sizeof(array) / sizeof(array[0]))
+
 //交换两个元素的值
 #define	swap(a, b, temp) do						\
 {												\
