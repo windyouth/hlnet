@@ -5,7 +5,8 @@
 #include <signal.h>
 #include "../hlnet/include/log.h"
 #include "../common/common.h"
-#include "../common/store.h"
+#include "../common/algorithm.h"
+#include "../hlnet/include/store.h"
 #include "../common/buffer.h"
 #include "../epollet/client.h"
 #include "../src/database.h"
@@ -513,6 +514,15 @@ void alive_test()
 		usleep(10);
 }
 
+void rand_test()
+{
+	int array[50];
+	get_rand(array, 50);
+
+	for (int i = 0; i < 50; i++)
+		printf("%d \n", array[i]);
+}
+
 int main()
 {
 	//log_test();
@@ -524,7 +534,8 @@ int main()
 	//client_test();
 	//dbtest();
 	//pthread_test();
-	alive_test();
+	//alive_test();
+	rand_test();
 
 	return 0;
 }

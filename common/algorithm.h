@@ -31,5 +31,7 @@
 
 //取得本机IP地址，网络序
 struct in_addr *get_addr();
+//取出0~n-1的随机数，且不重复
+void get_rand(int a[], int n);
 
 #endif //_ALGORITHM_H_
