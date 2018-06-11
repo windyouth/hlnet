@@ -4,26 +4,14 @@
 #include "../hlnet/include/algorithm.h"
 #include "../hlnet/include/store.h"
 
+
 static store_t			*g_set_store = NULL;			//数据集仓库
 
+//取得一个数据集
+#define			extract_set()		    (mysql_set *)extract_chunk(g_set_store)
 //释放结果集
 #define			recycle_set(set)		recycle_chunk(g_set_store, set)
 
-//取得一个数据集
-static mysql_set *extract_set()
-{
-	//双if判断，保证线程安全。
-	if (!g_set_store)
-	{
-		if (!g_set_store)
-		{
-			g_set_store = create_store(sizeof(mysql_set));
-			if (!g_set_store) return NULL;
-		}
-	}
-
-	return (mysql_set *)extract_chunk(g_set_store);
-}
 
 //读取字符串
 const char *mysql_get_string(mysql_set *set, const char *field)
@@ -70,6 +58,13 @@ MYSQL *mysql_create(const char *host, int port, const char *user, const char *pw
 	//初始化一个实例
 	MYSQL *mysql = mysql_init(NULL);
 	if (!mysql) return NULL;
+
+    //创建数据集仓库
+    if (!g_set_store)
+	{
+		g_set_store = create_store(sizeof(mysql_set));
+		if (!g_set_store) return NULL;
+	}
 
 	//设置重连
 	int arg = 1;

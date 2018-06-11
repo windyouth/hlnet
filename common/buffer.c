@@ -129,19 +129,32 @@ int buffer_write_int(buffer *buf, int num)
 	return SUCCESS;
 }
 
+
+//初始化缓冲区仓库
+int buffer_store_init()
+{
+    if (!g_buffer_store)
+	{
+		g_buffer_store = create_store(sizeof(buffer));
+		if (!g_buffer_store) return FAILURE;
+	}
+
+    return SUCCESS;
+}
+
+//释放缓冲区仓库
+void buffer_store_free()
+{
+    if (g_buffer_store)
+        destroy_store(g_buffer_store);
+}
+
 //取得一个缓冲区
 buffer *extract_buffer()
 {
-	//双if判断，保证线程安全。
 	if (!g_buffer_store)
-	{
-		if (!g_buffer_store)
-		{
-			g_buffer_store = create_store(sizeof(buffer));
-			if (!g_buffer_store) return NULL;
-		}
-	}
-
+        return NULL;
+	
 	buffer *buf = (buffer *)extract_chunk(g_buffer_store);
 	if (!buf) return NULL;
 

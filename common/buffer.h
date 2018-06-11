@@ -96,6 +96,12 @@ int buffer_write(buffer *buf, char *src, uint32_t len);
 //往缓冲区写数字
 int buffer_write_int(buffer *buf, int num);
 
+
+//初始化缓冲区仓库
+int buffer_store_init();
+//释放缓冲区仓库
+void buffer_store_free();
+
 //取得一个缓冲区
 buffer *extract_buffer();
 //回收一个缓冲区

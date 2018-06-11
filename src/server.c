@@ -222,6 +222,10 @@ static int create_udp(uint16_t port)
 //创建服务器
 int serv_create()
 {
+    //初始化缓冲区仓库
+    if (SUCCESS != buffer_store_init())
+        return FAILURE;
+
 	//构造调度器
 	g_schedule  = coroutine_open();
 	if (!g_schedule) return FAILURE;
