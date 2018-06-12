@@ -177,7 +177,7 @@ int create_manage_fd(uint16_t port)
 //创建UDP套接字
 int create_udp_fd(uint16_t port)
 {
-	g_udp_fd = create_tcp_socket(port);
+	g_udp_fd = create_udp_socket(port);
 	if (g_udp_fd == INVALID_SOCKET) return FAILURE;
 
 	//注册epoll事件
@@ -454,7 +454,8 @@ void epollet_run(struct schedule *sche, void *arg)
 
 	for (;;)
 	{
-		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, -1);
+        //最后一个值：0 立即返回，-1 一直阻塞直到有消息前来
+		count = epoll_wait(g_epoll_fd, g_events, MAX_EVENT_COUNT, 0);
 		
 		//分发处理
 		for (i = 0; i < count; ++i)

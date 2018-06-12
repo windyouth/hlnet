@@ -190,6 +190,7 @@ int on_dbmsg_reg(char *data, uint32_t len)
 
 	//发送消息
 	tcp_send(reginfo->client_id, MSG_REGISTER, rsp, strlen(rsp));
+    log(loglevel_error, rsp);
 
 	return SUCCESS;
 }

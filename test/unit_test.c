@@ -525,7 +525,7 @@ void rand_test()
 
 int main()
 {
-	//log_test();
+	log_test();
 	//store_test();
 	//buffer_test();
 	//rectify_test();
@@ -535,7 +535,7 @@ int main()
 	//dbtest();
 	//pthread_test();
 	//alive_test();
-	rand_test();
+	//rand_test();
 
 	return 0;
 }

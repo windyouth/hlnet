@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "../hlnet/include/server.h"
 #include "../hlnet/include/heap.h"
 #include "../hlnet/include/stack.h"
+#include "../hlnet/include/timer.h"
+#include "../hlnet/include/moment.h"
+#include "define.h"
 
 typedef struct student
 {
@@ -141,8 +145,36 @@ void stack_test()
 	}
 }
 
+//定时器触发事件
+int event(struct _timer *timer)
+{
+    static int count = 0;
+    printf("第%d次执行定时器：%s 当前clock时间：%d\n", 
+            ++count, (char *)timer->data, clock());
+}
+
+void timer_test()
+{
+    //创建服务器
+	if (SUCCESS != serv_create())
+		puts("serv_create failure");
+	//监听端口
+	if (SUCCESS != serv_ctl(socktype_client, PORT_CLIENT))
+		puts("serv_ctl failure");
+
+    char *msg = "没有共产党就没有新中国。";
+    timer_manager();
+    add_timer(1, 10, event, msg);
+
+	//运行服务器
+	puts("serv_run...");
+	puts("---------------------------------------");
+	serv_run();
+}
+
 void main()
 {
 	//heap_test();
-	stack_test();
+	//stack_test();
+    timer_test();
 }

@@ -43,7 +43,8 @@ _timer *add_timer(int after, int repeat, timer_cb cb, void *data)
 	if (!timer) return NULL;
 
 	//设置参数
-	timer->key = clock() + after; 	//以开机时间算
+	timer->key = time(NULL);    //以unix元年时间算
+    timer->key += after; 	
 	timer->after = after;
 	timer->repeat = repeat;
 	timer->cb = cb;
@@ -76,12 +77,12 @@ int del_timer(_timer *timer)
 void check_timers(struct schedule *sche, void *arg)
 {
 	struct _timer *timer = NULL;
-	clock_t now;
+	time_t now;
 
 	for (;;)
 	{
 		//更新时间
-		now = clock();
+		now = time(NULL);
 
 		//是否有已超时的定时器
 		while(!heap_empty(g_timers) && heap_top(g_timers)->key < now) 
