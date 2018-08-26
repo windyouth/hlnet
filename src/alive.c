@@ -4,7 +4,7 @@
 #include "../epollet/epollet.h"
 #include "../c-stl/list.h"
 
-#define				ALIVE_INTERVAL			3			//检查的间隔时间
+#define				ALIVE_INTERVAL			30			//检查的间隔时间
 
 static list			*g_client_alive = NULL;				//活跃的客户端链表
 

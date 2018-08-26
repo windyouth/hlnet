@@ -473,7 +473,7 @@ void alive_test()
 	if (SUCCESS != client_store_init())
 	{
 		puts("初始化客户端仓库失败");
-		return;
+		//return;
 	}
 
 	g_client1 = extract_client();

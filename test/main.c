@@ -5,6 +5,10 @@
 #include "../hlnet/include/server.h"
 #include "../hlnet/include/log.h"
 #include "../plugin/mysql_helper.h"
+#include "../hlnet/include/timer.h"
+#include "../hlnet/include/moment.h"
+#include "../hlnet/include/alive.h"
+#include "../epollet/client.h"
 #include "define.h"
 
 MYSQL				*g_mysql = NULL;			//mysql连接
@@ -195,6 +199,81 @@ int on_dbmsg_reg(char *data, uint32_t len)
 	return SUCCESS;
 }
 
+//定时器触发事件
+int timer_func(struct _timer *timer)
+{
+    static int count = 0;
+    printf("第%d次执行定时器：%s 当前clock时间：%d\n", 
+            ++count, (char *)timer->data, clock());
+}
+
+//定时器触发事件
+int moment_func(struct _moment *moment)
+{
+    static int count = 0;
+    printf("第%d次执行定时器：%s 当前clock时间：%d\n", 
+            ++count, (char *)moment->data, clock());
+}
+
+client_t *g_client1;
+client_t *g_client2;
+client_t *g_client3;
+client_t *g_client4;
+client_t *g_client5;
+
+//心跳模块测试
+void alive_test()
+{
+	if (SUCCESS != keep_alive())
+	{
+		puts("初始化心跳模块失败");
+		return;
+	}
+
+	if (SUCCESS != client_store_init())
+	{
+		puts("初始化客户端仓库失败");
+		//return;
+	}
+
+	g_client1 = extract_client();
+	g_client2 = extract_client();
+	g_client3 = extract_client();
+	g_client4 = extract_client();
+	g_client5 = extract_client();
+
+	g_client1->fd = 1001;
+	g_client2->fd = 1002;
+	g_client3->fd = 1003;
+	g_client4->fd = 1004;
+	g_client5->fd = 1005;
+
+	add_alive(g_client1->id);
+	add_alive(g_client2->id);
+	add_alive(g_client3->id);
+	add_alive(g_client4->id);
+	add_alive(g_client5->id);
+
+	alive(g_client1->id);
+	alive(g_client2->id);
+	alive(g_client3->id);
+	alive(g_client4->id);
+	alive(g_client5->id);
+	
+	safe(g_client1->id);
+	safe(g_client3->id);
+	safe(g_client5->id);
+
+    close_socket(g_client4);
+
+	printf("g_client1 safe: %d \n", is_safe(g_client1->id));
+	printf("g_client2 safe: %d \n", is_safe(g_client2->id));
+	printf("g_client3 safe: %d \n", is_safe(g_client3->id));
+	printf("g_client4 safe: %d \n", is_safe(g_client4->id));
+	printf("g_client5 safe: %d \n", is_safe(g_client5->id));
+
+}
+
 int main()
 {
 	//创建服务器
@@ -228,12 +307,25 @@ int main()
 	start_database();
 
 	//初始化日志
-	if (SUCCESS != init_log(".log.txt", loglevel_error))
+	if (SUCCESS != init_log("log.txt", loglevel_error))
 		puts("init_log failure");
 
 	//初始化数据库
 	g_mysql = mysql_create("localhost", 3306, "heluan", "heluanhl", "test", 1000);
 	if (!g_mysql) puts("mysql_create failure");
+
+    //初始化定时器
+    char *msg = "没有共产党就没有新中国。";
+    /*
+    timer_manager();
+    add_timer(1, 100, timer_func, msg);
+    */
+    /*
+    moment_manager();
+    add_moment(time(NULL) + 5, moment_func, msg);
+    */
+
+    //alive_test();
 
 	//运行服务器
 	puts("serv_run...");
