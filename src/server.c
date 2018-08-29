@@ -164,6 +164,10 @@ static int create_tcp_client(uint16_t port)
 	//初始化缓冲区
 	g_client_buf = (buffer *)malloc(sizeof(buffer));
 	if (!g_client_buf) return MEM_ERROR;
+
+	//初始化就绪链表
+	g_client_ready = (list *)malloc(sizeof(list));
+	if (!g_client_ready) return MEM_ERROR;
 		
 	//创建协程
 	if (-1 == coroutine_new(g_schedule, issue_client_msg, NULL))
@@ -188,6 +192,10 @@ static int create_tcp_manage(uint16_t port)
 	//初始化缓冲区
 	g_manage_buf = (buffer *)malloc(sizeof(buffer));
 	if (!g_manage_buf) return MEM_ERROR;
+
+	//初始化就绪链表
+	g_manage_ready = (list *)malloc(sizeof(list));
+	if (!g_manage_ready) return MEM_ERROR;
 
 	//创建协程
 	if (-1 == coroutine_new(g_schedule, issue_manage_msg, NULL))

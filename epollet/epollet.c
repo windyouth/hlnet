@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include "epollet.h"
 #include "../common/internal.h"
+#include "../c-stl/list.h"
 
 
 #define				MAX_EVENT_COUNT			1024			//一次能接收的最多事件个数
@@ -28,6 +29,9 @@ int 				g_udp_fd = INVALID_SOCKET;				//监听的套接字ID(UDP)
 
 buffer				*g_client_buf = NULL;					//数据队列(用户端)
 buffer				*g_manage_buf = NULL;					//数据队列(管理端)
+
+list				*g_client_ready = NULL;					//就绪链表(用户端)
+list				*g_manage_ready = NULL;					//就绪链表(管理端)
 
 link_hander			g_client_link = NULL;					//连接事件函数指针(用户端)
 shut_hander			g_client_shut = NULL;					//断开事件函数指针(用户端)

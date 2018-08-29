@@ -52,6 +52,7 @@ typedef struct _client
 	buffer				*in;			//读缓冲区
 	buffer				*out;			//写缓冲区
 	uint8_t				is_safe;		//是否通过安全认证
+	uint8_t				is_ready;		//是否处在就绪链表中
 }client_t, *pclient;
 
 //初始化客户端结构体
