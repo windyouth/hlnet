@@ -130,9 +130,9 @@ int client_tcp_socket(char *ip, ushort port)
 	return fd;
 }
 
-void main()
+void multi_connect()
 {
-	int i, fds[10];
+    int i, fds[10];
 	for (i = 0; i < 10; ++i)
 	{
 		fds[i] = client_tcp_socket("0.0.0.0", PORT_CLIENT);
@@ -159,4 +159,28 @@ void main()
 	{
 		close(fds[i]);
 	}
+}
+
+void one_connect()
+{
+    int fd = client_tcp_socket("0.0.0.0", PORT_CLIENT);
+	if (fd == INVALID_SOCKET)
+	{
+		puts("client_tcp_socket failure");
+		exit(1);
+	}
+		
+	usleep(100000);
+    
+    for (int j = 0; j < 10; j++)
+	{
+		send_reg_message(fd);
+
+		usleep(100000);
+	}
+}
+
+void main()
+{
+	one_connect();
 }

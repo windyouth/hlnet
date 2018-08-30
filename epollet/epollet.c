@@ -368,13 +368,6 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 		}
 		else
 		{
-            /*
-			//写入全局缓冲区
-			buffer_write(global_buf, read_ptr(cli->in), cli->in->len);
-			//状态重置
-			buffer_reset(cli->in);
-            */
-            
             //加入就绪链表
             if (cli->is_ready == NO)
             {
@@ -395,12 +388,7 @@ static int read_data(struct epoll_event *ev, list *ready_list)
                 cli->is_ready = YES;
             }
         }
-        /*
-		//写入全局缓冲区
-		buffer_write(global_buf, read_ptr(cli->in), cli->in->len);
-		//状态重置
-		buffer_reset(cli->in);
-        */
+        
 		cli->status.part = READ_PART_HEAD;
 		cli->status.need = sizeof(packet_head_t);
 	}

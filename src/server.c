@@ -192,6 +192,7 @@ static int create_tcp_client(uint16_t port)
    	//初始化就绪链表
 	g_client_ready = (list *)malloc(sizeof(list));
 	if (!g_client_ready) return MEM_ERROR;
+    list_init(g_client_ready);
 		
 	//创建协程
 	if (-1 == coroutine_new(g_schedule, issue_client_msg, NULL))
@@ -216,6 +217,7 @@ static int create_tcp_manage(uint16_t port)
 	//初始化就绪链表
 	g_manage_ready = (list *)malloc(sizeof(list));
 	if (!g_manage_ready) return MEM_ERROR;
+    list_init(g_manage_ready);
 
 	//创建协程
 	if (-1 == coroutine_new(g_schedule, issue_manage_msg, NULL))
