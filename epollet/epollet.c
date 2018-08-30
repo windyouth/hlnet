@@ -27,9 +27,6 @@ int 				g_client_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(用户端)
 int 				g_manage_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(管理端)
 int 				g_udp_fd = INVALID_SOCKET;				//监听的套接字ID(UDP)
 
-buffer				*g_client_buf = NULL;					//数据队列(用户端)
-buffer				*g_manage_buf = NULL;					//数据队列(管理端)
-
 list				*g_client_ready = NULL;					//就绪链表(用户端)
 list				*g_manage_ready = NULL;					//就绪链表(管理端)
 
@@ -300,11 +297,11 @@ int epollet_create()
 //		   =0 内核缓冲区已经读空
 //		   <0 网络异常，关闭套接字
 //-----------------------------------------------------------
-static int read_data(struct epoll_event *ev, buffer *global_buf)
+static int read_data(struct epoll_event *ev, list *ready_list)
 {
 	//参数检查
-	assert(ev && global_buf);
-	if (!ev || !global_buf) return PARAM_ERROR;
+	assert(ev && ready_list);
+	if (!ev || !ready_list) return PARAM_ERROR;
 
 	client_t *cli = (client_t *)ev->data.ptr;
 	//需要的已读完，读无可读。
@@ -371,18 +368,39 @@ static int read_data(struct epoll_event *ev, buffer *global_buf)
 		}
 		else
 		{
+            /*
 			//写入全局缓冲区
 			buffer_write(global_buf, read_ptr(cli->in), cli->in->len);
 			//状态重置
 			buffer_reset(cli->in);
+            */
+            
+            //加入就绪链表
+            if (cli->is_ready == NO)
+            {
+                if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
+                {
+                    cli->is_ready = YES;
+                }
+            }
 		}
 	}
 	else
 	{
+        //加入就绪链表
+        if (cli->is_ready == NO)
+        {
+            if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
+            {
+                cli->is_ready = YES;
+            }
+        }
+        /*
 		//写入全局缓冲区
 		buffer_write(global_buf, read_ptr(cli->in), cli->in->len);
 		//状态重置
 		buffer_reset(cli->in);
+        */
 		cli->status.part = READ_PART_HEAD;
 		cli->status.need = sizeof(packet_head_t);
 	}
@@ -403,9 +421,10 @@ static void tcp_read(struct epoll_event *ev)
 		return;
 	}
 
-	buffer *cur_buf = (cli->parent == g_client_tcp_fd) ? g_client_buf : g_manage_buf;
+	//buffer *cur_buf = (cli->parent == g_client_tcp_fd) ? g_client_buf : g_manage_buf;
+	list *ready_list = (cli->parent == g_client_tcp_fd) ? g_client_ready : g_manage_ready;
 
-	while (read_data(ev, cur_buf) > 0);
+	while (read_data(ev, ready_list) > 0);
 }
 
 //接收tcp连接

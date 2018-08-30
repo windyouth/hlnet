@@ -48,14 +48,18 @@ void issue_client_msg(struct schedule *sche, void *arg)
 	msg_func_item *func_item;
 	tcpmsg_hander hander;
 	char cmd[8];
+    list_item *ls_item;
+    client_t *cli;
 
 	for (;;)
 	{
-		while (g_client_buf->len > 0)
+        list_foreach(g_client_ready, ls_item)
 		{
-			//从全局缓冲区读数据
-			buffer_read(g_client_buf, head, sizeof(*head));
-			buffer_read(g_client_buf, data, head->head.data_size);
+            cli = (client_t *)ls_item;
+
+			//从输入缓冲区读数据，每次只读一条
+			buffer_read(cli->in, head, sizeof(*head));
+			buffer_read(cli->in, data, head->head.data_size);
 
 			//更新活跃时间
 			alive(head->client_id);
@@ -70,12 +74,22 @@ void issue_client_msg(struct schedule *sche, void *arg)
 			//取出消息处理函数派发消息
 			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
 			func_item = (msg_func_item *)map_get(g_net_client_msg, cmd, strlen(cmd));
+            //执行消息处理函数
 			if (func_item && func_item->msg_func)
 			{
 				hander = (tcpmsg_hander)func_item->msg_func;
 				hander(head->client_id, &(head->head), data);
 			}
-		} //end while
+
+            //如果消息读完了，移出就绪链表
+            if (cli->in->len == 0)
+            {
+                if (OP_LIST_SUCCESS == list_remove(g_client_ready, cli))
+                {
+                    cli->is_ready = NO;
+                }
+            }
+		} //end foreach
 
 		coroutine_yield(sche);
 	}//end for
@@ -89,14 +103,18 @@ void issue_manage_msg(struct schedule *sche, void *arg)
 	msg_func_item *func_item;
 	tcpmsg_hander hander;
 	char cmd[8];
+    list_item *ls_item;
+    client_t *cli;
 
 	for (;;)
 	{
-		while (g_manage_buf->len > 0)
+        list_foreach(g_manage_ready, ls_item)
 		{
+            cli = (client_t *)ls_item;
+
 			//从全局缓冲区读数据
-			buffer_read(g_manage_buf, head, sizeof(*head));
-			buffer_read(g_manage_buf, data, head->head.data_size);
+			buffer_read(cli->in, head, sizeof(*head));
+			buffer_read(cli->in, data, head->head.data_size);
 
 			//更新活跃时间
 			alive(head->client_id);
@@ -111,11 +129,21 @@ void issue_manage_msg(struct schedule *sche, void *arg)
 			//取出消息处理函数派发消息
 			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
 			func_item = (msg_func_item *)map_get(g_net_manage_msg, cmd, strlen(cmd));
+            //执行消息处理函数
 			if (func_item && func_item->msg_func)
 			{
 				hander = (tcpmsg_hander)func_item->msg_func;
 				hander(head->client_id, &(head->head), data);
 			}
+            
+            //如果消息读完了，移出就绪链表
+            if (cli->in->len == 0)
+            {
+                if (OP_LIST_SUCCESS == list_remove(g_manage_ready, cli))
+                {
+                    cli->is_ready = NO;
+                }
+            }
 		}
 
 		coroutine_yield(sche);
@@ -161,11 +189,7 @@ static int create_tcp_client(uint16_t port)
 	if (!g_net_client_msg) return MEM_ERROR;
 	if (map_init(g_net_client_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
 
-	//初始化缓冲区
-	g_client_buf = (buffer *)malloc(sizeof(buffer));
-	if (!g_client_buf) return MEM_ERROR;
-
-	//初始化就绪链表
+   	//初始化就绪链表
 	g_client_ready = (list *)malloc(sizeof(list));
 	if (!g_client_ready) return MEM_ERROR;
 		
@@ -188,10 +212,6 @@ static int create_tcp_manage(uint16_t port)
 	g_net_manage_msg = (map *)malloc(sizeof(map));
 	if (!g_net_manage_msg) return MEM_ERROR;
 	if (map_init(g_net_manage_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-
-	//初始化缓冲区
-	g_manage_buf = (buffer *)malloc(sizeof(buffer));
-	if (!g_manage_buf) return MEM_ERROR;
 
 	//初始化就绪链表
 	g_manage_ready = (list *)malloc(sizeof(list));

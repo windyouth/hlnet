@@ -39,9 +39,6 @@ extern int 				g_client_tcp_fd;		//监听的套接字ID(用户端)
 extern int 				g_manage_tcp_fd;		//监听的套接字ID(管理端)
 extern int 				g_udp_fd;				//监听的套接字ID(UDP)
 
-extern buffer			*g_client_buf;			//数据队列(用户端)
-extern buffer			*g_manage_buf;			//数据队列(管理端)
-
 extern list			    *g_client_ready;		//就绪链表(用户端)
 extern list			    *g_manage_ready;		//就绪链表(管理端)
 
