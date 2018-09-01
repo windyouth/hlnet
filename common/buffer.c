@@ -31,19 +31,29 @@ static int buffer_realloc(buffer *buf, uint32_t new_size)
 	buf->buf = (char *)realloc(buf->buf, new_size);
 	if (!buf->buf) return MEM_ERROR;
 
+#ifdef TEST
+    cmd_head_t *head = read_ptr(buf);
+#endif
+
 	//如果是中空结构，read以下的数据全部下移到底部。
-	if (buf->read > buf->write)
+	if (buf->len > 0 && buf->read >= buf->write)
 	{
 		int i = buf->end, index = new_size;
 		while (i > buf->read) 
-			buf->buf[--index] = buf->buf[i--];
+			buf->buf[--index] = buf->buf[--i];
 
 		buf->read = index;
 		buf->end = new_size;
 	}
 
+#ifdef TEST
+    head = read_ptr(buf);
+#endif
+
 	//重置参数
 	buf->size = new_size;
+    //尾部空缺被消除
+    buf->gap = 0;
 
 	return SUCCESS;
 }
@@ -57,7 +67,7 @@ int buffer_rectify(buffer *buf, uint32_t need)
 	uint32_t new_size = buf->size + max(buf->size / 2, need * 10);
 
 	//剩余空间不足,则重新申请大小
-	if (buf->len + need > buf->size ||
+	if (buffer_surplus(buf) < need ||
 		buf->write < buf->read && buf->write + need > buf->read)
 	{
 		return buffer_realloc(buf, new_size);	
@@ -76,8 +86,8 @@ int buffer_rectify(buffer *buf, uint32_t need)
 		{
 			//写指针移到开头
 			buf->write = 0;
-			//尾部空缺计入len
-			buf->len += buffer_gap(buf);
+			//记录尾部空缺
+			buf->gap = buf->size - buf->end;
 			
 			return SUCCESS;
 		}

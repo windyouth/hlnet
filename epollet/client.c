@@ -18,7 +18,7 @@ int client_init(client_t *cli, int size)
 	zero(cli);
 	cli->fd = INVALID_SOCKET;
 	cli->status.part = READ_PART_HEAD;
-	cli->status.need = sizeof(packet_head_t);
+	cli->status.need = sizeof(cmd_head_t);
 
 	//申请并初始化两个缓冲区
 	cli->in = (buffer *)malloc(sizeof(buffer));
@@ -101,6 +101,9 @@ void recycle_client(client_t *cli)
 //根据id查询客户端
 client_t *get_client(uint32_t id)
 {
+#ifdef TEST
+    printf("get_client id = %d \n", id);
+#endif
 	assert(id < array_size(g_client_store));
 	if (id >= array_size(g_client_store)) return NULL;
 

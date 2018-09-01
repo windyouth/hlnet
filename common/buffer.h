@@ -20,9 +20,7 @@
 #define write_ptr(buffer) 	((buffer)->buf + (buffer)->write)
 
 //缓冲区剩余大小
-#define buffer_surplus(buffer) 	((buffer)->size - (buffer)->len)
-//缓冲区尾部空缺
-#define buffer_gap(buffer)		((buffer)->size - (buffer)->end)
+#define buffer_surplus(buffer) 	((buffer)->size - (buffer)->len - (buffer)->gap)
 
 //偏移读指针
 #define seek_read(buf, off) do						\
@@ -37,7 +35,7 @@
 		(buf)->read != (buf)->write) 				\
 	{												\
 		(buf)->read = 0;							\
-		(buf)->len -= buffer_gap(buf);				\
+		(buf)->gap = 0;			                	\
 		(buf)->end = (buf)->write;					\
 	}												\
 }while (0)
@@ -65,6 +63,7 @@
 	(buf)->read = 0;								\
 	(buf)->write = 0;								\
 	(buf)->len = 0;									\
+	(buf)->gap = 0;									\
 	(buf)->end = 0;									\
 }while (0)
 
@@ -80,7 +79,8 @@ typedef struct _buffer
 {
 	uint32_t	read;			//读索引
 	uint32_t	write;			//写索引
-	int32_t		len;			//数据已占用的总长度，包含尾部可能出现的空长度
+	int32_t		len;			//数据已占用的总长度，不含尾部空长度
+	int32_t		gap;			//尾部空长度
 	uint32_t	size;			//缓冲区大小
 	uint32_t	end;			//尾索引，内容的最末位置，最大值刚好为size
 	char		*buf;			//起始地址指针

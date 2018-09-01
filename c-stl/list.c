@@ -133,6 +133,8 @@ int list_remove(list *list, list_item *item)
 		item->next->prev = item->prev;
 	}
 
+    --(list->__list_size);
+
 	return OP_LIST_SUCCESS;
 }
 

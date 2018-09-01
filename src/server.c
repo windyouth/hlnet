@@ -43,7 +43,7 @@ static void kernel_message(int client_id, cmd_head_t *head, char *data)
 //网络消息分发(客户端)
 void issue_client_msg(struct schedule *sche, void *arg)
 {
-	packet_head_t *head = NULL;
+	cmd_head_t *head = NULL;
 	char *data = NULL;
 	msg_func_item *func_item;
 	tcpmsg_hander hander;
@@ -53,32 +53,37 @@ void issue_client_msg(struct schedule *sche, void *arg)
 
 	for (;;)
 	{
-        list_foreach(g_client_ready, ls_item)
+        //list_foreach(g_client_ready, ls_item)
+        for (ls_item = g_client_ready->head; ls_item != NULL; ls_item = ls_item->next)
 		{
             cli = (client_t *)ls_item;
 
 			//从输入缓冲区读数据，每次只读一条
 			buffer_read(cli->in, head, sizeof(*head));
-			buffer_read(cli->in, data, head->head.data_size);
+			buffer_read(cli->in, data, head->data_size);
 
 			//更新活跃时间
-			alive(head->client_id);
+#ifdef TEST
+      //      printf("cli->id: %d, ls_item: %p, cli->next: %p\n", 
+        //            cli->id, ls_item, cli->__list_item.next);
+#endif
+			alive(cli->id);
 
 			//如果是内核消息
-			if (head->head.cmd_code <= CMD_KERNEL_END)
+			if (head->cmd_code <= CMD_KERNEL_END)
 			{
-				kernel_message(head->client_id, &(head->head), data);
+				kernel_message(cli->id, head, data);
 				continue;
 			}
 
 			//取出消息处理函数派发消息
-			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
+			snprintf(cmd, sizeof(cmd), "%u", head->cmd_code);
 			func_item = (msg_func_item *)map_get(g_net_client_msg, cmd, strlen(cmd));
             //执行消息处理函数
 			if (func_item && func_item->msg_func)
 			{
 				hander = (tcpmsg_hander)func_item->msg_func;
-				hander(head->client_id, &(head->head), data);
+				hander(cli->id, head, data);
 			}
 
             //如果消息读完了，移出就绪链表
@@ -98,7 +103,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
 //网络消息分发(管理端)
 void issue_manage_msg(struct schedule *sche, void *arg)
 {
-	packet_head_t *head = NULL;
+	cmd_head_t *head = NULL;
 	char *data = NULL;
 	msg_func_item *func_item;
 	tcpmsg_hander hander;
@@ -114,26 +119,26 @@ void issue_manage_msg(struct schedule *sche, void *arg)
 
 			//从全局缓冲区读数据
 			buffer_read(cli->in, head, sizeof(*head));
-			buffer_read(cli->in, data, head->head.data_size);
+			buffer_read(cli->in, data, head->data_size);
 
 			//更新活跃时间
-			alive(head->client_id);
+			alive(cli->id);
 
 			//如果是内核消息
-			if (head->head.cmd_code <= CMD_KERNEL_END)
+			if (head->cmd_code <= CMD_KERNEL_END)
 			{
-				kernel_message(head->client_id, &(head->head), data);
+				kernel_message(cli->id, head, data);
 				continue;
 			}
 
 			//取出消息处理函数派发消息
-			snprintf(cmd, sizeof(cmd), "%u", head->head.cmd_code);
+			snprintf(cmd, sizeof(cmd), "%u", head->cmd_code);
 			func_item = (msg_func_item *)map_get(g_net_manage_msg, cmd, strlen(cmd));
             //执行消息处理函数
 			if (func_item && func_item->msg_func)
 			{
 				hander = (tcpmsg_hander)func_item->msg_func;
-				hander(head->client_id, &(head->head), data);
+				hander(cli->id, head, data);
 			}
             
             //如果消息读完了，移出就绪链表
@@ -169,7 +174,7 @@ static void udp_read(int fd)
 
 	//检验数据
 	g_udp_buffer[size] = 0;
-	head = (packet_head_t *)g_udp_buffer;
+	head = (cmd_head_t *)g_udp_buffer;
 	if (head->data_size + sizeof(*head) != size)
 		return;
 

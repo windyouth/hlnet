@@ -321,13 +321,6 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 		return res;
 	}
 
-	//刚开始接收数据，先写客户端ID
-	if (cli->in->len == 0)
-	{
-		buffer_write_int(cli->in, cli->id);
-		cli->status.need -= sizeof(uint32_t);
-	}
-
 	//接收数据
 	int len = cli->status.need;
 	res = circle_recv(cli->fd, write_ptr(cli->in), len);
@@ -350,7 +343,7 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 	if (cli->status.part == READ_PART_HEAD)
 	{
 		//检查参数
-		cmd_head_t *head = (cmd_head_t *)(cli->in->buf + sizeof(uint32_t));
+		cmd_head_t *head = read_ptr(cli->in);
 		if (head->data_size > MAX_CMDDATA_LEN) 
 		{
 			close_socket(cli);
@@ -390,7 +383,7 @@ static int read_data(struct epoll_event *ev, list *ready_list)
         }
         
 		cli->status.part = READ_PART_HEAD;
-		cli->status.need = sizeof(packet_head_t);
+		cli->status.need = sizeof(cmd_head_t);
 	}
 
 	return res;
@@ -409,7 +402,6 @@ static void tcp_read(struct epoll_event *ev)
 		return;
 	}
 
-	//buffer *cur_buf = (cli->parent == g_client_tcp_fd) ? g_client_buf : g_manage_buf;
 	list *ready_list = (cli->parent == g_client_tcp_fd) ? g_client_ready : g_manage_ready;
 
 	while (read_data(ev, ready_list) > 0);
