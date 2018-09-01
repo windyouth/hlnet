@@ -182,5 +182,6 @@ void one_connect()
 
 void main()
 {
-	one_connect();
+	//one_connect();
+    multi_connect();
 }

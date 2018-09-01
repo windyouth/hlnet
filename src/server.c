@@ -53,8 +53,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
 
 	for (;;)
 	{
-        //list_foreach(g_client_ready, ls_item)
-        for (ls_item = g_client_ready->head; ls_item != NULL; ls_item = ls_item->next)
+        list_foreach(g_client_ready, ls_item)
 		{
             cli = (client_t *)ls_item;
 
@@ -63,10 +62,6 @@ void issue_client_msg(struct schedule *sche, void *arg)
 			buffer_read(cli->in, data, head->data_size);
 
 			//更新活跃时间
-#ifdef TEST
-      //      printf("cli->id: %d, ls_item: %p, cli->next: %p\n", 
-        //            cli->id, ls_item, cli->__list_item.next);
-#endif
 			alive(cli->id);
 
 			//如果是内核消息
@@ -87,7 +82,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
 			}
 
             //如果消息读完了，移出就绪链表
-            if (cli->in->len == 0)
+            if (cli->in->len <= 0)
             {
                 if (OP_LIST_SUCCESS == list_remove(g_client_ready, cli))
                 {
@@ -142,7 +137,7 @@ void issue_manage_msg(struct schedule *sche, void *arg)
 			}
             
             //如果消息读完了，移出就绪链表
-            if (cli->in->len == 0)
+            if (cli->in->len <= 0)
             {
                 if (OP_LIST_SUCCESS == list_remove(g_manage_ready, cli))
                 {

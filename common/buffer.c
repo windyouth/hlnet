@@ -31,10 +31,6 @@ static int buffer_realloc(buffer *buf, uint32_t new_size)
 	buf->buf = (char *)realloc(buf->buf, new_size);
 	if (!buf->buf) return MEM_ERROR;
 
-#ifdef TEST
-    cmd_head_t *head = read_ptr(buf);
-#endif
-
 	//如果是中空结构，read以下的数据全部下移到底部。
 	if (buf->len > 0 && buf->read >= buf->write)
 	{
@@ -45,10 +41,6 @@ static int buffer_realloc(buffer *buf, uint32_t new_size)
 		buf->read = index;
 		buf->end = new_size;
 	}
-
-#ifdef TEST
-    head = read_ptr(buf);
-#endif
 
 	//重置参数
 	buf->size = new_size;
