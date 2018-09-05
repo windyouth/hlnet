@@ -6,7 +6,7 @@
 #define			max(x, y)					(x > y ? x : y)
 #define 		min(x, y)					(x < y ? x : y)
 
-#define			zero(ptr)					memset(ptr, 0, sizeof(*ptr))
+#define			zero(ptr)					memset((ptr), 0, sizeof(*(ptr)))
 #define			zero_array(ptr, len)		memset(ptr, 0, len)
 
 #define			array_size(array)			(sizeof(array) / sizeof(array[0]))

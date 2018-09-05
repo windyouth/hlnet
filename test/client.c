@@ -8,6 +8,10 @@
 #include "../hlnet/include/algorithm.h"
 #include "../hlnet/include/common.h"
 
+#define         CONN_COUNT      1000
+
+int         g_msg_index = 0;
+
 void show_addr()
 {
 	char local[128] = { 0 };
@@ -88,7 +92,7 @@ void send_reg_message(int fd)
 	}
 
 	res = recv(fd, buf, len, 0);
-	printf("接收长度：%d \n", res);
+	printf("消息包: %d，接收长度：%d \n", g_msg_index++, res);
 	if (res > 0)
 	{
 		buf[res] = 0;
@@ -132,8 +136,8 @@ int client_tcp_socket(char *ip, ushort port)
 
 void multi_connect()
 {
-    int i, fds[10];
-	for (i = 0; i < 10; ++i)
+    int i, fds[CONN_COUNT];
+	for (i = 0; i < CONN_COUNT; ++i)
 	{
 		fds[i] = client_tcp_socket("0.0.0.0", PORT_CLIENT);
 		if (fds[i] == INVALID_SOCKET)
@@ -145,9 +149,9 @@ void multi_connect()
 		usleep(100000);
 	}
 	
-	for (i = 0; i < 10; ++i)
+	for (i = 0; i < 20; ++i)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < CONN_COUNT; j++)
 		{
 			send_reg_message(fds[j]);
 
@@ -155,10 +159,17 @@ void multi_connect()
 		}
 	}
 
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < CONN_COUNT; i++)
 	{
 		close(fds[i]);
 	}
+
+    /*
+    while (1)
+    {
+		usleep(100000);
+    }
+    */
 }
 
 void one_connect()
