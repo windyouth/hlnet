@@ -16,5 +16,5 @@ copy: $(head)
 #libuthread.a: $(obj)
 #	ar rcs $@ $^
 
-$(obj_dir)/%.o: %.c
+$(obj_dir)/%.o: %.c %.h
 	$(compiler) -c $< -o $@ $(flag) $(debug_flag)

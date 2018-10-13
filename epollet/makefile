@@ -11,5 +11,5 @@ flag += -I../common -I../c-stl
 
 all: $(obj)
 
-$(obj_dir)/%.o: %.c
+$(obj_dir)/%.o: %.c %.h
 	$(compiler) -c $< -o $@ $(flag) $(debug_flag)

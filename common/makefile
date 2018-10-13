@@ -13,6 +13,6 @@ all: $(obj) copy
 copy: $(head)
 	cp $^ ../hlnet/include
 
-$(obj_dir)/%.o: %.c
+$(obj_dir)/%.o: %.c %.h
 	$(compiler) -c $< -o $@ $(flag) $(debug_flag) -D $(define_flag)
 

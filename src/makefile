@@ -15,7 +15,7 @@ copy: $(head)
 	cp $^ ../hlnet/include
 
 #%.o: %.c # %.d
-$(obj_dir)/%.o: %.c
+$(obj_dir)/%.o: %.c %.h
 	$(compiler) -c $< -o $@ $(flag) $(debug_flag) -D $(define_flag)
 
 #%.d: %.c
