@@ -161,15 +161,16 @@ buffer *extract_buffer()
 	buffer *buf = (buffer *)extract_chunk(g_buffer_store);
 	if (!buf) return NULL;
 
-    //如果是已经初始化过，直接返回。
-    if (buf->init == YES)
-        return buf;
-
-	if (buffer_init(buf, BUFFER_ORIGINAL_SIZE) != SUCCESS)
-	{
-		recycle_chunk(g_buffer_store, buf);
-		return NULL;
-	}
+    //如果是一块新内存
+    if (buf->init == NO)
+    {
+        //执行初始化
+        if (buffer_init(buf, BUFFER_ORIGINAL_SIZE) != SUCCESS)
+	    {
+		    recycle_chunk(g_buffer_store, buf);
+		    return NULL;
+	    }
+    }
 
 	return buf;
 }

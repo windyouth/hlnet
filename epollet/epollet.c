@@ -337,7 +337,7 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 	seek_write(cli->in, res);
 	cli->status.need = len - res;
 
-	//只读了一部分，提前返回。
+	//只读了一部分，提前返回。此处包括res=0的情况。
 	if (res < len) return 0;
 
 	if (cli->status.part == READ_PART_HEAD)
