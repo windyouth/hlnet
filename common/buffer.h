@@ -84,6 +84,7 @@ typedef struct _buffer
 	uint32_t	size;			//缓冲区大小
 	uint32_t	end;			//尾索引，内容的最末位置，最大值刚好为size
 	char		*buf;			//起始地址指针
+    uint8_t     init;           //是否初始化
 }buffer, *pbuffer;
 
 

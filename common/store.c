@@ -40,8 +40,11 @@ void *extract_chunk(store_t *store)
 	}
 
 	//如果没有，新申请一个。
-	void *chunk = malloc(sizeof(list_item) + store->chunk_size);
+    uint len = sizeof(list_item) + store->chunk_size;
+	void *chunk = malloc(len);
 	if (!chunk) return NULL;
+    //内存块用零值初始化
+    mem_zero(chunk, len);
 
 	//list_item这个头部外面不要
 	return (void *)((ulong)chunk + sizeof(list_item));

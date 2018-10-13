@@ -8,7 +8,8 @@
 #include "../hlnet/include/algorithm.h"
 #include "../hlnet/include/common.h"
 
-#define         CONN_COUNT      1000
+#define         CONN_COUNT      200
+#define         SLEEP_TIME      2000
 
 int         g_msg_index = 0;
 
@@ -113,7 +114,12 @@ void send_reg_message(int fd)
 int client_tcp_socket(char *ip, ushort port)
 {
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (-1 == fd) return INVALID_SOCKET;
+	if (-1 == fd)
+    { 
+        //printf("创建socket失败，fd: %d，errno: %d \n", fd, errno);
+        perror("创建socket失败。");
+        return INVALID_SOCKET;
+    }
 
 	struct sockaddr_in addr;
 	bzero(&addr, sizeof(addr));
@@ -127,6 +133,8 @@ int client_tcp_socket(char *ip, ushort port)
 
 	if (FAILURE == connect(fd, (struct sockaddr *)&addr, sizeof(addr)))
 	{
+        perror("connect失败。");
+        printf("连接失败，fd: %d \n", fd);
 		close(fd);
 		return INVALID_SOCKET;
 	}
@@ -136,7 +144,14 @@ int client_tcp_socket(char *ip, ushort port)
 
 void multi_connect()
 {
-    int i, fds[CONN_COUNT];
+    int i; 
+    int *fds = (int *)malloc(sizeof(int) * CONN_COUNT);
+    if (!fds)
+    {
+        puts("fds molloc failure");
+        exit(1);
+    }
+
 	for (i = 0; i < CONN_COUNT; ++i)
 	{
 		fds[i] = client_tcp_socket("0.0.0.0", PORT_CLIENT);
@@ -146,16 +161,16 @@ void multi_connect()
 			exit(1);
 		}
 		
-		usleep(100000);
+		usleep(SLEEP_TIME);
 	}
 	
-	for (i = 0; i < 20; ++i)
+	for (i = 0; i < 2000; ++i)
 	{
 		for (int j = 0; j < CONN_COUNT; j++)
 		{
 			send_reg_message(fds[j]);
 
-			usleep(100000);
+			usleep(SLEEP_TIME);
 		}
 	}
 
@@ -163,13 +178,6 @@ void multi_connect()
 	{
 		close(fds[i]);
 	}
-
-    /*
-    while (1)
-    {
-		usleep(100000);
-    }
-    */
 }
 
 void one_connect()
@@ -181,13 +189,13 @@ void one_connect()
 		exit(1);
 	}
 		
-	usleep(100000);
+	usleep(SLEEP_TIME);
     
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 50; j++)
 	{
 		send_reg_message(fd);
 
-		usleep(100000);
+		usleep(SLEEP_TIME);
 	}
 }
 

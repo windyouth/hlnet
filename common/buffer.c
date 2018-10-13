@@ -19,6 +19,7 @@ int buffer_init(buffer *buf, uint32_t size)
 	if (!buf->buf) return MEM_ERROR;
 
 	buf->size = size;
+    buf->init = YES;
 
 	return SUCCESS;
 }
@@ -159,6 +160,10 @@ buffer *extract_buffer()
 	
 	buffer *buf = (buffer *)extract_chunk(g_buffer_store);
 	if (!buf) return NULL;
+
+    //如果是已经初始化过，直接返回。
+    if (buf->init == YES)
+        return buf;
 
 	if (buffer_init(buf, BUFFER_ORIGINAL_SIZE) != SUCCESS)
 	{

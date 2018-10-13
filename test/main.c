@@ -148,7 +148,7 @@ int on_netmsg_reg(int client_id, cmd_head_t *head, char *data)
 	info.client_id = client_id;
 	memcpy(&info.info, data, head->data_size);
 	post_db_msg(DB_REGISTER, &info, sizeof(info));
-	
+
 	return SUCCESS;
 }
 
@@ -166,10 +166,10 @@ int on_dbmsg_reg(char *data, uint32_t len)
 
 	db_reg_info *reginfo = (db_reg_info *)data;
 	char sql[256] = { 0 };
-	
 	snprintf(sql, 256, "call add_user('%s', '%s', '%s', '%s', '%s')", 
 			reginfo->info.account, reginfo->info.password, reginfo->info.secret_key, 
 			reginfo->info.corporation, reginfo->info.phone);
+
 
 	char rsp[128];
 	mysql_set *set = mysql_execute(g_mysql, sql);
