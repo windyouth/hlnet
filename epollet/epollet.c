@@ -40,6 +40,9 @@ udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 
 uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 
+uint                g_user_first_length = 0;                //用户端首次接收的长度
+uint                g_manage_first_length = 0;              //管理端首次接收的长度
+
 //设备套接字为非阻塞
 static int set_nonblock(int fd)
 {
@@ -340,10 +343,12 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 	//只读了一部分，提前返回。此处包括res=0的情况。
 	if (res < len) return 0;
 
+    //如果读的是数据头
 	if (cli->status.part == READ_PART_HEAD)
 	{
-		//检查参数
+		//数据头参数判断
 		cmd_head_t *head = read_ptr(cli->in);
+        //如果大于规定值，踢掉。
 		if (head->data_size > MAX_CMDDATA_LEN) 
 		{
 			close_socket(cli);
@@ -353,7 +358,8 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 			return FAILURE;
 		}
 
-		//如果客户端只发送一个数据头过来，此处就不做任何处理。
+		//如果客户端提示有数据，却只发送一个包头过来，
+        //此后将不会得到任何处理，直到被检测链表断开。
 		if (head->data_size > 0) 
 		{
 			cli->status.part = READ_PART_DATA;
@@ -371,7 +377,7 @@ static int read_data(struct epoll_event *ev, list *ready_list)
             }
 		}
 	}
-	else
+	else            //如果读的是数据体
 	{
         //加入就绪链表
         if (cli->is_ready == NO)
@@ -402,7 +408,15 @@ static void tcp_read(struct epoll_event *ev)
 		return;
 	}
 
-	list *ready_list = (cli->parent == g_client_tcp_fd) ? g_client_ready : g_manage_ready;
+	list *ready_list;
+    if (cli->parent == g_client_tcp_fd)
+    {
+        ready_list = g_client_ready;
+    }
+    else    
+    {
+        ready_list = g_manage_ready;
+    }
 
 	while (read_data(ev, ready_list) > 0);
 }
@@ -441,8 +455,20 @@ static void tcp_accept(int fd)
 			//添加到心跳检测
 			if (fd == g_manage_tcp_fd || g_is_keep_alive == YES)
 				add_alive(client->id);
+            
+            //赋值处理
+            if (fd == g_client_tcp_fd)
+            {
+                hander = g_client_link;
+                client->status.need = g_user_first_length;
+            }
+            else
+            {
+                hander = g_manage_link;
+                client->status.need = g_manage_first_length;
+            }
+
 			//通知应用层
-			hander = (fd == g_client_tcp_fd ? g_client_link : g_manage_link);
 			hander(client->id, client->ip);
 		}			
 	}

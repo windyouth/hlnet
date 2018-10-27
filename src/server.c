@@ -319,6 +319,29 @@ int serv_run()
 	coroutine_run(g_schedule);
 }
 
+//设置初次接收数据包的长度
+int set_first_length(sock_type_e sock_type, uint length)
+{
+    if (sock_type == socktype_client)
+        g_user_first_length = length;
+    else
+        g_manage_first_length = length;
+
+    return SUCCESS;
+}
+
+//设置下次接收数据包的长度
+int set_next_length(uint32_t client_id, uint length)
+{
+	//取得对应的客户端
+	client_t *cli = get_client(client_id);
+	if (!cli) return PARAM_ERROR;
+
+    cli->status.need = length;
+
+    return SUCCESS;
+}
+
 //注册连接消息函数
 int reg_link_event(sock_type_e type, link_hander func)
 {

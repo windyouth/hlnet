@@ -52,4 +52,7 @@ extern udp_reader		g_udp_reader;			//udp读取函数指针
 
 extern uint8_t			g_is_keep_alive;		//是否保持长连接
 
+extern uint             g_user_first_length;        //用户端首次接收的数据包长度
+extern uint             g_manage_first_length;      //管理端首次接收的数据包长度
+
 #endif //_EPOLLET_H_
