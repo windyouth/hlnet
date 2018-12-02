@@ -469,7 +469,8 @@ static void tcp_accept(int fd)
             }
 
 			//通知应用层
-			hander(client->id, client->ip);
+            if (hander)
+			    hander(client->id, client->ip);
 		}			
 	}
 }
@@ -517,7 +518,7 @@ void epollet_run(struct schedule *sche, void *arg)
 		}//end for
 		
 		/* 事关整个线程的休眠 */
-		usleep(10);	
+		usleep(2);	
 		//切换协程
 		coroutine_yield(sche);
 	}//end for

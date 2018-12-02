@@ -27,9 +27,9 @@ int serv_ctl(sock_type_e sock_type, short port);
 int serv_run();
 
 //设置初次接收数据包的长度
-int set_first_length(sock_type_e sock_type, uint length);
+int set_first_length(sock_type_e sock_type, uint32_t length);
 //设置下次接收数据包的长度
-int set_next_length(uint32_t client_id, uint length);
+int set_next_length(uint32_t client_id, uint32_t length);
 
 //注册连接事件处理函数
 int reg_link_event(sock_type_e type, link_hander func);

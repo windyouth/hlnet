@@ -327,6 +327,8 @@ int main()
 
     //alive_test();
 
+    set_first_length(socktype_client, sizeof(cmd_head_t));
+
 	//运行服务器
 	puts("serv_run...");
 	puts("---------------------------------------");
