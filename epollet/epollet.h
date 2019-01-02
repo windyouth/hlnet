@@ -35,15 +35,15 @@ void epollet_run(struct schedule *sche, void *arg);
 void close_socket(client_t *cli);
 
 //全局变量
-extern int 				g_client_tcp_fd;		//监听的套接字ID(用户端)
+extern int 				g_user_tcp_fd;		    //监听的套接字ID(用户端)
 extern int 				g_manage_tcp_fd;		//监听的套接字ID(管理端)
 extern int 				g_udp_fd;				//监听的套接字ID(UDP)
 
-extern list			    *g_client_ready;		//就绪链表(用户端)
+extern list			    *g_user_ready;		    //就绪链表(用户端)
 extern list			    *g_manage_ready;		//就绪链表(管理端)
 
-extern link_hander		g_client_link;			//连接事件函数指针(用户端)
-extern shut_hander		g_client_shut;			//断开事件函数指针(用户端)
+extern link_hander		g_user_link;			//连接事件函数指针(用户端)
+extern shut_hander		g_user_shut;			//断开事件函数指针(用户端)
 
 extern link_hander		g_manage_link;			//连接事件函数指针(管理端)
 extern shut_hander		g_manage_shut;			//断开事件函数指针(管理端)

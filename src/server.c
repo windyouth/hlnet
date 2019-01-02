@@ -17,7 +17,7 @@
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
 
 
-static map				*g_net_client_msg = NULL;			//网络消息映射(TCP用户端口)
+static map				*g_net_user_msg = NULL;			//网络消息映射(TCP用户端口)
 static map				*g_net_manage_msg = NULL;			//网络消息映射(TCP管理端口)
 static map				*g_net_udp_msg = NULL;				//网络消息映射(UDP端口)
 
@@ -53,7 +53,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
 
 	for (;;)
 	{
-        list_foreach(g_client_ready, ls_item)
+        list_foreach(g_user_ready, ls_item)
 		{
             cli = (client_t *)ls_item;
 
@@ -73,7 +73,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
 
 			//取出消息处理函数派发消息
 			snprintf(cmd, sizeof(cmd), "%u", head->cmd_code);
-			func_item = (msg_func_item *)map_get(g_net_client_msg, cmd, strlen(cmd));
+			func_item = (msg_func_item *)map_get(g_net_user_msg, cmd, strlen(cmd));
             //执行消息处理函数
 			if (func_item && func_item->msg_func)
 			{
@@ -84,7 +84,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
             //如果消息读完了，移出就绪链表
             if (cli->in->len <= 0)
             {
-                if (OP_LIST_SUCCESS == list_remove(g_client_ready, cli))
+                if (OP_LIST_SUCCESS == list_remove(g_user_ready, cli))
                 {
                     cli->is_ready = NO;
                 }
@@ -179,20 +179,20 @@ static void udp_read(int fd)
 //创建tcp客户端相关
 static int create_tcp_client(uint16_t port)
 {
-	if (g_client_tcp_fd != INVALID_SOCKET) return FAILURE;
+	if (g_user_tcp_fd != INVALID_SOCKET) return FAILURE;
 
 	if (SUCCESS != create_client_fd(port))
 		return FAILURE;
 
 	//初始化网络消息映射器
-	g_net_client_msg = (map *)malloc(sizeof(map));
-	if (!g_net_client_msg) return MEM_ERROR;
-	if (map_init(g_net_client_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
+	g_net_user_msg = (map *)malloc(sizeof(map));
+	if (!g_net_user_msg) return MEM_ERROR;
+	if (map_init(g_net_user_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
 
    	//初始化就绪链表
-	g_client_ready = (list *)malloc(sizeof(list));
-	if (!g_client_ready) return MEM_ERROR;
-    list_init(g_client_ready);
+	g_user_ready = (list *)malloc(sizeof(list));
+	if (!g_user_ready) return MEM_ERROR;
+    list_init(g_user_ready);
 		
 	//创建协程
 	if (-1 == coroutine_new(g_schedule, issue_client_msg, NULL))
@@ -267,7 +267,7 @@ int serv_create()
 int serv_ctl(sock_type_e sock_type, short port)
 {
 	//tcp客户端
-	if (sock_type == socktype_client)		
+	if (sock_type == socktype_user)		
 	{
 		return create_tcp_client(port);
 	}
@@ -322,7 +322,7 @@ int serv_run()
 //设置初次接收数据包的长度
 int set_first_length(sock_type_e sock_type, uint length)
 {
-    if (sock_type == socktype_client)
+    if (sock_type == socktype_user)
         g_user_first_length = length;
     else
         g_manage_first_length = length;
@@ -347,8 +347,8 @@ int reg_link_event(sock_type_e type, link_hander func)
 {
 	if (!func) return PARAM_ERROR;
 
-	if (type == socktype_client)
-		g_client_link = func;
+	if (type == socktype_user)
+		g_user_link = func;
 	else if (type == socktype_manage)
 		g_manage_link = func;
 	else
@@ -362,8 +362,8 @@ int reg_shut_event(sock_type_e type, shut_hander func)
 {
 	if (!func) return PARAM_ERROR;
 
-	if (type == socktype_client)
-		g_client_shut = func;
+	if (type == socktype_user)
+		g_user_shut = func;
 	else if (type == socktype_manage)
 		g_manage_shut = func;
 	else
@@ -383,9 +383,9 @@ int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func)
 
 	switch (sock_type)
 	{
-		case socktype_client:
+		case socktype_user:
 			{
-				dst_map = g_net_client_msg;
+				dst_map = g_net_user_msg;
 			}
 			break;
 		case socktype_manage:

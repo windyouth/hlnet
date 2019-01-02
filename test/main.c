@@ -51,7 +51,7 @@ int api_test()
 	}
 	puts("serv_create success");
 
-	if (SUCCESS != serv_ctl(socktype_client, 3366))
+	if (SUCCESS != serv_ctl(socktype_user, 3366))
 	{
 		puts("serv_ctl(socktype_client, 3366) failed");
 		return -1;
@@ -72,7 +72,7 @@ int api_test()
 	}
 	puts("serv_ctl(socktype_udp, 5566) success");
 
-	if (SUCCESS != reg_link_event(socktype_client, my_link_hander))
+	if (SUCCESS != reg_link_event(socktype_user, my_link_hander))
 	{
 		puts("reg_link_event failed");
 		return -1;

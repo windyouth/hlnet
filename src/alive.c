@@ -6,7 +6,7 @@
 
 #define				ALIVE_INTERVAL			30			//检查的间隔时间
 
-static list			*g_client_alive = NULL;				//活跃的客户端链表
+static list			*g_user_alive = NULL;				//活跃的客户端链表
 
 //检查连接的活跃时间
 int check_alive(struct _timer *timer)
@@ -16,7 +16,7 @@ int check_alive(struct _timer *timer)
 	uint64_t now = time(0);
 	
 	//遍历链表
-	item = g_client_alive->head;
+	item = g_user_alive->head;
 	while (item != NULL)
 	{
 		//参数检查与转换
@@ -26,7 +26,7 @@ int check_alive(struct _timer *timer)
 		//socket已经被断开
 		if (cli->fd == INVALID_SOCKET)
 		{
-			list_remove(g_client_alive, item);
+			list_remove(g_user_alive, item);
 			item = item->next;
 			recycle_client(cli);
 
@@ -38,7 +38,7 @@ int check_alive(struct _timer *timer)
 		if (now - cli->alive_time > ALIVE_INTERVAL)			
 		{
 			close_socket(cli);
-			list_remove(g_client_alive, item);
+			list_remove(g_user_alive, item);
 			item = item->next;
 			recycle_client(cli);
 
@@ -53,10 +53,10 @@ int check_alive(struct _timer *timer)
 int keep_alive()
 {
 	//初始化活跃链表
-	g_client_alive = (list *)malloc(sizeof(list));
-	if (!g_client_alive) return MEM_ERROR;
+	g_user_alive = (list *)malloc(sizeof(list));
+	if (!g_user_alive) return MEM_ERROR;
 
-	list_init(g_client_alive);
+	list_init(g_user_alive);
 	g_is_keep_alive = YES;
 
 	//开启定时器
@@ -72,7 +72,7 @@ void add_alive(int client_id)
 	client_t *cli = get_client(client_id);
 	if (!cli) return;
 
-	list_push_back(g_client_alive, cli);
+	list_push_back(g_user_alive, cli);
 }
 
 //更新活跃时间

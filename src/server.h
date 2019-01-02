@@ -14,7 +14,7 @@
 //监听方式
 typedef enum _sock_type 
 {
-	socktype_client = 1,			//tcp方式(用户端)
+	socktype_user = 1,	    		//tcp方式(用户端)
 	socktype_manage = 2,			//tcp方式(管理端)
 	socktype_udp = 3				//udp方式
 }sock_type_e;

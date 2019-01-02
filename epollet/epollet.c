@@ -23,15 +23,15 @@ static struct epoll_event  	*g_events = NULL;						//事件数组指针
 static int 					g_epoll_fd = INVALID_SOCKET;			//epoll元套接字
 
 //全局变量
-int 				g_client_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(用户端)
+int 				g_user_tcp_fd = INVALID_SOCKET;		    //监听的套接字ID(用户端)
 int 				g_manage_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(管理端)
 int 				g_udp_fd = INVALID_SOCKET;				//监听的套接字ID(UDP)
 
-list				*g_client_ready = NULL;					//就绪链表(用户端)
+list				*g_user_ready = NULL;					//就绪链表(用户端)
 list				*g_manage_ready = NULL;					//就绪链表(管理端)
 
-link_hander			g_client_link = NULL;					//连接事件函数指针(用户端)
-shut_hander			g_client_shut = NULL;					//断开事件函数指针(用户端)
+link_hander			g_user_link = NULL;					    //连接事件函数指针(用户端)
+shut_hander			g_user_shut = NULL;					    //断开事件函数指针(用户端)
 
 link_hander			g_manage_link = NULL;					//连接事件函数指针(管理端)
 shut_hander			g_manage_shut = NULL;					//断开事件函数指针(管理端)
@@ -42,6 +42,7 @@ uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 
 uint                g_user_first_length = 0;                //用户端首次接收的长度
 uint                g_manage_first_length = 0;              //管理端首次接收的长度
+
 
 //设备套接字为非阻塞
 static int set_nonblock(int fd)
@@ -147,14 +148,14 @@ static int epoll_add(int fd, int flag)
 //创建客户端监听套接字
 int create_client_fd(uint16_t port)
 {
-	g_client_tcp_fd = create_tcp_socket(port);
-	if (g_client_tcp_fd == INVALID_SOCKET) return FAILURE;
+	g_user_tcp_fd = create_tcp_socket(port);
+	if (g_user_tcp_fd == INVALID_SOCKET) return FAILURE;
 
 	//注册epoll事件
-	if (0 != epoll_add(g_client_tcp_fd, EPOLLIN | EPOLLET))
+	if (0 != epoll_add(g_user_tcp_fd, EPOLLIN | EPOLLET))
 	{
-		close(g_client_tcp_fd);
-		g_client_tcp_fd = INVALID_SOCKET;
+		close(g_user_tcp_fd);
+		g_user_tcp_fd = INVALID_SOCKET;
 		return FAILURE;
 	}
 
@@ -409,9 +410,9 @@ static void tcp_read(struct epoll_event *ev)
 	}
 
 	list *ready_list;
-    if (cli->parent == g_client_tcp_fd)
+    if (cli->parent == g_user_tcp_fd)
     {
-        ready_list = g_client_ready;
+        ready_list = g_user_ready;
     }
     else    
     {
@@ -457,9 +458,9 @@ static void tcp_accept(int fd)
 				add_alive(client->id);
             
             //赋值处理
-            if (fd == g_client_tcp_fd)
+            if (fd == g_user_tcp_fd)
             {
-                hander = g_client_link;
+                hander = g_user_link;
                 client->status.need = g_user_first_length;
             }
             else
@@ -490,7 +491,7 @@ void epollet_run(struct schedule *sche, void *arg)
 		//分发处理
 		for (i = 0; i < count; ++i)
 		{
-			if (g_events[i].data.fd == g_client_tcp_fd || 
+			if (g_events[i].data.fd == g_user_tcp_fd || 
 				g_events[i].data.fd == g_manage_tcp_fd)
 			{
 				tcp_accept(g_events[i].data.fd);
@@ -536,10 +537,10 @@ void close_socket(client_t *cli)
 	epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, cli->fd, &event);
 
 	//通知上层
-	if (cli->parent == g_client_tcp_fd)
+	if (cli->parent == g_user_tcp_fd)
 	{	
-		if (g_client_shut)
-			g_client_shut(cli->id); 
+		if (g_user_shut)
+			g_user_shut(cli->id); 
 	}
 	else if (cli->parent == g_manage_tcp_fd)
 	{
