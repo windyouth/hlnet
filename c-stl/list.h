@@ -51,14 +51,14 @@ int list_push_back(list *list, void *item);//insert item at tail.
 
 int list_insert_before(list *list, int index, void *item);//insert before index.
 
-//移除节点
-int list_remove(list *list, list_item *item);
-
+//移除尾节点
 list_item *list_remove_last(list *list);//rm tail item of list.
-
+//移除头节点
 list_item *list_remove_first(list *list);//rm head item of list.
-
+//根据索引移除节点
 list_item *list_remove_by_index(list *list, int index);// remove by index.
+//移除指定节点
+list_item *list_remove(list *list, list_item *item);
 
 list_item *list_find_by_index(list *list, int index); // find by index.
 #endif

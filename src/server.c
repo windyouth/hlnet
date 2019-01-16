@@ -84,7 +84,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
             //如果消息读完了，移出就绪链表
             if (cli->in->len <= 0)
             {
-                if (OP_LIST_SUCCESS == list_remove(g_user_ready, cli))
+                if (NULL != list_remove(g_user_ready, cli))
                 {
                     cli->is_ready = NO;
                 }
@@ -139,7 +139,7 @@ void issue_manage_msg(struct schedule *sche, void *arg)
             //如果消息读完了，移出就绪链表
             if (cli->in->len <= 0)
             {
-                if (OP_LIST_SUCCESS == list_remove(g_manage_ready, cli))
+                if (NULL != list_remove(g_manage_ready, cli))
                 {
                     cli->is_ready = NO;
                 }

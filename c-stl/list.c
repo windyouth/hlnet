@@ -45,7 +45,7 @@ void list_free_deep(list *list)
 
 int list_push_back(list *list, void *item)
 {
-    assert(list != NULL && list->inited == 1);
+    assert(list != NULL && list->inited == 1 && item);
     if(item == NULL)
     {
         return OP_LIST_FAILURE;
@@ -105,39 +105,6 @@ int list_insert_before(list *list, int index, void *item)
     return OP_LIST_SUCCESS;
 }
 
-//移除节点
-int list_remove(list *list, list_item *item)
-{
-	assert(list && list->inited == 1 && list->__list_size > 0 && item);
-	if (!list || list->inited != 1 || list->__list_size <= 0 || !item) 
-		return OP_LIST_FAILURE;
-
-	//item是头节点
-	if (list->head == item)
-	{
-		list->head = item->next;
-		//既是头节点，又是尾节点
-		if (list->tail == item)
-		{
-			list->tail = NULL;
-		}
-		else
-		{
-			item->next->prev = item->next;
-		}
-	}
-	else
-	{
-		//是中间结点或者尾节点
-		item->prev->next = item->next;
-		item->next->prev = item->prev;
-	}
-
-    --(list->__list_size);
-
-	return OP_LIST_SUCCESS;
-}
-
 //从尾部移除
 list_item *list_remove_last(list *list)
 {
@@ -178,6 +145,13 @@ list_item *list_remove_first(list *list)
     {
         list_item *head = list->head;
         list->head = head->next;
+
+#ifdef TEST
+        if (list->head == NULL)
+            printf("list: size= %d, head=0x%x, tail = 0x%x inited = %d \n",
+                    list->__list_size, list->head, list->tail, list->inited);
+#endif
+
         if(head->next != NULL)
         {
             head->next->prev = NULL;
@@ -211,6 +185,31 @@ list_item *list_remove_by_index(list *list, int index)
     
     --(list->__list_size);
     return rm;
+}
+
+//移除指定节点
+list_item *list_remove(list *list, list_item *item)
+{
+    //参数校验
+    assert(list && list->inited == 1 && list->__list_size > 0 && item);
+    if (!list || list->inited != 1 || list->__list_size <= 0 || !item)
+        return NULL;    
+
+    //如果是头节点
+    if (item == list->head) return list_remove_first(list);
+    //如果是尾节点
+    if (item == list->tail) return list_remove_last(list);
+
+    //如果是中间节点
+    item->prev->next = item->next;
+    item->next->prev = item->prev;
+    item->prev = NULL;
+    item->next = NULL;
+
+    //统计数减一
+    --(list->__list_size);
+    
+    return item;
 }
 
 list_item *list_find_by_index(list *list, int index)

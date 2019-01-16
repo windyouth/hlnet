@@ -11,7 +11,9 @@
 #include "../hlnet/include/algorithm.h"
 #include "../hlnet/include/common.h"
 
-#define         CONN_COUNT      300
+#define         CONN_COUNT      25000
+#define         MSG_COUNT       4
+#define         USLEEP_TIME     2
 
 int g_sent_count = 0;
 int g_recv_count = 0;
@@ -99,7 +101,7 @@ void create_fds()
 			exit(1);
 		}
 
-        usleep(1);
+        usleep(USLEEP_TIME);
 	}
 }
 
@@ -112,7 +114,7 @@ void send_msg()
     g_usec_start = g_time_start.tv_sec * 1000000 + g_time_start.tv_nsec / 1000;
     printf("开始时间：%lld微秒 \n", g_usec_start);
 
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < MSG_COUNT; ++i)
 	{
 		for (int j = 0; j < CONN_COUNT; j++)
 		{
@@ -127,7 +129,7 @@ void send_msg()
             }
 
             if (j % 10 == 0)
-                usleep(1);
+                usleep(USLEEP_TIME);
 		}
 	}
 
@@ -144,7 +146,7 @@ void *recv_msg(void *arg)
     //等待通知
     sem_wait(&sem_ok);
 
-    for (i = 0; i < 100; ++i)
+    for (i = 0; i < MSG_COUNT; ++i)
 	{
 		for (int j = 0; j < CONN_COUNT; j++)
 		{
@@ -159,7 +161,7 @@ void *recv_msg(void *arg)
                 //printf("收到第%d个消息包，长度为：%d \n", g_recv_count, res);
             }
 		}
-        usleep(1);
+        usleep(USLEEP_TIME);
 	}
 
     clock_gettime(CLOCK_MONOTONIC, &g_time_end);
@@ -183,6 +185,8 @@ void *recv_msg(void *arg)
 
 void main()
 {
+    printf("连接的客户端数：%d \n", CONN_COUNT);
+
     pthread_t pt_recv = 0;
     sem_init(&sem_ok, 0, 0);
 
