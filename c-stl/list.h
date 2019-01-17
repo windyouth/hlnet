@@ -1,65 +1,56 @@
 /*
- * A list template, linkedlist, 2 direction.
- *
- * @author ZhangShiming
+ * 说明：双向循环链表
+ * 作者：何峦
+ * 日期：2019-01-17
  */
-#ifndef __LIST_H_
-#define __LIST_H_
-#include<stdio.h>
-#include<assert.h>
-#include<stdlib.h>
 
-/* base list "class" for child to "extend" 
- * ,however some compilers implment it not as first addr.
- */
-#define as_list_item list_item __list_item
+#ifndef _LIST_H_
+#define _LIST_H_
 
-#define OP_LIST_SUCCESS (1)
-#define OP_LIST_FAILURE (-1)
+//错误码定义
+#define 		OP_LIST_SUCCESS 		(0)
+#define 		OP_LIST_FAILURE 		(-1)
+#define 		OP_LIST_MEM_ERROR 		(-2)
+#define 		OP_LIST_PARAM_ERROR	    (-3)
 
+//作为链表头，应用结构体头部包含。
+#define     as_list_item    list_item __list_item       
+
+//链表头
 typedef struct _list_item
 {
-    struct _list_item *prev;
-    struct _list_item *next;
+    struct _list_item   *prev;      //前向指针
+    struct _list_item   *next;      //后向指针
 }list_item;
 
+//链表
 typedef struct _list
 {
-    size_t __list_size;
-    list_item *head;
-    list_item *tail;
-    unsigned char inited;
-    //int (*list_init)(struct _list *list);
+    size_t          size;           //数量
+    list_item       *head;          //头指针
+    list_item       *tail;          //尾指针
+    unsigned char   inited;         //是否初始化
 }list;
 
-#define 	list_size(list) 	((list)->__list_size) 		//链表大小
+//创建一个链表
+list *list_create();
+//销毁链表
+#define list_free(list)     free(list)
+//销毁链表(带元素释放)
+void list_free_deep(list *list);
+//从该元素前面插入
+int list_insert_before(list *list, list_item *pos, list_item *item);
+//从该元素后面插入
+int list_insert_after(list *list, list_item *pos, list_item *item);
+//从链表头部插入
+int list_push_front(list *list, void *item);
+//从链表尾部插入
+int list_push_back(list *list, void *item);
+//删除一个元素
+list_item *list_erase(list *list, list_item *item);
+//删除第一个元素
+list_item *list_pop_front(list *list);
+//删除最后一个元素
+list_item *list_pop_back(list *list);
 
-//遍历链表
-#define list_foreach(__plist__, plist_item) \
-            for(plist_item = (__plist__)->head;\
-                        plist_item != NULL;\
-                             plist_item = plist_item->next)
-
-//init empty linkedlist.
-void list_init(list *list);
-
-void list_free_shalow(list *list);//destroy linkedlist. member is stack mem.
-
-void list_free_deep(list *list);//destroy linkedlist. member is heap mem.
-
-int list_push_back(list *list, void *item);//insert item at tail.
-
-int list_insert_before(list *list, int index, void *item);//insert before index.
-
-//移除尾节点
-list_item *list_remove_last(list *list);//rm tail item of list.
-//移除头节点
-list_item *list_remove_first(list *list);//rm head item of list.
-//根据索引移除节点
-list_item *list_remove_by_index(list *list, int index);// remove by index.
-//移除指定节点
-list_item *list_remove(list *list, list_item *item);
-
-list_item *list_find_by_index(list *list, int index); // find by index.
 #endif
-
