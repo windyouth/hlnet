@@ -16,6 +16,12 @@
 //作为链表头，应用结构体头部包含。
 #define     as_list_item    list_item __list_item       
 
+#define list_size(list)	    (list)->size				//取得链表大小
+#define list_empty(list)	((list)->size == 0)	        //判断链表是否为空
+#define list_only_one(list) ((list)->size == 1)         //是否只有一个元素
+#define list_front(list)	(list)->head			    //返回链表第一个元素
+#define list_back(list)	    (list)->tail			    //返回链表最后一个元素
+
 //链表头
 typedef struct _list_item
 {
@@ -34,23 +40,29 @@ typedef struct _list
 
 //创建一个链表
 list *list_create();
-//销毁链表
-#define list_free(list)     free(list)
 //销毁链表(带元素释放)
-void list_free_deep(list *list);
+void list_free(list *list);
+//销毁链表
+#define list_free_shalow(list)     free(list)
+
 //从该元素前面插入
 int list_insert_before(list *list, list_item *pos, list_item *item);
 //从该元素后面插入
 int list_insert_after(list *list, list_item *pos, list_item *item);
 //从链表头部插入
-int list_push_front(list *list, void *item);
+int list_push_front(list *list, list_item *item);
 //从链表尾部插入
-int list_push_back(list *list, void *item);
+int list_push_back(list *list, list_item *item);
+
 //删除一个元素
 list_item *list_erase(list *list, list_item *item);
 //删除第一个元素
-list_item *list_pop_front(list *list);
+#define list_pop_front(list)    list_erase(list, list->head)
 //删除最后一个元素
-list_item *list_pop_back(list *list);
+#define list_pop_back(list)     list_erase(list, list->tail)
+
+//遍历链表
+typedef void (* deal_func)(list_item *item);
+void list_foreach(list *list, deal_func deal);
 
 #endif
