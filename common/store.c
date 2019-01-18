@@ -10,15 +10,13 @@ store_t *create_store(uint chunk_size)
 	if (!store) return NULL;
 
 	store->chunk_size = chunk_size;
-	store->chunk_list = (list *)malloc(sizeof(list));
+	store->chunk_list = list_create();
 	if (!store->chunk_list) 
 	{
 		safe_free(store);
 
 		return NULL;
 	}
-
-	list_init(store->chunk_list);
 
 	return store;
 }
@@ -33,7 +31,7 @@ void *extract_chunk(store_t *store)
 	//如果有现成的，直接取出。
 	if (list_size(store->chunk_list) > 0) 
 	{
-		list_item *item = list_remove_first(store->chunk_list); 
+		list_item *item = list_pop_front(store->chunk_list); 
 		if (!item) return NULL;
 
 		return (void *)((ulong)item + sizeof(list_item));

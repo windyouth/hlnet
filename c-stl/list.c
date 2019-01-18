@@ -20,7 +20,7 @@ void list_free(list *list)
     assert(list);
     if (!list) return;
 
-    if (list_empty(list)) return;
+    if (list_empty(list)) goto end;
 
     list_item *temp = list->head;
     list_item *next;
@@ -32,6 +32,7 @@ void list_free(list *list)
         temp = next;
     } while(temp != list->head);
     
+end:
     free((void *)list);
 }
 
@@ -160,19 +161,24 @@ end:
 }
 
 //遍历链表
-void list_foreach(list *list, deal_func deal)
+void _list_foreach(list *list, deal_func deal, void *arg)
 {
     //参数校验
     assert(list && deal);
     if (!list || !deal) return;
 
+    //空链表，直接返回
+    if (list_empty(list)) return;
+
     //遍历各元素
     list_item *item = list->head;
+    list_item *next;
     do
     {
+        next = item->next;
         //执行操作
-        deal(item);
-        item = item->next;
+        deal(item, arg);
+        item = next;
     } 
     while(item != list->head);
 }

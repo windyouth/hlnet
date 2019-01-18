@@ -15,12 +15,17 @@
 
 //作为链表头，应用结构体头部包含。
 #define     as_list_item    list_item __list_item       
-
 #define list_size(list)	    (list)->size				//取得链表大小
 #define list_empty(list)	((list)->size == 0)	        //判断链表是否为空
 #define list_only_one(list) ((list)->size == 1)         //是否只有一个元素
 #define list_front(list)	(list)->head			    //返回链表第一个元素
 #define list_back(list)	    (list)->tail			    //返回链表最后一个元素
+
+//遍历链表
+#define list_foreach(list, item)                                               \
+    for (int i = list_size(list), item = (list)->head, list_item *next = NULL;  \
+         item != NULL && i >= 0 && (next = item->next);                         \
+         i--, item = next)
 
 //链表头
 typedef struct _list_item
@@ -62,7 +67,7 @@ list_item *list_erase(list *list, list_item *item);
 #define list_pop_back(list)     list_erase(list, list->tail)
 
 //遍历链表
-typedef void (* deal_func)(list_item *item);
-void list_foreach(list *list, deal_func deal);
+typedef void (* deal_func)(list_item *item, void *arg);
+void _list_foreach(list *list, deal_func deal, void *arg);
 
 #endif

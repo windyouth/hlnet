@@ -22,7 +22,7 @@ typedef struct _store
 //销毁仓库
 #define destroy_store(store) do 						\
 {														\
-	list_free_deep(store->chunk_list);					\
+	list_free(store->chunk_list);					\
 	safe_free(store->chunk_list);						\
 	safe_free(store);									\
 } while(0)
@@ -30,7 +30,7 @@ typedef struct _store
 //回收内存块
 #define recycle_chunk(store, chunk) do 												\
 {																					\
-	list_push_back(store->chunk_list, (void *)((ulong)chunk - sizeof(list_item)));	\
+	list_push_back(store->chunk_list, (list_item *)((ulong)chunk - sizeof(list_item)));	\
 } while(0)
 
 //创建仓库

@@ -41,10 +41,8 @@ int client_store_init()
 		return REPEAT_ERROR;
 
 	//初始化空闲链表
-	g_user_free = (list *)malloc(sizeof(list));
+	g_user_free = list_create();
 	if (!g_user_free) return MEM_ERROR;
-
-	list_init(g_user_free);
 
 	//初始化仓库数组
 	g_user_store = (array *)malloc(sizeof(array));
@@ -62,7 +60,6 @@ void client_store_free()
 	array_free_deep(g_user_store);
 	safe_free(g_user_store);
 	//释放空闲链表
-	list_free_shalow(g_user_free);
 	safe_free(g_user_free);
 }
 
@@ -70,7 +67,7 @@ void client_store_free()
 client_t *extract_client()
 {
 	if (list_size(g_user_free) > 0)
-		return (client_t *)list_remove_first(g_user_free);
+		return (client_t *)list_pop_front(g_user_free);
 	
 	client_t *item = (client_t *)malloc(sizeof(client_t));
 	if (!item) return NULL;

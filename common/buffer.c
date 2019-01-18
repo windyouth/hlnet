@@ -1,7 +1,6 @@
 #include <assert.h>
 #include "buffer.h"
 #include "store.h"
-#include "../c-stl/list.h"
 
 #define					BUFFER_ORIGINAL_SIZE				256
 
