@@ -5,7 +5,7 @@
 //创建一个链表
 list *list_create()
 {
-    list *list = (list *)malloc(sizeof(struct _list));
+    list *list = (struct _list *)malloc(sizeof(struct _list));
     if (!list) return NULL;
 
     memset(list, 0, sizeof(struct _list));
@@ -19,6 +19,8 @@ void list_free(list *list)
 {
     assert(list);
     if (!list) return;
+
+    if (list_empty(list)) return;
 
     list_item *temp = list->head;
     list_item *next;

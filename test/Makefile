@@ -13,8 +13,11 @@ all: queue_test array_test coroutine_test
 queue_test: queue_test.c  ../c-stl/queue.c ../common/algorithm.h
 	$(compiler) queue_test.c ../c-stl/queue.c ../common/algorithm.h -o test-queue -g
 
-list_test: list_test.c
-	$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -g
+#list_test: list_test.c
+#	$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -g
+
+list_test: list_test.c ../c-stl/list.c ../c-stl/list.h
+	$(compiler) -o $@ $^ -g
 
 array_test: array_test.c ../c-stl/array.c
 	$(compiler) test-array.c ../c-stl/array.c -o test-array -g

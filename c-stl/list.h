@@ -32,7 +32,7 @@ typedef struct _list_item
 //链表
 typedef struct _list
 {
-    size_t          size;           //数量
+    long            size;           //数量
     list_item       *head;          //头指针
     list_item       *tail;          //尾指针
     unsigned char   inited;         //是否初始化
