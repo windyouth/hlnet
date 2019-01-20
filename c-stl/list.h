@@ -21,11 +21,6 @@
 #define list_front(list)	(list)->head			    //返回链表第一个元素
 #define list_back(list)	    (list)->tail			    //返回链表最后一个元素
 
-//遍历链表
-#define list_foreach(list, item)                                               \
-    for (int i = list_size(list), item = (list)->head, list_item *next = NULL;  \
-         item != NULL && i >= 0 && (next = item->next);                         \
-         i--, item = next)
 
 //链表头
 typedef struct _list_item
@@ -45,9 +40,21 @@ typedef struct _list
 
 //创建一个链表
 list *list_create();
+//清理链表
+void list_clear(list *list);
+
 //销毁链表(带元素释放)
-void list_free(list *list);
-//销毁链表
+#define list_free(list) do      \
+{                               \
+    if (list)                   \
+    {                           \
+        list_clear(list);       \
+        free(list);             \
+        list = 0;               \
+    }                           \
+} while(0)
+
+//直接销毁链表
 #define list_free_shalow(list)     free(list)
 
 //从该元素前面插入
@@ -62,12 +69,12 @@ int list_push_back(list *list, list_item *item);
 //删除一个元素
 list_item *list_erase(list *list, list_item *item);
 //删除第一个元素
-#define list_pop_front(list)    list_erase(list, list->head)
+#define list_pop_front(list)    list_erase(list, (list)->head)
 //删除最后一个元素
-#define list_pop_back(list)     list_erase(list, list->tail)
+#define list_pop_back(list)     list_erase(list, (list)->tail)
 
 //遍历链表
 typedef void (* deal_func)(list_item *item, void *arg);
-void _list_foreach(list *list, deal_func deal, void *arg);
+void list_foreach(list *list, deal_func deal, void *arg);
 
 #endif

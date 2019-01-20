@@ -14,26 +14,22 @@ list *list_create()
     return list;
 }
 
-//销毁链表(成员在堆上时)
-void list_free(list *list)
+//释放元素
+static void free_item(list_item *item, void *arg)
 {
+    list_erase((list *)arg, item);
+    free(item);
+}
+
+//清理链表
+void list_clear(list *list)
+{   
     assert(list);
     if (!list) return;
 
-    if (list_empty(list)) goto end;
+    if (list_empty(list)) return;
 
-    list_item *temp = list->head;
-    list_item *next;
-    do
-    {
-        next = temp->next;
-        //释放元素内存
-        free((void *)temp);
-        temp = next;
-    } while(temp != list->head);
-    
-end:
-    free((void *)list);
+    list_foreach(list, free_item, list);
 }
 
 //从该元素前面插入
@@ -161,7 +157,7 @@ end:
 }
 
 //遍历链表
-void _list_foreach(list *list, deal_func deal, void *arg)
+void list_foreach(list *list, deal_func deal, void *arg)
 {
     //参数校验
     assert(list && deal);
@@ -171,8 +167,8 @@ void _list_foreach(list *list, deal_func deal, void *arg)
     if (list_empty(list)) return;
 
     //遍历各元素
-    list_item *item = list->head;
-    list_item *next;
+    long i = list->size;
+    list_item *item = list->head, *next = 0;
     do
     {
         next = item->next;
@@ -180,5 +176,5 @@ void _list_foreach(list *list, deal_func deal, void *arg)
         deal(item, arg);
         item = next;
     } 
-    while(item != list->head);
+    while(--i > 0);
 }

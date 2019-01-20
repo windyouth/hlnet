@@ -61,12 +61,12 @@ static void deal_msg(list_item *item, void *arg)
     list *ready_list;
 
     //容器定位
-    if ((tcp_type)arg == tcp_type_user)
+    if ((sock_type_e)arg == socktype_user)
     {
         msg_map = g_net_user_msg;
         ready_list = g_user_ready;
     }
-    else if ((tcp_type)arg == tcp_type_manage)
+    else if ((sock_type_e)arg == socktype_manage)
     {
         msg_map = g_net_manage_msg;
         ready_list = g_manage_ready;
@@ -113,7 +113,7 @@ void issue_client_msg(struct schedule *sche, void *arg)
 {
 	for (;;)
 	{
-        list_foreach(g_user_ready, deal_msg, tcp_type_user)
+        list_foreach(g_user_ready, deal_msg, socktype_user)
 
 		coroutine_yield(sche);
 	}//end for
@@ -124,7 +124,7 @@ void issue_manage_msg(struct schedule *sche, void *arg)
 {
 	for (;;)
 	{
-        list_foreach(g_manage_ready, deal_msg, tcp_type_manage)
+        list_foreach(g_manage_ready, deal_msg, socktype_manage)
 
 		coroutine_yield(sche);
 	}
