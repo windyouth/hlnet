@@ -48,7 +48,7 @@ static void kernel_message(int client_id, cmd_head_t *head, char *data)
 }
 
 //处理网络消息
-static void deal_msg(list_item *item, void *arg)
+static void deal_msg(list *ready_list, list_item *item, map *msg_map)
 {
     //变量定义
     cmd_head_t *head = NULL;
@@ -56,23 +56,8 @@ static void deal_msg(list_item *item, void *arg)
 	msg_func_item *func_item;
 	tcpmsg_hander hander;
 	char cmd[8];
-    client_t *cli;
-    map *msg_map;
-    list *ready_list;
 
-    //容器定位
-    if ((sock_type_e)arg == socktype_user)
-    {
-        msg_map = g_net_user_msg;
-        ready_list = g_user_ready;
-    }
-    else if ((sock_type_e)arg == socktype_manage)
-    {
-        msg_map = g_net_manage_msg;
-        ready_list = g_manage_ready;
-    }
-
-    cli = (client_t *)item;
+    client_t *cli = (client_t *)item;
 
     //从输入缓冲区读数据，每次只读一条
 	buffer_read(cli->in, head, sizeof(*head));
@@ -109,11 +94,17 @@ static void deal_msg(list_item *item, void *arg)
 }
 
 //网络消息分发(客户端)
-void issue_client_msg(struct schedule *sche, void *arg)
+void issue_user_msg(struct schedule *sche, void *arg)
 {
+    long index;
+    list_item *item, *temp;
+
 	for (;;)
 	{
-        list_foreach(g_user_ready, deal_msg, socktype_user)
+        list_foreach(g_user_ready, index, item, temp)
+        {
+            deal_msg(g_user_ready, item, g_net_user_msg);
+        }
 
 		coroutine_yield(sche);
 	}//end for
@@ -122,9 +113,14 @@ void issue_client_msg(struct schedule *sche, void *arg)
 //网络消息分发(管理端)
 void issue_manage_msg(struct schedule *sche, void *arg)
 {
+    long index;
+    list_item *item, *temp;
 	for (;;)
 	{
-        list_foreach(g_manage_ready, deal_msg, socktype_manage)
+        list_foreach(g_manage_ready, index, item, temp)
+        {
+            deal_msg(g_manage_ready, item, g_net_manage_msg);
+        }
 
 		coroutine_yield(sche);
 	}
@@ -174,7 +170,7 @@ static int create_tcp_client(uint16_t port)
 	if (!g_user_ready) return MEM_ERROR;
 		
 	//创建协程
-	if (-1 == coroutine_new(g_schedule, issue_client_msg, NULL))
+	if (-1 == coroutine_new(g_schedule, issue_user_msg, NULL))
 		return FAILURE;
 
 	return SUCCESS;

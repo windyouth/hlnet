@@ -12,9 +12,10 @@ static list			*g_client_alive = NULL;				//活跃的客户端链表
 int check_alive(struct _timer *timer)
 {
 	uint64_t now = time(0);
-    list_item *item = 0;
+    list_item *item = 0, *temp = 0;
+    long index = 0;
 
-    list_foreach(g_client_alive, item)
+    list_foreach(g_client_alive, index, item, temp)
     {
         client_t *cli = (client_t *)item;
 
@@ -44,10 +45,9 @@ int check_alive(struct _timer *timer)
 int keep_alive()
 {
 	//初始化活跃链表
-	g_client_alive = (list *)malloc(sizeof(list));
+	g_client_alive = list_create();
 	if (!g_client_alive) return MEM_ERROR;
 
-	list_init(g_client_alive);
 	g_is_keep_alive = YES;
 
 	//开启定时器

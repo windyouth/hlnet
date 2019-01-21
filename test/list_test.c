@@ -35,7 +35,7 @@ void normal_test()
     snprintf(stu->name, 32, "李四");
     list_push_back(list, stu);
 
-    student *temp = stu = (student *)malloc(sizeof(student));
+    student *temp1 = stu = (student *)malloc(sizeof(student));
     stu->id = 3;
     snprintf(stu->name, 32, "王五");
     list_push_front(list, stu);
@@ -50,26 +50,64 @@ void normal_test()
     snprintf(stu->name, 32, "赵七");
     list_push_front(list, stu);
 
+    //_list_foreach(list, deal_data, 0);
+    list_item *temp, *item;
+    long index;
+    list_foreach(list, index, item, temp)
+    {
+        stu = (student *)item;
+        printf("学号: %d, 姓名：%s \n", stu->id, stu->name);
+    }
     printf("元素数量：%ld \n", list_size(list));
-    list_foreach(list, deal_data, 0);
 
     puts("--------------------------");
-    list_pop_front(list);
+    //list_pop_front(list);
     puts("删除头元素后");
+    //_list_foreach(list, deal_data, 0);
+    list_item *item_head = list->head;
+    list_foreach(list, index, item, temp)
+    {
+        if (item == item_head)
+        {
+            list_erase(list, item);
+            continue;
+        }
+        stu = (student *)item;
+        printf("学号: %d, 姓名：%s \n", stu->id, stu->name);
+    }
     printf("元素数量：%ld \n", list_size(list));
-    list_foreach(list, deal_data, 0);
 
     puts("--------------------------");
-    list_pop_back(list);
+    //list_pop_back(list);
     puts("删除尾元素后");
+    //_list_foreach(list, deal_data, 0);
+    list_foreach(list, index, item, temp)
+    {
+        if (item == list->tail)
+        {
+            list_erase(list, item);
+            continue;
+        }
+        stu = (student *)item;
+        printf("学号: %d, 姓名：%s \n", stu->id, stu->name);
+    }
     printf("元素数量：%ld \n", list_size(list));
-    list_foreach(list, deal_data, 0);
 
     puts("--------------------------");
-    list_erase(list, temp);
+    //list_erase(list, temp1);
     puts("删除中间元素后");
+    //_list_foreach(list, deal_data, 0);
+    list_foreach(list, index, item, temp)
+    {
+        if (item == temp1)
+        {
+            list_erase(list, item);
+            continue;
+        }
+        stu = (student *)item;
+        printf("学号: %d, 姓名：%s \n", stu->id, stu->name);
+    }
     printf("元素数量：%ld \n", list_size(list));
-    list_foreach(list, deal_data, 0);
 
     list_free(list);
 }
@@ -105,7 +143,14 @@ void press_test()
         list_push_back(left, list_pop_back(right));
     }
     
-    list_foreach(left, deal_data, left);
+    //list_foreach(left, deal_data, left);
+    list_item *temp, *item;
+    long index;
+    list_foreach(left, index, item, temp)
+    {
+        stu = (student *)item;
+        printf("学号: %d, 姓名：%s \n", stu->id, stu->name);
+    }
 
     printf("左链表元素数量：%ld \n", list_size(left));
     printf("右链表元素数量：%ld \n", list_size(right));
@@ -116,5 +161,6 @@ void press_test()
 
 void main(int argc, char **argv)
 {
-    press_test();
+    //press_test();
+    normal_test();
 }

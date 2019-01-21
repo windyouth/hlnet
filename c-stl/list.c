@@ -29,7 +29,7 @@ void list_clear(list *list)
 
     if (list_empty(list)) return;
 
-    list_foreach(list, free_item, list);
+    list_for_each(list, free_item, list);
 }
 
 //从该元素前面插入
@@ -157,7 +157,7 @@ end:
 }
 
 //遍历链表
-void list_foreach(list *list, deal_func deal, void *arg)
+void list_for_each(list *list, deal_func deal, void *arg)
 {
     //参数校验
     assert(list && deal);
