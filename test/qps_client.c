@@ -12,7 +12,7 @@
 #include "../hlnet/include/common.h"
 
 #define         CONN_COUNT      25000
-#define         MSG_COUNT       4
+#define         MSG_COUNT       2
 #define         USLEEP_TIME     2
 
 int g_sent_count = 0;

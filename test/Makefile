@@ -38,7 +38,8 @@ qps_server: qps_server.c define.h
 	$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -g
 
 qps_client: qps_client.c define.h
-	$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -lpthread -lrt
+	$(compiler) -o $@ $^ -lpthread -lrt
+#$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -lpthread -lrt
 
 timer_test: timer_test.c
 	$(compiler) -o $@ $^ -L../hlnet/lib -lhlnet -g -D $(define_flag)

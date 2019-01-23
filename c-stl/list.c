@@ -1,6 +1,4 @@
 #include "list.h"
-#include <assert.h>
-#include <string.h>
 
 //创建一个链表
 list *list_create()

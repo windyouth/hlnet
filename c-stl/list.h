@@ -7,6 +7,10 @@
 #ifndef _LIST_H_
 #define _LIST_H_
 
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+
 //错误码定义
 #define 		OP_LIST_SUCCESS 		(0)
 #define 		OP_LIST_FAILURE 		(-1)
