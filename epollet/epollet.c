@@ -14,7 +14,6 @@
 
 
 #define				MAX_EVENT_COUNT			1024			//一次能接收的最多事件个数
-#define				MAX_CMDDATA_LEN			65000			//数据体的最大长度
 
 #define				GLOBAL_BUF_ORIGIN_SIZE	4096 * 5		//全局缓冲区初始大小
 
@@ -301,7 +300,7 @@ int epollet_create()
 //		   =0 内核缓冲区已经读空
 //		   <0 网络异常，关闭套接字
 //-----------------------------------------------------------
-static int read_data(struct epoll_event *ev, list *ready_list)
+static int read_data(struct epoll_event *ev)
 {
 	//参数检查
 	assert(ev && ready_list);
@@ -309,10 +308,10 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 
 	client_t *cli = (client_t *)ev->data.ptr;
 	//需要的已读完，读无可读。
-	if (cli->status.need == 0) return SUCCESS;
+	if (cli->need == 0) return SUCCESS;
 
 	//调整缓冲区结构
-	int res = buffer_rectify(cli->in, cli->status.need);
+	int res = buffer_rectify(cli->in, cli->need);
 	if (res < 0)
 	{
 		//由于是边缘触发，为防止该套接字变僵尸，直接删除之。
@@ -326,8 +325,7 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 	}
 
 	//接收数据
-	int len = cli->status.need;
-	res = circle_recv(cli->fd, write_ptr(cli->in), len);
+	res = circle_recv(cli->fd, write_ptr(cli->in), cli->need);
 	if (res < 0) 
 	{
 		close_socket(cli);
@@ -339,61 +337,12 @@ static int read_data(struct epoll_event *ev, list *ready_list)
 
 	//更新索引和状态
 	seek_write(cli->in, res);
-	cli->status.need = len - res;
 
-	//只读了一部分，提前返回。此处包括res=0的情况。
-	if (res < len) return 0;
-
-    //如果读的是数据头
-	if (cli->status.part == READ_PART_HEAD)
-	{
-		//数据头参数判断
-		cmd_head_t *head = read_ptr(cli->in);
-        //如果大于规定值，踢掉。
-		if (head->data_size > MAX_CMDDATA_LEN) 
-		{
-			close_socket(cli);
-			if (!g_is_keep_alive) 
-				recycle_client(cli);
-
-			return FAILURE;
-		}
-
-		//如果客户端提示有数据，却只发送一个包头过来，
-        //此后将不会得到任何处理，直到被检测链表断开。
-		if (head->data_size > 0) 
-		{
-			cli->status.part = READ_PART_DATA;
-			cli->status.need = head->data_size;
-		}
-		else
-		{
-            //加入就绪链表
-            if (cli->is_ready == NO)
-            {
-                if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
-                {
-                    cli->is_ready = YES;
-                }
-            }
-		}
-	}
-	else            //如果读的是数据体
-	{
-        //加入就绪链表
-        if (cli->is_ready == NO)
-        {
-            if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
-            {
-                cli->is_ready = YES;
-            }
-        }
-        
-		cli->status.part = READ_PART_HEAD;
-		cli->status.need = sizeof(cmd_head_t);
-	}
-
-	return res;
+	//已经读空了，返回零。此处包括res=0的情况。
+	if (res < cli->need) 
+        return 0;
+    else
+	    return res;
 }
 
 //tcp事件读取函数
@@ -409,17 +358,24 @@ static void tcp_read(struct epoll_event *ev)
 		return;
 	}
 
-	list *ready_list;
-    if (cli->parent == g_user_tcp_fd)
-    {
-        ready_list = g_user_ready;
-    }
-    else    
-    {
-        ready_list = g_manage_ready;
-    }
+    //读空为止
+	while (read_data(ev) > 0);
 
-	while (read_data(ev, ready_list) > 0);
+    //如果已经达到要求长度
+    if (buffer_length(cli->in) >= cli->need)
+    {
+        //加入就绪链表
+        if (cli->is_ready == NO)
+        {
+	        list *ready_list = (cli->parent == g_user_tcp_fd) ? 
+                                g_user_ready : g_manage_ready;
+
+            if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
+            {
+                cli->is_ready = YES;
+            }
+        }
+    }
 }
 
 //接收tcp连接

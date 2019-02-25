@@ -8,8 +8,8 @@
 //重置客户端结构
 #define client_reset(cli) do							\
 {														\
-	cli->status.part = READ_PART_HEAD;					\
-	cli->status.need = sizeof(cmd_head_t);		    	\
+	cli->status = 0;					                \
+	cli->need = 0;		                            	\
 	cli->fd = INVALID_SOCKET;  							\
 	cli->is_safe = NO;									\
 	cli->is_ready = NO;									\
@@ -25,35 +25,21 @@
 	safe_free(cli);										\
 }while (0)
 
-//正在读的部分
-enum read_part_e
-{
-	READ_PART_HEAD 		= 1,			//正在读包头
-	READ_PART_DATA 		= 2				//正在读数据
-};
-
-//读状态
-typedef struct _read_status
-{
-	uint16_t			need;			//未读完的字节数
-	uint8_t				part;			//参见：read_part_e
-	uint8_t				reserve;		//保留字段 
-}read_status_t, *pread_status;
-
 //客户端信息
 typedef struct _client
 {
 	as_list_item;
-	uint64_t			alive_time;		//上次活跃时间
-	uint32_t			id;				//套接字对应的内部使用索引号
+	ulong			    alive_time;		//上次活跃时间
+	uint			    id;				//套接字对应的内部使用索引号
 	int					fd;				//socket文件描述符
-	uint32_t			ip;				//客户端IP地址
+	uint			    ip;				//客户端IP地址
 	int 				parent;			//所属的父文件描述符
-	read_status_t		status;			//读状态
 	buffer				*in;			//读缓冲区
 	buffer				*out;			//写缓冲区
-	uint8_t				is_safe;		//是否通过安全认证
-	uint8_t				is_ready;		//是否处在就绪链表中
+	ushort	    		need;			//未读完的字节数
+    uchar               status;         //当前状态
+	uchar				is_safe;		//是否通过安全认证
+	uchar				is_ready;		//是否处在就绪链表中
 }client_t, *pclient;
 
 //初始化客户端结构体
@@ -70,6 +56,6 @@ client_t *extract_client();
 void recycle_client(client_t *cli);
 
 //根据id查询客户端
-client_t *get_client(uint32_t id);
+client_t *get_client(uint id);
 
 #endif //_CLIENT_H_

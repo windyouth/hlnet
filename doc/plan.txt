@@ -21,5 +21,4 @@
 * 封装原子数据类型
 * 引入probuffer的pbc库
 * 引入封装的cjson库
-* 参照cjson的设计思路，重写libconfig库部分代码，改进性能，减少代码量。
-
+* 引入封闭的mxml库

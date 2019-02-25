@@ -1,7 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <stdint.h>
+#include <sys/types.h>
 
 //错误码
 #define				SUCCESS					0					//成功
@@ -25,28 +25,21 @@
 #define				CMD_KERNEL_HEARTBEAT	0x00				//心跳
 #define				CMD_KERNEL_END			0x0F				//最后一个内核命令
 
-//网络数据包头
-typedef struct _cmd_head
-{
-	uint32_t		data_size;			//数据部分大小
-	uint16_t		cmd_code;			//命令码
-	uint16_t		proto_ver;			//协议版本号
-}cmd_head_t, *pcmd_head;
 
 //连接事件
-typedef int (*link_hander)(int client_id, uint32_t ip);
+typedef int (*link_hander)(int client_id, uint ip);
 //关闭事件
 typedef int (*shut_hander)(int client_id);
 
 //TCP消息函数
 //head中需要用到data_size和proto_ver两个值，cmd_code不需要关注。
-typedef int (*tcpmsg_hander)(int client_id, cmd_head_t *head, char *data);
+typedef int (*tcpmsg_hander)(int client_id, char *data, uint len);
 //UDP消息函数，ip和port是大端(网络序)
-typedef int (*udpmsg_hander)(uint32_t ip, uint16_t port, cmd_head_t *head, char *data);
+typedef int (*udpmsg_hander)(uint ip, ushort port, cmd_head_t *head, char *data);
 //UDP读取函数
 typedef void (*udp_reader)(int fd);
 //数据库消息函数
-typedef int (*dbmsg_hander)(char *data, uint32_t len);
+typedef int (*dbmsg_hander)(char *data, uint len);
 
 typedef			unsigned char		uchar;			//无符号8位整数
 

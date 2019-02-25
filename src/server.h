@@ -27,9 +27,9 @@ int serv_ctl(sock_type_e sock_type, short port);
 int serv_run();
 
 //设置初次接收数据包的长度
-int set_first_length(sock_type_e sock_type, uint32_t length);
+int set_first_length(sock_type_e sock_type, uint length);
 //设置下次接收数据包的长度
-int set_next_length(uint32_t client_id, uint32_t length);
+int set_next_length(uint client_id, uint length);
 
 //注册连接事件处理函数
 int reg_link_event(sock_type_e type, link_hander func);
@@ -42,8 +42,8 @@ int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func);
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
 
 //发送数据(tcp)
-int tcp_send(uint32_t client_id, uint16_t cmd, char *data, uint32_t len);
+int tcp_send(uint client_id, uint16_t cmd, char *data, uint len);
 //发送数据(udp) ip, port必须是大端(网络序)
-int udp_send(uint32_t ip, uint16_t port, uint16_t cmd, char *data, uint32_t len);
+int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len);
 
 #endif //_SERVER_H_

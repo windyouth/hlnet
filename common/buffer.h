@@ -19,6 +19,8 @@
 //从缓冲区获取写指针
 #define write_ptr(buffer) 	((buffer)->buf + (buffer)->write)
 
+//缓冲区数据已占用长度
+#define buffer_length(buffer)   ((buffer)->len)
 //缓冲区剩余大小
 #define buffer_surplus(buffer) 	((buffer)->size - (buffer)->len - (buffer)->gap)
 
@@ -77,23 +79,23 @@
 //缓冲区结构体
 typedef struct _buffer
 {
-	uint32_t	read;			//读索引
-	uint32_t	write;			//写索引
-	int32_t		len;			//数据已占用的总长度，不含尾部空长度
-	int32_t		gap;			//尾部空长度
-	uint32_t	size;			//缓冲区大小
-	uint32_t	end;			//尾索引，内容的最末位置，最大值刚好为size
+	uint    	read;			//读索引
+	uint    	write;			//写索引
+	int		    len;			//数据已占用的总长度，不含尾部空长度
+	int		    gap;			//尾部空长度
+	uint	    size;			//缓冲区大小
+	uint	    end;			//尾索引，内容的最末位置，最大值刚好为size
 	char		*buf;			//起始地址指针
-    uint8_t     init;           //是否初始化
+    char        init;           //是否初始化
 }buffer, *pbuffer;
 
 
 //初始化缓冲区
-int buffer_init(buffer *buf, uint32_t size);
+int buffer_init(buffer *buf, uint size);
 //检查并调整缓冲区,使之具备need大小的连续空闲空间
-int buffer_rectify(buffer *buf, uint32_t need);
+int buffer_rectify(buffer *buf, uint need);
 //往缓冲区写
-int buffer_write(buffer *buf, char *src, uint32_t len);
+int buffer_write(buffer *buf, char *src, uint len);
 //往缓冲区写数字
 int buffer_write_int(buffer *buf, int num);
 

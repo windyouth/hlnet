@@ -17,8 +17,6 @@ int client_init(client_t *cli, int size)
 
 	zero(cli);
 	cli->fd = INVALID_SOCKET;
-	cli->status.part = READ_PART_HEAD;
-	cli->status.need = sizeof(cmd_head_t);
 
 	//申请并初始化两个缓冲区
 	cli->in = (buffer *)malloc(sizeof(buffer));

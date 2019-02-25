@@ -305,13 +305,13 @@ int set_first_length(sock_type_e sock_type, uint length)
 }
 
 //设置下次接收数据包的长度
-int set_next_length(uint32_t client_id, uint length)
+int set_next_length(uint client_id, uint length)
 {
 	//取得对应的客户端
 	client_t *cli = get_client(client_id);
 	if (!cli) return PARAM_ERROR;
 
-    cli->status.need = length;
+    cli->need = length;
 
     return SUCCESS;
 }
@@ -398,7 +398,7 @@ int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 }
 
 //发送数据(tcp)
-int tcp_send(uint32_t client_id, uint16_t cmd, char *data, uint32_t len)
+int tcp_send(uint client_id, uint16_t cmd, char *data, uint len)
 {
 	//取得对应的客户端
 	client_t *cli = get_client(client_id);
@@ -430,7 +430,7 @@ int tcp_send(uint32_t client_id, uint16_t cmd, char *data, uint32_t len)
 }
 
 //发送数据(udp) ip, port必须是大端(网络序)
-int udp_send(uint32_t ip, uint16_t port, uint16_t cmd, char *data, uint32_t len)
+int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len)
 {
 	//参数检查
 	if (len > MAX_UDP_LENGTH - sizeof(cmd_head_t))
