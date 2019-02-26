@@ -10,34 +10,33 @@
 
 #define				MAX_UDP_LENGTH				2048				//UDP数据包最大长度
 
-
 //监听方式
 typedef enum _sock_type 
 {
-	socktype_user = 1,	    		//tcp方式(用户端)
-	socktype_manage = 2,			//tcp方式(管理端)
-	socktype_udp = 3				//udp方式
-}sock_type_e;
+	socktype_tcp = 1,	    		//tcp方式	
+    socktype_udp = 2				//udp方式
+}sock_type;
+
 
 //创建服务器
 int serv_create();
 //添加服务器参数
-int serv_ctl(sock_type_e sock_type, short port);
+int serv_ctl(sock_type type, short port);
 //运行服务器
 int serv_run();
 
 //设置初次接收数据包的长度
-int set_first_length(sock_type_e sock_type, uint length);
+int set_first_length(sock_type sock_type, uint length);
 //设置下次接收数据包的长度
 int set_next_length(uint client_id, uint length);
 
 //注册连接事件处理函数
-int reg_link_event(sock_type_e type, link_hander func);
+int reg_link_event(sock_type type, link_hander func);
 //注册中断事件处理函数
-int reg_shut_event(sock_type_e type, shut_hander func);
+int reg_shut_event(sock_type type, shut_hander func);
 
-//注册TCP消息
-int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func);
+//注册TCP处理函数
+int reg_net_msg(sock_type sock_type, tcpmsg_hander func);
 //注册UDP消息
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
 

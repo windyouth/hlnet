@@ -170,3 +170,15 @@ void array_free_deep(array *array)
     array->table = NULL;
 }
 
+//检查该元素在数组中是否存在
+int array_exist(array *array, void *item)
+{
+    void *temp;
+    array_foreach(array, temp, 0)
+    {
+        if (temp == item)
+            return 1;
+    }
+
+    return 0;
+}

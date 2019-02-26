@@ -3,6 +3,14 @@
 
 #include <sys/types.h>
 
+
+//tcp通信的类型
+typedef enum _tcp_type
+{
+    tcp_type_user = 1,
+    tcp_type_manage = 2
+}tcp_type;
+
 //网络数据包头
 typedef struct _cmd_head
 {
@@ -16,5 +24,13 @@ typedef struct _cmd_head
 typedef int (*tcpmsg_hander)(int client_id, cmd_head_t *head, char *data);
 //UDP消息函数，ip和port是大端(网络序)
 typedef int (*udpmsg_hander)(uint ip, ushort port, cmd_head_t *head, char *data);
+
+//注册TCP消息
+int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func);
+//注册UDP消息
+int reg_udp_msg(uint16_t msg, udpmsg_hander func);
+
+//监听用户端口
+int listen_user_port(ushort port);
 
 #endif //_PROTO_H_

@@ -11,6 +11,7 @@
 #include "epollet.h"
 #include "../common/internal.h"
 #include "../c-stl/list.h"
+#include "../c-stl/array.h"
 
 
 #define				MAX_EVENT_COUNT			1024			//一次能接收的最多事件个数
@@ -22,12 +23,9 @@ static struct epoll_event  	*g_events = NULL;						//事件数组指针
 static int 					g_epoll_fd = INVALID_SOCKET;			//epoll元套接字
 
 //全局变量
-int 				g_user_tcp_fd = INVALID_SOCKET;		    //监听的套接字ID(用户端)
-int 				g_manage_tcp_fd = INVALID_SOCKET;		//监听的套接字ID(管理端)
 int 				g_udp_fd = INVALID_SOCKET;				//监听的套接字ID(UDP)
 
-list				*g_user_ready = NULL;					//就绪链表(用户端)
-list				*g_manage_ready = NULL;					//就绪链表(管理端)
+list                *g_ready_list = NULL;                   //就绪链表
 
 link_hander			g_user_link = NULL;					    //连接事件函数指针(用户端)
 shut_hander			g_user_shut = NULL;					    //断开事件函数指针(用户端)
@@ -41,6 +39,9 @@ uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 
 uint                g_user_first_length = 0;                //用户端首次接收的长度
 uint                g_manage_first_length = 0;              //管理端首次接收的长度
+
+array               *g_tcp_listener = NULL;                 //tcp监听套接字数组
+array               *g_udp_listener = NULL;                 //udp监听套接字数组
 
 
 //设备套接字为非阻塞
@@ -113,8 +114,6 @@ static int create_udp_socket(uint16_t port)
 	//TIME_WAIT过程中可重用该socket
 	int sockopt = 1;
 	setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&sockopt, sizeof(sockopt));
-	
-	
 
 	//绑定端口
 	struct sockaddr_in addr;
@@ -145,54 +144,41 @@ static int epoll_add(int fd, int flag)
 }
 
 //创建客户端监听套接字
-int create_client_fd(uint16_t port)
+int create_tcp_fd(uint16_t port)
 {
-	g_user_tcp_fd = create_tcp_socket(port);
-	if (g_user_tcp_fd == INVALID_SOCKET) return FAILURE;
+	int fd = create_tcp_socket(port);
+	if (fd == INVALID_SOCKET) return INVALID_SOCKET;
 
 	//注册epoll事件
-	if (0 != epoll_add(g_user_tcp_fd, EPOLLIN | EPOLLET))
+	if (0 != epoll_add(fd, EPOLLIN | EPOLLET))
 	{
-		close(g_user_tcp_fd);
-		g_user_tcp_fd = INVALID_SOCKET;
-		return FAILURE;
+		close(fd);
+		return INVALID_SOCKET;
 	}
 
-	return SUCCESS;
-}
+    if (g_tcp_listener)
+        array_push_back(g_tcp_listener, (void *)fd);
 
-//创建管理端监听套接字
-int create_manage_fd(uint16_t port)
-{
-	g_manage_tcp_fd = create_tcp_socket(port);
-	if (g_manage_tcp_fd == INVALID_SOCKET) return FAILURE;
-
-	//注册epoll事件
-	if (0 != epoll_add(g_manage_tcp_fd, EPOLLIN | EPOLLET))
-	{
-		close(g_manage_tcp_fd);
-		g_manage_tcp_fd = INVALID_SOCKET;
-		return FAILURE;
-	}
-
-	return SUCCESS;
+	return INVALID_SOCKET;
 }
 
 //创建UDP套接字
 int create_udp_fd(uint16_t port)
 {
-	g_udp_fd = create_udp_socket(port);
-	if (g_udp_fd == INVALID_SOCKET) return FAILURE;
+	int fd = create_udp_socket(port);
+	if (fd == INVALID_SOCKET) return INVALID_SOCKET;
 
 	//注册epoll事件
-	if (0 != epoll_add(g_udp_fd, EPOLLIN))
+	if (0 != epoll_add(fd, EPOLLIN))
 	{
-		close(g_udp_fd);
-		g_udp_fd = INVALID_SOCKET;
-		return FAILURE;
+		close(fd);
+		return INVALID_SOCKET;
 	}
 
-	return SUCCESS;
+    if (g_tcp_listener)
+        array_push_back(g_tcp_listener, (void *)fd);
+
+	return INVALID_SOCKET;
 }
 
 //--------------------------------------------------------------------
@@ -290,6 +276,30 @@ int epollet_create()
 
 	g_events = (struct epoll_event *)malloc(sizeof(struct epoll_event) * MAX_EVENT_COUNT);
 	if (!g_events) return MEM_ERROR;
+
+   	//初始化就绪链表
+	g_user_ready = list_create();
+	if (!g_user_ready) return MEM_ERROR;
+    
+    //创建tcp监听套接字数组
+    if (!g_tcp_listener)
+    {
+        //初始化监听套接字数组
+        g_tcp_listener = (array *)malloc(sizeof(array));
+        if (!g_tcp_listener) return MEM_ERROR;
+
+        array_init(g_tcp_listener, 16);
+    }
+    
+    //创建tcp监听套接字数组
+    if (!g_udp_listener)
+    {
+        //初始化监听套接字数组
+        g_udp_listener = (array *)malloc(sizeof(array));
+        if (!g_udp_listener) return MEM_ERROR;
+
+        array_init(g_udp_listener, 16);
+    }
 
 	return client_store_init();
 }
@@ -429,7 +439,7 @@ static void tcp_accept(int fd)
             if (hander)
 			    hander(client->id, client->ip);
 		}			
-	}
+	}//end for
 }
 
 //epollet运行函数
@@ -447,9 +457,9 @@ void epollet_run(struct schedule *sche, void *arg)
 		//分发处理
 		for (i = 0; i < count; ++i)
 		{
-			if (g_events[i].data.fd == g_user_tcp_fd || 
-				g_events[i].data.fd == g_manage_tcp_fd)
+			if (array_exist(g_tcp_listener, g_events[i].data.fd))
 			{
+                //如果遇到fd为0的极端情况，会accept失败，不用担心。
 				tcp_accept(g_events[i].data.fd);
 			}
 			else if (g_events[i].data.fd == g_udp_fd)

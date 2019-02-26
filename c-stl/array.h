@@ -46,6 +46,8 @@ int array_push_back(array *array, void *item);
 void array_free_shallow(array *array);
 
 void array_free_deep(array *array);
+//检查该元素在数组中是否存在
+int array_exist(array *array, void *item);
 
 #endif
 

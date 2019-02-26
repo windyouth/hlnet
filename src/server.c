@@ -25,105 +25,40 @@ static char				*g_udp_buffer = NULL;				//UDP缓冲区
 
 static struct schedule	*g_schedule = NULL;					//协程调度器
 
-//tcp通信的类型
-typedef enum _tcp_type
+static tcpmsg_hander    g_tcp_func = 0;                //tcp消息处理函数
+
+
+//网络消息分发
+void issue_tcp_msg(struct schedule *sche, void *arg)
 {
-    tcp_type_user = 1,
-    tcp_type_manage = 2
-}tcp_type;
+    long index;
+    list_item *item, *temp;
+    client_t *cli = NULL;
 
-//处理内核消息
-static void kernel_message(int client_id, cmd_head_t *head, char *data)
-{
-	switch (head->cmd_code)
-	{
-		case CMD_KERNEL_HEARTBEAT:
-		{
-			/* 暂时无事可做 */
-		}
-		break;
-		default:
-		break;
-	}
-}
-
-//处理网络消息
-static void deal_msg(list *ready_list, list_item *item, map *msg_map)
-{
-    //变量定义
-    cmd_head_t *head = NULL;
-	char *data = NULL;
-	msg_func_item *func_item;
-	tcpmsg_hander hander;
-	char cmd[8];
-
-    client_t *cli = (client_t *)item;
-
-    //从输入缓冲区读数据，每次只读一条
-	buffer_read(cli->in, head, sizeof(*head));
-	buffer_read(cli->in, data, head->data_size);
-
-	//更新活跃时间
-	alive(cli->id);
-
-	//如果是内核消息
-	if (head->cmd_code <= CMD_KERNEL_END)
-	{
-		kernel_message(cli->id, head, data);
-		return;
-	}
-
-	//取出消息处理函数派发消息
-	snprintf(cmd, sizeof(cmd), "%u", head->cmd_code);
-	func_item = (msg_func_item *)map_get(msg_map, cmd, strlen(cmd));
-    //执行消息处理函数
-	if (func_item && func_item->msg_func)
-	{
-		hander = (tcpmsg_hander)func_item->msg_func;
-		hander(cli->id, head, data);
-	}
-
-    //如果消息读完了，移出就绪链表
-    if (cli->in->len <= 0)
+    for (;;)
     {
-        if (NULL != list_erase(ready_list, cli))
+        list_foreach(g_ready_list, index, item, temp)
         {
-            cli->is_ready = NO;
-        }
-    }
-}
+            cli = (client_t *)item;
+            tcpmsg_hander func;
 
-//网络消息分发(客户端)
-void issue_user_msg(struct schedule *sche, void *arg)
-{
-    long index;
-    list_item *item, *temp;
+            //更新活跃时间
+            alive(cli->id);
 
-	for (;;)
-	{
-        list_foreach(g_user_ready, index, item, temp)
-        {
-            deal_msg(g_user_ready, item, g_net_user_msg);
-        }
+            g_tcp_func(cli->id);
 
-		coroutine_yield(sche);
-	}//end for
-}
-
-//网络消息分发(管理端)
-void issue_manage_msg(struct schedule *sche, void *arg)
-{
-    long index;
-    list_item *item, *temp;
-	for (;;)
-	{
-        list_foreach(g_manage_ready, index, item, temp)
-        {
-            deal_msg(g_manage_ready, item, g_net_manage_msg);
+            //如果消息读完了，移出就绪链表
+            if (cli->in->len <= cli->need)
+            {
+                if (NULL != list_erase(g_ready_list, cli))
+                {
+                    cli->is_ready = NO;
+                }
+            }
         }
 
-		coroutine_yield(sche);
-	}
+        coroutine_yield(sche);
+    }//end for
 }
 
 //udp事件读取函数
@@ -155,49 +90,15 @@ static void udp_read(int fd)
 //创建tcp客户端相关
 static int create_tcp_client(uint16_t port)
 {
-	if (g_user_tcp_fd != INVALID_SOCKET) return FAILURE;
-
-	if (SUCCESS != create_client_fd(port))
-		return FAILURE;
-
-	//初始化网络消息映射器
-	g_net_user_msg = (map *)malloc(sizeof(map));
-	if (!g_net_user_msg) return MEM_ERROR;
-	if (map_init(g_net_user_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-
-   	//初始化就绪链表
-	g_user_ready = list_create();
-	if (!g_user_ready) return MEM_ERROR;
+    int fd = create_tcp_fd(port);
+	if (INVALID_SOCKET == fd)
+		return INVALID_SOCKET;
 		
 	//创建协程
 	if (-1 == coroutine_new(g_schedule, issue_user_msg, NULL))
 		return FAILURE;
 
 	return SUCCESS;
-}
-
-//创建tcp管理端相关
-static int create_tcp_manage(uint16_t port)
-{
-	if (g_manage_tcp_fd != INVALID_SOCKET) return FAILURE;
-
-	if (SUCCESS != create_manage_fd(port))
-		return FAILURE;
-
-	//初始化网络消息映射器
-	g_net_manage_msg = (map *)malloc(sizeof(map));
-	if (!g_net_manage_msg) return MEM_ERROR;
-	if (map_init(g_net_manage_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-
-	//初始化就绪链表
-	g_manage_ready = list_create();
-	if (!g_manage_ready) return MEM_ERROR;
-
-	//创建协程
-	if (-1 == coroutine_new(g_schedule, issue_manage_msg, NULL))
-		return FAILURE;
-
-	return keep_alive();
 }
 
 //创建udp相关
@@ -238,7 +139,7 @@ int serv_create()
 }
 
 //添加服务器参数
-int serv_ctl(sock_type_e sock_type, short port)
+int serv_ctl(sock_type type, short port)
 {
 	//tcp客户端
 	if (sock_type == socktype_user)		
@@ -294,7 +195,7 @@ int serv_run()
 }
 
 //设置初次接收数据包的长度
-int set_first_length(sock_type_e sock_type, uint length)
+int set_first_length(sock_type sock_type, uint length)
 {
     if (sock_type == socktype_user)
         g_user_first_length = length;
@@ -317,7 +218,7 @@ int set_next_length(uint client_id, uint length)
 }
 
 //注册连接消息函数
-int reg_link_event(sock_type_e type, link_hander func)
+int reg_link_event(sock_type type, link_hander func)
 {
 	if (!func) return PARAM_ERROR;
 
@@ -332,7 +233,7 @@ int reg_link_event(sock_type_e type, link_hander func)
 }
 
 //注册中断消息函数
-int reg_shut_event(sock_type_e type, shut_hander func)
+int reg_shut_event(sock_type type, shut_hander func)
 {
 	if (!func) return PARAM_ERROR;
 
@@ -347,38 +248,19 @@ int reg_shut_event(sock_type_e type, shut_hander func)
 }
 
 //注册网络消息
-int reg_net_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func)
+int reg_net_msg(sock_type sock_type, tcpmsg_hander func)
 {
-	char *key = (char *)malloc(8);
-	bzero(key, 8);
-	sprintf(key, "%u", msg);
+    if (!func) return PARAM_ERROR;
 
-	map *dst_map = NULL;
-
-	switch (sock_type)
-	{
-		case socktype_user:
-			{
-				dst_map = g_net_user_msg;
-			}
-			break;
-		case socktype_manage:
-			{
-				dst_map = g_net_manage_msg;
-			}
-			break;
-		default:
-			return PARAM_ERROR;
-	}
-
-	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
-	if (!item) return MEM_ERROR;
-
-	item->msg_func = func;
-	if (map_put(dst_map, key, strlen(key), item) != OP_MAP_SUCCESS)
-		return FAILURE;
+	if (type == socktype_user)
+		g_msg_func_user = func;
+	else if (type == socktype_manage)
+		g_msg_func_manage = func;
+	else
+		return PARAM_ERROR;
 
 	return SUCCESS;
+
 }
 
 //注册UDP消息
