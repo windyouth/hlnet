@@ -21,11 +21,6 @@
 
 #define				PATH_LENGTH				256					//地址长度
 
-//内核命令码(0x00~0x0F)
-#define				CMD_KERNEL_HEARTBEAT	0x00				//心跳
-#define				CMD_KERNEL_END			0x0F				//最后一个内核命令
-
-
 //连接事件
 typedef int (*link_hander)(int client_id, uint ip);
 //关闭事件

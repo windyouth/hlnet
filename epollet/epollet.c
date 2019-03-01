@@ -16,29 +16,23 @@
 
 #define				MAX_EVENT_COUNT			1024			//一次能接收的最多事件个数
 
-#define				GLOBAL_BUF_ORIGIN_SIZE	4096 * 5		//全局缓冲区初始大小
 
-
-static struct epoll_event  	*g_events = NULL;						//事件数组指针 
-static int 					g_epoll_fd = INVALID_SOCKET;			//epoll元套接字
+static struct epoll_event  	*g_events = NULL;				//事件数组指针 
+static int 					g_epoll_fd = INVALID_SOCKET;	//epoll元套接字
 
 //全局变量
 int 				g_udp_fd = INVALID_SOCKET;				//监听的套接字ID(UDP)
 
 list                *g_ready_list = NULL;                   //就绪链表
 
-link_hander			g_user_link = NULL;					    //连接事件函数指针(用户端)
-shut_hander			g_user_shut = NULL;					    //断开事件函数指针(用户端)
-
-link_hander			g_manage_link = NULL;					//连接事件函数指针(管理端)
-shut_hander			g_manage_shut = NULL;					//断开事件函数指针(管理端)
+link_hander			g_tcp_link = NULL;					    //连接事件函数指针(用户端)
+shut_hander			g_tcp_shut = NULL;					    //断开事件函数指针(用户端)
 
 udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 
 uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 
-uint                g_user_first_length = 0;                //用户端首次接收的长度
-uint                g_manage_first_length = 0;              //管理端首次接收的长度
+uint                g_first_need = 0;                     //TCP首次接收的长度
 
 array               *g_tcp_listener = NULL;                 //tcp监听套接字数组
 array               *g_udp_listener = NULL;                 //udp监听套接字数组
@@ -377,10 +371,7 @@ static void tcp_read(struct epoll_event *ev)
         //加入就绪链表
         if (cli->is_ready == NO)
         {
-	        list *ready_list = (cli->parent == g_user_tcp_fd) ? 
-                                g_user_ready : g_manage_ready;
-
-            if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
+            if (OP_LIST_SUCCESS == list_push_back(g_ready_list, cli))
             {
                 cli->is_ready = YES;
             }
@@ -423,21 +414,11 @@ static void tcp_accept(int fd)
 			if (fd == g_manage_tcp_fd || g_is_keep_alive == YES)
 				add_alive(client->id);
             
-            //赋值处理
-            if (fd == g_user_tcp_fd)
-            {
-                hander = g_user_link;
-                client->status.need = g_user_first_length;
-            }
-            else
-            {
-                hander = g_manage_link;
-                client->status.need = g_manage_first_length;
-            }
+             client->need = g_first_length;
 
 			//通知应用层
-            if (hander)
-			    hander(client->id, client->ip);
+            if (g_tcp_link)
+			    g_tcp_link(client->id, client->ip);
 		}			
 	}//end for
 }
@@ -503,18 +484,13 @@ void close_socket(client_t *cli)
 	epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, cli->fd, &event);
 
 	//通知上层
-	if (cli->parent == g_user_tcp_fd)
-	{	
-		if (g_user_shut)
-			g_user_shut(cli->id); 
-	}
-	else if (cli->parent == g_manage_tcp_fd)
-	{
-		if (g_manage_shut)
-			g_manage_shut(cli->id); 
-	}
+	if (g_tcp_shut)
+		g_tcp_shut(cli->id); 
 
 	//关闭套接字并将客户端结构回收
 	close(cli->fd);
 	cli->fd = INVALID_SOCKET;
+
+	if (!g_is_keep_alive) 
+		recycle_client(cli);
 }

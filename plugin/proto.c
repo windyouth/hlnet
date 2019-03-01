@@ -1,10 +1,26 @@
 #include "proto.h"
 #include "../c-stl/map.h"
+#include "../epollet/client.h"
 
 #define				MAX_CMDDATA_LEN			65000			//数据体的最大长度
 
-int 				g_user_tcp_fd;		    //监听的套接字ID(用户端)
-int 				g_manage_tcp_fd;		//监听的套接字ID(管理端)
+static int 				g_tcp_fd_user;		                //监听的套接字ID(用户端)
+static int 				g_tcp_fd_manage;		            //监听的套接字ID(管理端)
+
+static map				*g_msg_map_user = NULL;			    //网络消息映射(TCP用户端口)
+static map				*g_msg_map_manage = NULL;			//网络消息映射(TCP管理端口)
+static map				*g_msg_map_udp = NULL;				//网络消息映射(UDP端口)
+
+//内核命令码(0x00~0x0F)
+#define				CMD_KERNEL_HEARTBEAT	0x00				//心跳
+#define				CMD_KERNEL_END			0x0F				//最后一个内核命令
+
+//消息处理函数在map中所用的结构
+typedef struct _msg_func_item
+{
+	as_map_item;
+	void 			*msg_func;			//消息处理函数指针
+}msg_func_item, *pmsg_func_item;
 
 //正在读的部分
 enum read_part_e
@@ -72,8 +88,41 @@ static void kernel_message(int client_id, cmd_head_t *head, char *data)
 	}
 }
 
+static int verify(client_t *cli)
+{
+    //检验参数
+    assert(cli);
+    if (!cli) return NO;
+
+    cmd_head_t *head = 0;
+
+    //检验数据长度是否满足数据头
+    if (buffer_length(cli->in) < sizeof(cmd_head_t))
+        return NO;
+
+    //如果大于规定值，踢掉。
+	if (head->data_size > MAX_CMDDATA_LEN) 
+	{
+		close_socket(cli);
+		return NO;
+	}
+
+    //检验数据体
+	//如果客户端提示有数据，却只发送一个包头过来，
+    //此后将不会得到任何处理，直到被检测链表断开。
+    head = read_ptr(cli->in);
+    int total = head->data_size + sizeof(*head);
+    if (total > buffer_length(cli->in))
+    {
+        set_need(cli->id, total);
+        return NO;
+    }
+    
+    return YES;
+} 
+
 //处理TCP消息
-int deal_tcpmsg(int client_id)
+void deal_tcpmsg(int client_id)
 {   
     //变量定义
     cmd_head_t *head = NULL;
@@ -82,75 +131,39 @@ int deal_tcpmsg(int client_id)
 	tcpmsg_hander hander;
 	char cmd[8];
 
-    client_t *cli = (client_t *)item;
+	//取得对应的客户端
+	client_t *cli = get_client(client_id);
+	if (!cli) return;
 
-    //从输入缓冲区读数据，每次只读一条
-	buffer_read(cli->in, head, sizeof(*head));
-	buffer_read(cli->in, data, head->data_size);
-    
-    //如果是内核消息
-	if (head->cmd_code <= CMD_KERNEL_END)
-	{
-		kernel_message(cli->id, head, data);
-		return;
-	}
+    //循环读取消息处理
+    while (verify(cli) == YES)
+    {
+        //从输入缓冲区读数据，每次只读一条
+        buffer_read(cli->in, head, sizeof(*head));
+        buffer_read(cli->in, data, head->data_size);
 
-    //取出消息处理函数派发消息
-	snprintf(cmd, sizeof(cmd), "%u", head->cmd_code);
-	func_item = (msg_func_item *)map_get(msg_map, cmd, strlen(cmd));
-    //执行消息处理函数
-	if (func_item && func_item->msg_func)
-	{
-		hander = (tcpmsg_hander)func_item->msg_func;
-		hander(cli->id, head, data);
-	}
-
-    //如果读的是数据头
-	if (cli->status == READ_PART_HEAD)
-	{
-		//数据头参数判断
-		cmd_head_t *head = read_ptr(cli->in);
-        //如果大于规定值，踢掉。
-		if (head->data_size > MAX_CMDDATA_LEN) 
-		{
-			close_socket(cli);
-			if (!g_is_keep_alive) 
-				recycle_client(cli);
-
-			return FAILURE;
-		}
-
-		//如果客户端提示有数据，却只发送一个包头过来，
-        //此后将不会得到任何处理，直到被检测链表断开。
-		if (head->data_size > 0) 
-		{
-			cli->status.part = READ_PART_DATA;
-			cli->status.need = head->data_size;
-		}
-		else
-		{
-            //加入就绪链表
-            if (cli->is_ready == NO)
-            {
-                if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
-                {
-                    cli->is_ready = YES;
-                }
-            }
-		}
-	}
-	else            //如果读的是数据体
-	{
-        //加入就绪链表
-        if (cli->is_ready == NO)
+        //如果是内核消息
+        if (head->cmd_code <= CMD_KERNEL_END)
         {
-            if (OP_LIST_SUCCESS == list_push_back(ready_list, cli))
-            {
-                cli->is_ready = YES;
-            }
+            kernel_message(cli->id, head, data);
+            return;
         }
-        
-		cli->status.part = READ_PART_HEAD;
-		cli->status.need = sizeof(cmd_head_t);
-	}
+
+        msp_map = (cli->parent == g_tcp_fd_user) ? g_msg_map_user : g_msg_map_manage;
+
+        //取出消息处理函数派发消息
+        snprintf(cmd, sizeof(cmd), "%u", head->cmd_code);
+        func_item = (msg_func_item *)map_get(msg_map, cmd, strlen(cmd));
+        //执行消息处理函数
+        if (func_item && func_item->msg_func)
+        {
+            hander = (tcpmsg_hander)func_item->msg_func;
+            hander(cli->id, head, data);
+        }
+    } //end while
+
+    //处理完了，重新设置需要长度
+    if (buffer_empty(cli->in))
+        set_need(cli->id, sizeof(cmd_head_t));
 }
+

@@ -17,10 +17,6 @@
 #define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
 
 
-static map				*g_net_user_msg = NULL;			//网络消息映射(TCP用户端口)
-static map				*g_net_manage_msg = NULL;			//网络消息映射(TCP管理端口)
-static map				*g_net_udp_msg = NULL;				//网络消息映射(UDP端口)
-
 static char				*g_udp_buffer = NULL;				//UDP缓冲区
 
 static struct schedule	*g_schedule = NULL;					//协程调度器
@@ -88,7 +84,7 @@ static void udp_read(int fd)
 }
 
 //创建tcp客户端相关
-static int create_tcp_client(uint16_t port)
+static int create_tcp(uint16_t port)
 {
     int fd = create_tcp_fd(port);
 	if (INVALID_SOCKET == fd)
@@ -141,15 +137,10 @@ int serv_create()
 //添加服务器参数
 int serv_ctl(sock_type type, short port)
 {
-	//tcp客户端
-	if (sock_type == socktype_user)		
+	//tcp端口
+	if (sock_type == socktype_tcp)		
 	{
-		return create_tcp_client(port);
-	}
-	//tcp管理端	
-	else if (sock_type == socktype_manage)	
-	{
-		return create_tcp_manage(port);
+		return create_tcp(port);
 	}
 	//udp端口
 	else if (sock_type == socktype_udp)				
@@ -195,18 +186,13 @@ int serv_run()
 }
 
 //设置初次接收数据包的长度
-int set_first_length(sock_type sock_type, uint length)
+void set_first_need(uint need)
 {
-    if (sock_type == socktype_user)
-        g_user_first_length = length;
-    else
-        g_manage_first_length = length;
-
-    return SUCCESS;
+    g_first_need = need;
 }
 
 //设置下次接收数据包的长度
-int set_next_length(uint client_id, uint length)
+int set_need(uint client_id, uint need)
 {
 	//取得对应的客户端
 	client_t *cli = get_client(client_id);
@@ -218,49 +204,21 @@ int set_next_length(uint client_id, uint length)
 }
 
 //注册连接消息函数
-int reg_link_event(sock_type type, link_hander func)
+void reg_link_event(link_hander func)
 {
-	if (!func) return PARAM_ERROR;
-
-	if (type == socktype_user)
-		g_user_link = func;
-	else if (type == socktype_manage)
-		g_manage_link = func;
-	else
-		return PARAM_ERROR;
-
-	return SUCCESS;
+	g_tcp_link = func;
 }
 
 //注册中断消息函数
-int reg_shut_event(sock_type type, shut_hander func)
+void reg_shut_event(shut_hander func)
 {
-	if (!func) return PARAM_ERROR;
-
-	if (type == socktype_user)
-		g_user_shut = func;
-	else if (type == socktype_manage)
-		g_manage_shut = func;
-	else
-		return PARAM_ERROR;
-
-	return SUCCESS;
+	g_tcp_shut = func;
 }
 
 //注册网络消息
-int reg_net_msg(sock_type sock_type, tcpmsg_hander func)
+void reg_tcp_msg(tcpmsg_hander func)
 {
-    if (!func) return PARAM_ERROR;
-
-	if (type == socktype_user)
-		g_msg_func_user = func;
-	else if (type == socktype_manage)
-		g_msg_func_manage = func;
-	else
-		return PARAM_ERROR;
-
-	return SUCCESS;
-
+    g_tcp_func = func;
 }
 
 //注册UDP消息

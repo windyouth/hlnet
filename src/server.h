@@ -26,17 +26,17 @@ int serv_ctl(sock_type type, short port);
 int serv_run();
 
 //设置初次接收数据包的长度
-int set_first_length(sock_type sock_type, uint length);
+void set_first_need(uint need);
 //设置下次接收数据包的长度
-int set_next_length(uint client_id, uint length);
+int set_need(uint client_id, uint need);
 
 //注册连接事件处理函数
-int reg_link_event(sock_type type, link_hander func);
+void reg_link_event(link_hander func);
 //注册中断事件处理函数
-int reg_shut_event(sock_type type, shut_hander func);
+void reg_shut_event(shut_hander func);
 
 //注册TCP处理函数
-int reg_net_msg(sock_type sock_type, tcpmsg_hander func);
+int reg_tcp_msg(tcpmsg_hander func);
 //注册UDP消息
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
 
