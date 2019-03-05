@@ -35,14 +35,14 @@ void reg_link_event(link_hander func);
 //注册中断事件处理函数
 void reg_shut_event(shut_hander func);
 
-//注册TCP处理函数
-int reg_tcp_msg(tcpmsg_hander func);
-//注册UDP消息
-int reg_udp_msg(uint16_t msg, udpmsg_hander func);
+//设置TCP回调函数
+int set_cb_tcp(cb_tcp cb);
+//设置UDP回调函数
+int set_cb_udp(cb_udp cb);
 
 //发送数据(tcp)
-int tcp_send(uint client_id, uint16_t cmd, char *data, uint len);
+int send_tcp(uint client_id, char *data, uint len);
 //发送数据(udp) ip, port必须是大端(网络序)
-int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len);
+int send_udp(uint ip, ushort port, char *data, uint len);
 
 #endif //_SERVER_H_

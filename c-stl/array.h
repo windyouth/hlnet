@@ -23,8 +23,8 @@ typedef struct _array
 //根据索引取得元素
 #define 			array_item(array, index)		(array)->table[index]	
 
-#define array_foreach(array, temp, from)							\
-           for(int i = (from);										\
+#define array_foreach(array, temp)							        \
+           for(int i = 0;										    \
                (temp) = *((array)->table + i), i < (array)->size;	\
                ++i)
 

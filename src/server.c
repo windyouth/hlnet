@@ -9,19 +9,19 @@
 #include "moment.h"
 #include "../common/internal.h"
 #include "../c-stl/queue.h"
-#include "../c-stl/map.h"
 #include "../epollet/epollet.h"
 #include "../coroutine/coroutine.h"
 
 
-#define				UDP_BUFFER_SIZE				(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
-
+#define		UDP_BUFFER_SIZE		(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
+#define		MAX_DATA_LEN	    65000			        //数据体的最大长度
 
 static char				*g_udp_buffer = NULL;				//UDP缓冲区
 
 static struct schedule	*g_schedule = NULL;					//协程调度器
 
-static tcpmsg_hander    g_tcp_func = 0;                //tcp消息处理函数
+static cb_tcp           g_cb_tcp = 0;                       //tcp回调函数
+static cb_udp           g_cb_udp = 0;                       //udp回调函数
 
 
 //网络消息分发
@@ -58,7 +58,7 @@ void issue_tcp_msg(struct schedule *sche, void *arg)
 }
 
 //udp事件读取函数
-static void udp_read(int fd)
+static void udp_read(udp_fd *ufd)
 {
 	cmd_head_t *head = NULL;
 	char *data = NULL;
@@ -216,51 +216,34 @@ void reg_shut_event(shut_hander func)
 }
 
 //注册网络消息
-void reg_tcp_msg(tcpmsg_hander func)
+void set_cb_tcp(cb_tcp cb)
 {
-    g_tcp_func = func;
+    g_cb_tcp = func;
 }
 
 //注册UDP消息
-int reg_udp_msg(uint16_t msg, udpmsg_hander func)
+int set_cb_udp(cb_udp cb)
 {
-	char *key = (char *)malloc(8);
-	bzero(key, 8);
-	sprintf(key, "%u", msg);
-
-	
-	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
-	if (!item) return MEM_ERROR;
-
-	item->msg_func = func;
-
-	return (map_put(g_net_udp_msg, key, strlen(key), item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
+    g_cb_udp = func;
 }
 
 //发送数据(tcp)
-int tcp_send(uint client_id, uint16_t cmd, char *data, uint len)
+int send_tcp(uint client_id, char *data, uint len)
 {
+    //检验参数
+    assert(data && len <= MAX_DATA_LEN);
+    if (!data || len > MAX_DATA_LEN) return PARAM_ERROR;
+
 	//取得对应的客户端
 	client_t *cli = get_client(client_id);
 	if (!cli) return PARAM_ERROR;
 
 	//申请缓冲区
-	int size = sizeof(cmd_head_t);
-	if (data) size += len;
-	
-	int res = buffer_rectify(cli->out, size);
+	int res = buffer_rectify(cli->out, len);
 	if (res != SUCCESS) return res;
 
 	//写数据
-	cmd_head_t *head = (cmd_head_t *)write_ptr(cli->out);	
-	zero(head);
-	head->cmd_code = cmd;
-	seek_write(cli->out, sizeof(*head));
-	if (data)
-	{
-	   	head->data_size = len;
-		buffer_write(cli->out, data, len);
-	}
+	buffer_write(cli->out, data, len);
 
 	//发送，如果没有发成功，由后续的epoll写事件发送。
 	res = circle_send(cli->fd, read_ptr(cli->out), cli->out->len);
@@ -270,10 +253,10 @@ int tcp_send(uint client_id, uint16_t cmd, char *data, uint len)
 }
 
 //发送数据(udp) ip, port必须是大端(网络序)
-int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len)
+int send_udp(uint ip, ushort port, char *data, uint len)
 {
 	//参数检查
-	if (len > MAX_UDP_LENGTH - sizeof(cmd_head_t))
+	if (len > MAX_UDP_LENGTH)
 		return PARAM_ERROR;
 
 	//填写地址信息
@@ -282,20 +265,6 @@ int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len)
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = ip;
 	addr.sin_port = port;
-
-	//申请缓冲区
-	const int size = data ? sizeof(cmd_head_t) : sizeof(cmd_head_t) + len;
-	char buf[size];
-	bzero(buf, size);
-
-	//写数据
-	cmd_head_t *head = (cmd_head_t *)buf;
-	head->cmd_code = cmd;
-	if (data)
-	{
-		head->data_size = len;
-		memcpy(buf + sizeof(cmd_head_t), data, len);
-	}
 
 	//发送
 	return sendto(g_udp_fd, data, len, 0, (struct sockaddr *)&addr, sizeof(addr));

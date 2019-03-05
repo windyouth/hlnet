@@ -4,6 +4,15 @@
 #include "client.h"
 #include "../coroutine/coroutine.h"
 
+//UDP相关参数
+typdef struct _udp_fd
+{
+    int         fd;         //UDP套接字
+    char        *buf;       //缓冲区
+}udp_fd;
+
+//UDP读取函数
+typedef void (*udp_reader)(udp_fd *ufd);
 
 //创建客户端监听套接字
 int create_tcp_fd(uint16_t port);

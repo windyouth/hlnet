@@ -35,8 +35,7 @@ uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 uint                g_first_need = 0;                     //TCP首次接收的长度
 
 array               *g_tcp_listener = NULL;                 //tcp监听套接字数组
-array               *g_udp_listener = NULL;                 //udp监听套接字数组
-
+array               *g_udp_fds = 0;
 
 //设备套接字为非阻塞
 static int set_nonblock(int fd)
@@ -47,6 +46,19 @@ static int set_nonblock(int fd)
 	opt = opt|O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, opt) < 0)
 		return FAILURE;
+}
+
+//检查fd是否存在于数组中
+static udp_fd *udp_fd_find(int fd)
+{
+    udp_fd *item;
+    array_foreach(g_udp_fds, item)
+    {
+        if (item->fd == fd)
+            return item;
+    }
+
+    return NULL;
 }
 
 //创建一个tcp套接字并监听端口
@@ -169,8 +181,8 @@ int create_udp_fd(uint16_t port)
 		return INVALID_SOCKET;
 	}
 
-    if (g_tcp_listener)
-        array_push_back(g_tcp_listener, (void *)fd);
+    if (g_udp_listener)
+        array_push_back(g_udp_listener, (void *)fd);
 
 	return INVALID_SOCKET;
 }
@@ -286,13 +298,13 @@ int epollet_create()
     }
     
     //创建tcp监听套接字数组
-    if (!g_udp_listener)
+    if (!g_udp_fds)
     {
         //初始化监听套接字数组
-        g_udp_listener = (array *)malloc(sizeof(array));
-        if (!g_udp_listener) return MEM_ERROR;
+        g_udp_fds = (array *)malloc(sizeof(array));
+        if (!g_udp_fds) return MEM_ERROR;
 
-        array_init(g_udp_listener, 16);
+        array_init(g_udp_fds, 16);
     }
 
 	return client_store_init();
@@ -427,6 +439,7 @@ static void tcp_accept(int fd)
 void epollet_run(struct schedule *sche, void *arg)
 {
 	int i, count;
+    udp_fd *ufd = NULL;
 	char empty[16];
 	send(0, empty, sizeof(empty), MSG_DONTWAIT);
 
@@ -443,9 +456,9 @@ void epollet_run(struct schedule *sche, void *arg)
                 //如果遇到fd为0的极端情况，会accept失败，不用担心。
 				tcp_accept(g_events[i].data.fd);
 			}
-			else if (g_events[i].data.fd == g_udp_fd)
+			else if (ufd = udp_fd_find(g_events[i].data.fd))
 			{
-				g_udp_reader(g_events[i].data.fd);
+				g_udp_reader(ufd);
 			}
 			else if (g_events[i].data.fd > g_epoll_fd)
 			{

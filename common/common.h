@@ -29,11 +29,9 @@ typedef int (*shut_hander)(int client_id);
 //TCP消息函数
 //head中需要用到data_size和proto_ver两个值，cmd_code不需要关注。
 //typedef int (*tcpmsg_hander)(int client_id, char *data, uint len);
-typedef int (*tcpmsg_hander)(int client_id);
+typedef int (*cb_tcp)(int client_id);
 //UDP消息函数，ip和port是大端(网络序)
-typedef int (*udpmsg_hander)(uint ip, ushort port, cmd_head_t *head, char *data);
-//UDP读取函数
-typedef void (*udp_reader)(int fd);
+typedef int (*cb_udp)(uint ip, ushort port, char *data, uint len);
 //数据库消息函数
 typedef int (*dbmsg_hander)(char *data, uint len);
 

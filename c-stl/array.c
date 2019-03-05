@@ -174,7 +174,7 @@ void array_free_deep(array *array)
 int array_exist(array *array, void *item)
 {
     void *temp;
-    array_foreach(array, temp, 0)
+    array_foreach(array, temp)
     {
         if (temp == item)
             return 1;
