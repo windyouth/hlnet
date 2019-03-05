@@ -15,12 +15,6 @@ static map				*g_msg_map_udp = NULL;				//网络消息映射(UDP端口)
 #define				CMD_KERNEL_HEARTBEAT	0x00				//心跳
 #define				CMD_KERNEL_END			0x0F				//最后一个内核命令
 
-//消息处理函数在map中所用的结构
-typedef struct _msg_func_item
-{
-	as_map_item;
-	void 			*msg_func;			//消息处理函数指针
-}msg_func_item, *pmsg_func_item;
 
 //正在读的部分
 enum read_part_e
@@ -36,6 +30,16 @@ int listen_user_port(ushort port)
 	g_net_user_msg = (map *)malloc(sizeof(map));
 	if (!g_net_user_msg) return MEM_ERROR;
 	if (map_init(g_net_user_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
+}
+
+//监听UDP端口
+int listen_udp_port(ushort port)
+{
+    //初始化网络消息映射器
+	g_net_udp_msg = (map *)malloc(sizeof(map));
+	if (!g_net_udp_msg) return MEM_ERROR;
+	if (map_init(g_net_udp_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
+
 }
 
 //注册网络消息
@@ -182,6 +186,23 @@ void deal_tcpmsg(int client_id)
     //处理完了，重新设置需要长度
     if (buffer_empty(cli->in))
         set_need(cli->id, sizeof(cmd_head_t));
+}
+
+//处理UDP消息
+void deal_udpmsg(uint ip, ushort port, char *data, uint len)
+{
+    assert(data);
+    if (!data) return;
+
+    cmd_head_t *head = (cmd_head_t *)data;
+	char *data = NULL;
+
+	//检验数据
+	if (head->data_size + sizeof(*head) != len)
+		return;
+
+    //根据命令码从消息映射容器中取出对应的处理函数并回调
+    // ...
 }
 
 //发送数据(tcp)

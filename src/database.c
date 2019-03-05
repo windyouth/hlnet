@@ -2,7 +2,6 @@
 #include "database.h"
 #include "../c-stl/queue.h"
 #include "../c-stl/map.h"
-#include "../common/internal.h"
 #include "../common/buffer.h"
 #include "../coroutine/coroutine.h"
 

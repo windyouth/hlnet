@@ -1,7 +1,6 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
 
-#include "../common/internal.h"
 #include "../common/buffer.h"
 #include "../c-stl/list.h"
 

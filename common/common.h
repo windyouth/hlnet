@@ -2,6 +2,7 @@
 #define _COMMON_H_
 
 #include <sys/types.h>
+#include "../c-stl/map.h"
 
 //错误码
 #define				SUCCESS					0					//成功
@@ -20,6 +21,14 @@
 #define				NO						0
 
 #define				PATH_LENGTH				256					//地址长度
+#define				MAX_UDP_LENGTH			2048				//UDP数据包最大长度
+
+//消息处理函数在map中所用的结构
+typedef struct _msg_func_item
+{
+	as_map_item;
+	void 			*msg_func;			//消息处理函数指针
+}msg_func_item, *pmsg_func_item;
 
 //连接事件
 typedef int (*link_hander)(int client_id, uint ip);

@@ -8,7 +8,6 @@
 #endif
 
 
-#define				MAX_UDP_LENGTH				2048				//UDP数据包最大长度
 
 //监听方式
 typedef enum _sock_type 
@@ -36,9 +35,9 @@ void reg_link_event(link_hander func);
 void reg_shut_event(shut_hander func);
 
 //设置TCP回调函数
-int set_cb_tcp(cb_tcp cb);
+void set_cb_tcp(cb_tcp cb);
 //设置UDP回调函数
-int set_cb_udp(cb_udp cb);
+void set_cb_udp(cb_udp cb);
 
 //发送数据(tcp)
 int send_tcp(uint client_id, char *data, uint len);

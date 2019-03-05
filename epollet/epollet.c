@@ -9,7 +9,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include "epollet.h"
-#include "../common/internal.h"
 #include "../c-stl/list.h"
 #include "../c-stl/array.h"
 
@@ -28,6 +27,7 @@ list                *g_ready_list = NULL;                   //就绪链表
 link_hander			g_tcp_link = NULL;					    //连接事件函数指针(用户端)
 shut_hander			g_tcp_shut = NULL;					    //断开事件函数指针(用户端)
 
+typedef void (* udp_reader)(udp_fd *ufd);
 udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 
 uint8_t				g_is_keep_alive = NO;					//是否保持长连接
@@ -181,8 +181,17 @@ int create_udp_fd(uint16_t port)
 		return INVALID_SOCKET;
 	}
 
-    if (g_udp_listener)
-        array_push_back(g_udp_listener, (void *)fd);
+    //创建结构体
+    udp_fd *ufd = (udp_fd *)malloc(sizeof(udp_fd));
+    if (!ufd) return MEM_ERROR;
+    //赋值
+    ufd->fd = fd;
+    ufd->buf = (char *)malloc(MAX_UDP_LENGTH);
+    if (!ufd->buf) return MEM_ERROR;
+
+    //放入数组
+    if (g_udp_fds)
+        array_push_back(g_udp_fds, ufd);
 
 	return INVALID_SOCKET;
 }
@@ -284,8 +293,8 @@ int epollet_create()
 	if (!g_events) return MEM_ERROR;
 
    	//初始化就绪链表
-	g_user_ready = list_create();
-	if (!g_user_ready) return MEM_ERROR;
+	g_ready_list = list_create();
+	if (!g_ready_list) return MEM_ERROR;
     
     //创建tcp监听套接字数组
     if (!g_tcp_listener)
@@ -319,8 +328,8 @@ int epollet_create()
 static int read_data(struct epoll_event *ev)
 {
 	//参数检查
-	assert(ev && ready_list);
-	if (!ev || !ready_list) return PARAM_ERROR;
+	assert(ev);
+	if (!ev) return PARAM_ERROR;
 
 	client_t *cli = (client_t *)ev->data.ptr;
 	//需要的已读完，读无可读。
@@ -423,10 +432,10 @@ static void tcp_accept(int fd)
 		if (res == 0)
 		{
 			//添加到心跳检测
-			if (fd == g_manage_tcp_fd || g_is_keep_alive == YES)
+			if (g_is_keep_alive == YES)
 				add_alive(client->id);
             
-             client->need = g_first_length;
+             client->need = g_first_need;
 
 			//通知应用层
             if (g_tcp_link)

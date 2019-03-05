@@ -7,7 +7,6 @@
 #include "log.h"
 #include "timer.h"
 #include "moment.h"
-#include "../common/internal.h"
 #include "../c-stl/queue.h"
 #include "../epollet/epollet.h"
 #include "../coroutine/coroutine.h"
@@ -36,12 +35,11 @@ void issue_tcp_msg(struct schedule *sche, void *arg)
         list_foreach(g_ready_list, index, item, temp)
         {
             cli = (client_t *)item;
-            tcpmsg_hander func;
 
             //更新活跃时间
             alive(cli->id);
 
-            g_tcp_func(cli->id);
+            g_cb_tcp(cli->id);
 
             //如果消息读完了，移出就绪链表
             if (cli->in->len <= cli->need)
@@ -60,27 +58,20 @@ void issue_tcp_msg(struct schedule *sche, void *arg)
 //udp事件读取函数
 static void udp_read(udp_fd *ufd)
 {
-	cmd_head_t *head = NULL;
-	char *data = NULL;
-	udpmsg_hander hander;
-	char cmd[8];
+    assert(ufd);
+    if (!ufd) return;
 
 	struct sockaddr_in addr;
 	int len = sizeof(addr);
 
 	//接收数据
-	int size = recvfrom(fd, g_udp_buffer, MAX_UDP_LENGTH, 0, 
+	int size = recvfrom(ufd->fd, ufd->buf, MAX_UDP_LENGTH, 0, 
 						(struct sockaddr *)&addr, (socklen_t *)&len);
 	if (size < 0 || addr.sin_family != AF_INET)
 		return;
 
-	//检验数据
-	g_udp_buffer[size] = 0;
-	head = (cmd_head_t *)g_udp_buffer;
-	if (head->data_size + sizeof(*head) != size)
-		return;
-
-	hander(addr.sin_addr.s_addr, addr.sin_port, (cmd_head_t *)g_udp_buffer, g_udp_buffer + sizeof(*head));
+    //传递给协议层
+	g_cb_udp(addr.sin_addr.s_addr, addr.sin_port, ufd->buf, size);
 }
 
 //创建tcp客户端相关
@@ -91,7 +82,7 @@ static int create_tcp(uint16_t port)
 		return INVALID_SOCKET;
 		
 	//创建协程
-	if (-1 == coroutine_new(g_schedule, issue_user_msg, NULL))
+	if (-1 == coroutine_new(g_schedule, issue_tcp_msg, NULL))
 		return FAILURE;
 
 	return SUCCESS;
@@ -100,24 +91,10 @@ static int create_tcp(uint16_t port)
 //创建udp相关
 static int create_udp(uint16_t port)
 {
-	if (g_udp_fd != INVALID_SOCKET) return FAILURE;
+    if (!g_udp_reader)
+        g_udp_reader = udp_read;
 
-	if (SUCCESS != create_udp_fd(port))
-		return FAILURE;
-
-	//初始化网络消息映射器
-	g_net_udp_msg = (map *)malloc(sizeof(map));
-	if (!g_net_udp_msg) return MEM_ERROR;
-	if (map_init(g_net_udp_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-
-	//初始化缓冲区
-	g_udp_buffer = (char *)malloc(UDP_BUFFER_SIZE);
-	if (!g_udp_buffer) return MEM_ERROR;
-
-	//设置回调函数
-	g_udp_reader = udp_read;
-
-	return SUCCESS;
+	return create_udp_fd(port);
 }
 
 //创建服务器
@@ -138,12 +115,12 @@ int serv_create()
 int serv_ctl(sock_type type, short port)
 {
 	//tcp端口
-	if (sock_type == socktype_tcp)		
+	if (type == socktype_tcp)		
 	{
 		return create_tcp(port);
 	}
 	//udp端口
-	else if (sock_type == socktype_udp)				
+	else if (type == socktype_udp)				
 	{
 		return create_udp(port);
 	}
@@ -198,7 +175,7 @@ int set_need(uint client_id, uint need)
 	client_t *cli = get_client(client_id);
 	if (!cli) return PARAM_ERROR;
 
-    cli->need = length;
+    cli->need = need;
 
     return SUCCESS;
 }
@@ -218,13 +195,13 @@ void reg_shut_event(shut_hander func)
 //注册网络消息
 void set_cb_tcp(cb_tcp cb)
 {
-    g_cb_tcp = func;
+    g_cb_tcp = cb;
 }
 
 //注册UDP消息
-int set_cb_udp(cb_udp cb)
+void set_cb_udp(cb_udp cb)
 {
-    g_cb_udp = func;
+    g_cb_udp = cb;
 }
 
 //发送数据(tcp)

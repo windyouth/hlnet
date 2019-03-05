@@ -5,7 +5,7 @@
 #include "../coroutine/coroutine.h"
 
 //UDP相关参数
-typdef struct _udp_fd
+typedef struct _udp_fd
 {
     int         fd;         //UDP套接字
     char        *buf;       //缓冲区
