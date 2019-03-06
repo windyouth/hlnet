@@ -32,10 +32,14 @@ udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 
 uint8_t				g_is_keep_alive = NO;					//是否保持长连接
 
-uint                g_first_need = 0;                     //TCP首次接收的长度
+uint                g_first_need = 0;                       //TCP首次接收的长度
 
-array               *g_tcp_listener = NULL;                 //tcp监听套接字数组
-array               *g_udp_fds = 0;
+//array               *g_tcp_listener = NULL;                 //tcp监听套接字数组
+//array               *g_udp_fds = 0;
+
+//tcp和udp的两个映射map
+map                 *g_tcp_fds = NULL;                      //tcp的相关参数容器
+map                 *g_udp_fds = NULL;                      //udp的相关参数容器
 
 //设备套接字为非阻塞
 static int set_nonblock(int fd)
@@ -149,28 +153,68 @@ static int epoll_add(int fd, int flag)
 	return epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, fd, &ev);
 }
 
-//创建客户端监听套接字
-int create_tcp_fd(uint16_t port)
+//创建TCP监听套接字
+int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander)
 {
+    //参数校验
+    assert(guide && hander);
+    if (!guide || !hander) return INVALID_SOCKET;
+
+    //创建套接字
 	int fd = create_tcp_socket(port);
 	if (fd == INVALID_SOCKET) return INVALID_SOCKET;
 
 	//注册epoll事件
 	if (0 != epoll_add(fd, EPOLLIN | EPOLLET))
-	{
-		close(fd);
-		return INVALID_SOCKET;
-	}
+        goto error;        
+    
+    if (!g_tcp_fds)
+        goto error;        
 
-    if (g_tcp_listener)
-        array_push_back(g_tcp_listener, (void *)fd);
+    //key
+    char *key = (char *)malloc(16);
+    if (!key) 
+        goto error;
+    //key赋值
+    bzero(key, 16);
+    sprintf(key, "%d", fd);
 
-	return INVALID_SOCKET;
+    //value
+    tcp_fd *tfd = (tcp_fd *)malloc(sizeof(tcp_fd));
+    if (!tfd) 
+    {
+        safe_free(key);
+        goto error;
+    }
+    //value赋值
+    tfd->fd = fd;
+    tfd->heart = NO;
+    tfd->guide = guide;
+    tfd->hander = hander;
+
+    //放入容器
+	if (map_put(g_tcp_fds, key, strlen(key), tfd) != OP_MAP_SUCCESS)
+    {
+        safe_free(key);
+        safe_free(tfd);
+		goto error;
+    }
+
+	return fd;
+
+error:
+    close(fd);
+    return INVALID_SOCKET;
 }
 
 //创建UDP套接字
-int create_udp_fd(uint16_t port)
+int create_udp_fd(uint16_t port, cb_udp hander)
 {
+    //参数校验
+    assert(hander);
+    if (!hander) return INVALID_SOCKET;
+
+    //创建套接字
 	int fd = create_udp_socket(port);
 	if (fd == INVALID_SOCKET) return INVALID_SOCKET;
 
@@ -181,19 +225,49 @@ int create_udp_fd(uint16_t port)
 		return INVALID_SOCKET;
 	}
 
+    if (!g_udp_fds)
+        goto error;        
+
+    //key
+    char *key = (char *)malloc(16);
+    if (!key) 
+        goto error;
+    //key赋值
+    bzero(key, 16);
+    sprintf(key, "%d", fd);
+
     //创建结构体
     udp_fd *ufd = (udp_fd *)malloc(sizeof(udp_fd));
-    if (!ufd) return MEM_ERROR;
+    if (!ufd) 
+    {
+        safe_free(key);
+        goto error;
+    }
     //赋值
     ufd->fd = fd;
     ufd->buf = (char *)malloc(MAX_UDP_LENGTH);
-    if (!ufd->buf) return MEM_ERROR;
+    if (!ufd->buf)
+    {
+        safe_free(key);
+        safe_free(ufd);
+		goto error;
+    }
+    ufd->hander = hander;
 
-    //放入数组
-    if (g_udp_fds)
-        array_push_back(g_udp_fds, ufd);
+    //放入容器
+	if (map_put(g_udp_fds, key, strlen(key), ufd) != OP_MAP_SUCCESS)
+    {
+        safe_free(key);
+        safe_free(ufd->buf);
+        safe_free(ufd);
+		goto error;
+    }
 
-	return INVALID_SOCKET;
+	return fd;
+
+error:
+    close(fd);
+    return INVALID_SOCKET;
 }
 
 //--------------------------------------------------------------------
@@ -296,24 +370,22 @@ int epollet_create()
 	g_ready_list = list_create();
 	if (!g_ready_list) return MEM_ERROR;
     
-    //创建tcp监听套接字数组
-    if (!g_tcp_listener)
+    //创建tcp监听套接字容器
+    if (!g_tcp_fds)
     {
-        //初始化监听套接字数组
-        g_tcp_listener = (array *)malloc(sizeof(array));
-        if (!g_tcp_listener) return MEM_ERROR;
+        g_tcp_fds = (map *)malloc(sizeof(map));
+        if (!g_tcp_fds) return MEM_ERROR;
 
-        array_init(g_tcp_listener, 16);
+	    if (map_init(g_tcp_fds) != OP_MAP_SUCCESS) return MEM_ERROR;
     }
     
     //创建tcp监听套接字数组
     if (!g_udp_fds)
     {
-        //初始化监听套接字数组
-        g_udp_fds = (array *)malloc(sizeof(array));
+        g_udp_fds = (map *)malloc(sizeof(map));
         if (!g_udp_fds) return MEM_ERROR;
 
-        array_init(g_udp_fds, 16);
+	    if (map_init(g_udp_fds) != OP_MAP_SUCCESS) return MEM_ERROR;
     }
 
 	return client_store_init();
@@ -460,15 +532,18 @@ void epollet_run(struct schedule *sche, void *arg)
 		//分发处理
 		for (i = 0; i < count; ++i)
 		{
+            //接收TCP连接
 			if (array_exist(g_tcp_listener, g_events[i].data.fd))
 			{
                 //如果遇到fd为0的极端情况，会accept失败，不用担心。
 				tcp_accept(g_events[i].data.fd);
 			}
+            //UDP消息
 			else if (ufd = udp_fd_find(g_events[i].data.fd))
 			{
 				g_udp_reader(ufd);
 			}
+            //TCP读写事件
 			else if (g_events[i].data.fd > g_epoll_fd)
 			{
 				//读事件

@@ -74,29 +74,6 @@ static void udp_read(udp_fd *ufd)
 	g_cb_udp(addr.sin_addr.s_addr, addr.sin_port, ufd->buf, size);
 }
 
-//创建tcp客户端相关
-static int create_tcp(uint16_t port)
-{
-    int fd = create_tcp_fd(port);
-	if (INVALID_SOCKET == fd)
-		return INVALID_SOCKET;
-		
-	//创建协程
-	if (-1 == coroutine_new(g_schedule, issue_tcp_msg, NULL))
-		return FAILURE;
-
-	return SUCCESS;
-}
-
-//创建udp相关
-static int create_udp(uint16_t port)
-{
-    if (!g_udp_reader)
-        g_udp_reader = udp_read;
-
-	return create_udp_fd(port);
-}
-
 //创建服务器
 int serv_create()
 {
@@ -109,6 +86,26 @@ int serv_create()
 	if (!g_schedule) return FAILURE;
 
 	return epollet_create();
+}
+
+//监听tcp端口
+int listen_tcp(short port, cb_guide guide, cb_tcp hander)
+{
+    int fd = create_tcp_fd(port, guide, hander);
+	if (INVALID_SOCKET == fd)
+		return INVALID_SOCKET;
+		
+	//创建协程
+	if (-1 == coroutine_new(g_schedule, issue_tcp_msg, NULL))
+		return FAILURE;
+
+	return SUCCESS;
+}
+
+//监听udp端口
+int listen_udp(short port, cb_udp hander)
+{
+	return create_udp_fd(port, hander);
 }
 
 //添加服务器参数

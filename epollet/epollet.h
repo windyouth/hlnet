@@ -3,21 +3,34 @@
 
 #include "client.h"
 #include "../coroutine/coroutine.h"
+#include "../c-stl/map.h"
+
+//TCP相关参数
+typedef struct _tcp_fd
+{
+    as_map_item;
+    int             fd;             //套接字
+    uchar           heart;          //是否心跳检测
+    cb_guide        guide;          //引导recv的函数指针
+    cb_tcp          hander;         //消息处理函数的指针
+}tcp_fd;
 
 //UDP相关参数
 typedef struct _udp_fd
 {
-    int         fd;         //UDP套接字
-    char        *buf;       //缓冲区
+    as_map_item;
+    int             fd;             //UDP套接字
+    char            *buf;           //缓冲区
+    cb_udp          hander;         //消息处理函数
 }udp_fd;
 
 //UDP读取函数
 typedef void (*udp_reader)(udp_fd *ufd);
 
 //创建客户端监听套接字
-int create_tcp_fd(uint16_t port);
+int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander);
 //创建UDP套接字
-int create_udp_fd(uint16_t port);
+int create_udp_fd(uint16_t port, cb_udp hander);
 
 //--------------------------------------------------------------------
 // description: 循环发送

@@ -36,9 +36,9 @@ typedef int (*link_hander)(int client_id, uint ip);
 typedef int (*shut_hander)(int client_id);
 
 //TCP消息函数
-//head中需要用到data_size和proto_ver两个值，cmd_code不需要关注。
-//typedef int (*tcpmsg_hander)(int client_id, char *data, uint len);
 typedef int (*cb_tcp)(int client_id);
+//引导epoll边缘触发接收数据长度的函数
+typedef int (*cb_guide)(int client_id);
 //UDP消息函数，ip和port是大端(网络序)
 typedef int (*cb_udp)(uint ip, ushort port, char *data, uint len);
 //数据库消息函数
