@@ -52,19 +52,6 @@ static int set_nonblock(int fd)
 		return FAILURE;
 }
 
-//检查fd是否存在于数组中
-static udp_fd *udp_fd_find(int fd)
-{
-    udp_fd *item;
-    array_foreach(g_udp_fds, item)
-    {
-        if (item->fd == fd)
-            return item;
-    }
-
-    return NULL;
-}
-
 //创建一个tcp套接字并监听端口
 static int create_tcp_socket(uint16_t port)
 {
@@ -407,22 +394,28 @@ static int read_data(struct epoll_event *ev)
 	//需要的已读完，读无可读。
 	if (cli->need == 0) return SUCCESS;
 
-	//调整缓冲区结构
-	int res = buffer_rectify(cli->in, cli->need);
-	if (res < 0)
-	{
-		//由于是边缘触发，为防止该套接字变僵尸，直接删除之。
-		close_socket(cli);
-		//只有客户端没有设置keep_alive时，为短连接，此时需要提前回收。
-		//其他情况都是长连接，由keep_alive对象中的代码来进行回收。
-		if (!g_is_keep_alive) 
-			recycle_client(cli);
+    int res;
+    //表示读一段新的数据，重新申请内存
+    if (cli->read == 0)
+    {
+	    //调整缓冲区结构
+        int res = buffer_rectify(cli->in, cli->need);
+        if (res < 0)
+        {
+            //由于是边缘触发，为防止该套接字变僵尸，直接删除之。
+            close_socket(cli);
+            //只有客户端没有设置keep_alive时，为短连接，此时需要提前回收。
+            //其他情况都是长连接，由keep_alive对象中的代码来进行回收。
+            if (!g_is_keep_alive) 
+                recycle_client(cli);
 
-		return res;
-	}
+            return res;
+        }
+    }
 
+    int len = cli->need - cli->read;
 	//接收数据
-	res = circle_recv(cli->fd, write_ptr(cli->in), cli->need);
+	res = circle_recv(cli->fd, write_ptr(cli->in), len);
 	if (res < 0) 
 	{
 		close_socket(cli);
@@ -434,9 +427,14 @@ static int read_data(struct epoll_event *ev)
 
 	//更新索引和状态
 	seek_write(cli->in, res);
+    //记录已读的字节数
+    cli->read += res;
+
+    //询问引导函数下一步的need值
+    cli->guide(cli->id);
 
 	//已经读空了，返回零。此处包括res=0的情况。
-	if (res < cli->need) 
+	if (res < len) 
         return 0;
     else
 	    return res;
@@ -459,7 +457,7 @@ static void tcp_read(struct epoll_event *ev)
 	while (read_data(ev) > 0);
 
     //如果已经达到要求长度
-    if (buffer_length(cli->in) >= cli->need)
+    if (cli->is_ok)
     {
         //加入就绪链表
         if (cli->is_ready == NO)
@@ -521,8 +519,9 @@ void epollet_run(struct schedule *sche, void *arg)
 {
 	int i, count;
     udp_fd *ufd = NULL;
-	char empty[16];
-	send(0, empty, sizeof(empty), MSG_DONTWAIT);
+    tcp_fd *tfd = NULL;
+	char fd_str[16];
+	send(0, fd_str, sizeof(fd_str), MSG_DONTWAIT);
 
 	for (;;)
 	{
@@ -532,16 +531,18 @@ void epollet_run(struct schedule *sche, void *arg)
 		//分发处理
 		for (i = 0; i < count; ++i)
 		{
+            itoa(g_events[i].data.fd, fd_str, 10);
             //接收TCP连接
-			if (array_exist(g_tcp_listener, g_events[i].data.fd))
+			if (tfd = map_get(g_tcp_fds, fd_str, strlen(fd_str)))
 			{
                 //如果遇到fd为0的极端情况，会accept失败，不用担心。
 				tcp_accept(g_events[i].data.fd);
 			}
             //UDP消息
-			else if (ufd = udp_fd_find(g_events[i].data.fd))
+			else if (ufd = map_get(g_udp_fds, fd_str, strlen(fd_str)))
 			{
-				g_udp_reader(ufd);
+                if (ufd->hander)
+				    ufd->hander(ufd);
 			}
             //TCP读写事件
 			else if (g_events[i].data.fd > g_epoll_fd)

@@ -23,73 +23,12 @@ enum read_part_e
 	READ_PART_DATA 		= 2				//正在读数据
 };
 
-//监听用户端口
-int listen_user_port(ushort port)
+//引导函数
+int tcp_guide(int client_id)
 {
-	//初始化网络消息映射器
-	g_net_user_msg = (map *)malloc(sizeof(map));
-	if (!g_net_user_msg) return MEM_ERROR;
-	if (map_init(g_net_user_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-}
+    client_t *cli = get_client(client_id);
+    if (!cli) return FAILURE;
 
-//监听UDP端口
-int listen_udp_port(ushort port)
-{
-    //初始化网络消息映射器
-	g_net_udp_msg = (map *)malloc(sizeof(map));
-	if (!g_net_udp_msg) return MEM_ERROR;
-	if (map_init(g_net_udp_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-
-}
-
-//注册网络消息
-int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
-{
-	char *key = (char *)malloc(8);
-	bzero(key, 8);
-	sprintf(key, "%u", msg);
-
-	map *dst_map = NULL;
-
-	switch (sock_type)
-	{
-		case socktype_user:
-			{
-				dst_map = g_net_user_msg;
-			}
-			break;
-		case socktype_manage:
-			{
-				dst_map = g_net_manage_msg;
-			}
-			break;
-		default:
-			return PARAM_ERROR;
-	}
-
-	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
-	if (!item) return MEM_ERROR;
-
-	item->msg_func = func;
-	if (map_put(dst_map, key, strlen(key), item) != OP_MAP_SUCCESS)
-		return FAILURE;
-
-	return SUCCESS;
-}
-
-int reg_udp_msg(uint16_t msg, udpmsg_hander func)
-{
-    char *key = (char *)malloc(8);
-	bzero(key, 8);
-	sprintf(key, "%u", msg);
-
-	
-	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
-	if (!item) return MEM_ERROR;
-
-	item->msg_func = func;
-
-	return (map_put(g_net_udp_msg, key, strlen(key), item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
 
 }
 
@@ -267,4 +206,74 @@ int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len)
 
 	//发送
 	return sendto(g_udp_fd, data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
+}
+
+//监听用户端口
+int listen_user_port(ushort port)
+{
+	//初始化网络消息映射器
+	g_net_user_msg = (map *)malloc(sizeof(map));
+	if (!g_net_user_msg) return MEM_ERROR;
+	if (map_init(g_net_user_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
+}
+
+//监听UDP端口
+int listen_udp_port(ushort port)
+{
+    //初始化网络消息映射器
+	g_net_udp_msg = (map *)malloc(sizeof(map));
+	if (!g_net_udp_msg) return MEM_ERROR;
+	if (map_init(g_net_udp_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
+
+}
+
+//注册网络消息
+int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
+{
+	char *key = (char *)malloc(8);
+	bzero(key, 8);
+	sprintf(key, "%u", msg);
+
+	map *dst_map = NULL;
+
+	switch (sock_type)
+	{
+		case socktype_user:
+			{
+				dst_map = g_net_user_msg;
+			}
+			break;
+		case socktype_manage:
+			{
+				dst_map = g_net_manage_msg;
+			}
+			break;
+		default:
+			return PARAM_ERROR;
+	}
+
+	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
+	if (!item) return MEM_ERROR;
+
+	item->msg_func = func;
+	if (map_put(dst_map, key, strlen(key), item) != OP_MAP_SUCCESS)
+		return FAILURE;
+
+	return SUCCESS;
+}
+
+int reg_udp_msg(uint16_t msg, udpmsg_hander func)
+{
+    char *key = (char *)malloc(8);
+	bzero(key, 8);
+	sprintf(key, "%u", msg);
+
+	
+	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
+	if (!item) return MEM_ERROR;
+
+	item->msg_func = func;
+
+	return (map_put(g_net_udp_msg, key, strlen(key), item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
+
 }

@@ -31,13 +31,15 @@ typedef struct _client
 	ulong			    alive_time;		//上次活跃时间
 	uint			    id;				//套接字对应的内部使用索引号
 	int					fd;				//socket文件描述符
-	uint			    ip;				//客户端IP地址
 	int 				parent;			//所属的父文件描述符
+	uint			    ip;				//客户端IP地址
 	buffer				*in;			//读缓冲区
 	buffer				*out;			//写缓冲区
-	ushort	    		need;			//未读完的字节数
+	ushort	    		need;			//需要读的字节数
+    ushort              read;           //本次已读的字节数
     uchar               status;         //当前状态
 	uchar				is_safe;		//是否通过安全认证
+    uchar               is_ok;          //是否读完，可放入就绪链表
 	uchar				is_ready;		//是否处在就绪链表中
 }client_t, *pclient;
 
