@@ -70,12 +70,34 @@ void map_init_custom(map *map, size_t spar, unsigned int (*hashfunc)(char*,int))
     map->puts = 0;
 }
 
+//插入key为int类型的元素
+int map_put(map *map, int key, void *value)
+{
+    char *key_str = (char *)malloc(16);
+    if (!key_str) return OP_MAP_FAILURE;
+
+    itoa(key, key_str, 10);
+
+    return map_put_str(map, key_str, strlen(key_str), value);
+}
+
+//根据int类型的值获得元素
+map_entry *map_get(map *map, int key)
+{
+    char *key_str = (char *)malloc(16);
+    if (!key_str) return NULL;
+
+    itoa(key, key_str, 10);
+
+    return map_get_str(map, key_str, strlen(key_str));
+}
+
 //--------------------------------------------------------
 // 对于冲突的key,放在上一个key的next指针上。
 // 数据结构：数组 + 链表。key必须是在堆上的一个字符串
 // value亦必须是指向堆上的指针
 //--------------------------------------------------------
-int map_put(map *map, char *key, int key_size, void *value)
+int map_put_str(map *map, char *key, int key_size, void *value)
 {
     assert(map != NULL && key != NULL);
     if(key_size < 0 || value == NULL)
@@ -121,7 +143,7 @@ int map_put(map *map, char *key, int key_size, void *value)
     return OP_MAP_SUCCESS;
 }
 
-map_entry *map_get(map *map, char *key, int key_size)
+map_entry *map_get_str(map *map, char *key, int key_size)
 {
     assert(map != NULL && key != NULL);
     if(key_size < 0)

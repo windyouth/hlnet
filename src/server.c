@@ -97,9 +97,11 @@ int listen_tcp(short port, cb_guide guide, cb_tcp hander)
 		
 	//创建协程
 	if (-1 == coroutine_new(g_schedule, issue_tcp_msg, NULL))
-		return FAILURE;
-
-	return SUCCESS;
+    {
+        close(fd);
+		return INVALID_SOCKET;
+    }
+	return fd;
 }
 
 //监听udp端口

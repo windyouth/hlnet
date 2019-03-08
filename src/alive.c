@@ -42,13 +42,16 @@ int check_alive(struct _timer *timer)
 }
 
 //启动心跳检测
-int keep_alive()
+int keep_alive(int fd)
 {
+    tcp_fd *tfd = map_get(g_tcp_fds, fd);
+    if (!tfd) return PARAM_ERROR;
+
 	//初始化活跃链表
 	g_client_alive = list_create();
 	if (!g_client_alive) return MEM_ERROR;
 
-	g_is_keep_alive = YES;
+	tfd->heart = YES;
 
 	//开启定时器
 	timer_manager();

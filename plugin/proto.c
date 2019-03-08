@@ -17,19 +17,71 @@ static map				*g_msg_map_udp = NULL;				//网络消息映射(UDP端口)
 
 
 //正在读的部分
-enum read_part_e
+enum _read_part
 {
-	READ_PART_HEAD 		= 1,			//正在读包头
-	READ_PART_DATA 		= 2				//正在读数据
-};
+	READ_PART_HEAD 		= 0,			//正在读包头
+	READ_PART_DATA 		= 1				//正在读数据
+}read_part;
 
 //引导函数
 int tcp_guide(int client_id)
 {
+    //取得客户端结构
     client_t *cli = get_client(client_id);
     if (!cli) return FAILURE;
 
+    //未读完，直接返回
+    if (cli->read < cli->need)
+        return SUCCESS;
 
+    //如果在读包头
+    if (cli->status == READ_PART_HEAD)
+    {
+        //大于规定值，直接踢掉
+        cmd_head_t *head = seek_ptr(cli->in);
+        if (head->data_size > MAX_CMDDATA_LEN)
+        {
+            close_socket(cli);
+            return FAILURE;
+        }
+
+        //如果客户端提示有数据，却只发一个包头过来，
+        //此后将不会得到任何处理，直到被检测链表断开。
+        if (head->data_size > 0)
+        {
+            cli->status = READ_PART_DATA;
+            cli->need = head->data_size;
+        }
+        //只有一个包头，内含命令码的情况
+        else
+        {
+            //加入就绪链表
+            if (cli->is_ready == NO)
+            {
+                if (OP_LIST_SUCCESS == list_push_back(g_ready_list, cli))
+                    cli->is_ready = YES;
+            }
+
+            /* 状态保持HEAD不变，need值不变，迎接下一个数据包 */
+        }
+    }//end if
+    else            //读数据
+    {
+        //加入就绪链表
+        if (cli->is_ready == NO)
+        {
+            if (OP_LIST_SUCCESS == list_push_back(g_ready_list, cli))
+                cli->is_ready = YES;
+        }
+
+        cli->status = READ_PART_HEAD;
+        cli->need = sizeof(cmd_head_t);
+    }
+
+    //已读部分置零
+    cli->read = 0;
+    //seek值跟上write值
+    cli->in->seek = cli->in->write;
 }
 
 //处理内核消息

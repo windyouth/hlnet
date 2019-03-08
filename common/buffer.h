@@ -18,6 +18,8 @@
 #define read_ptr(buffer) 	((buffer)->buf + (buffer)->read)
 //从缓冲区获取写指针
 #define write_ptr(buffer) 	((buffer)->buf + (buffer)->write)
+//从缓冲区获取定位指针
+#define seek_ptr(buffer) 	((buffer)->buf + (buffer)->seek)
 
 //缓冲区数据已占用长度
 #define buffer_length(buffer)   ((buffer)->len)
@@ -83,6 +85,7 @@ typedef struct _buffer
 {
 	uint    	read;			//读索引
 	uint    	write;			//写索引
+    uint        seek;           //定位索引
 	int		    len;			//数据已占用的总长度，不含尾部空长度
 	int		    gap;			//尾部空长度
 	uint	    size;			//缓冲区大小

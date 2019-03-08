@@ -64,8 +64,10 @@ extern shut_hander		g_tcp_shut;			    //断开事件函数指针(用户端)
 
 extern udp_reader		g_udp_reader;			//udp读取函数指针
 
-extern uint8_t			g_is_keep_alive;		//是否保持长连接
-
 extern uint             g_first_need;         //TCP端首次接收的数据包长度
+
+//tcp和udp的两个映射map
+extern map              *g_tcp_fds;                      //tcp的相关参数容器
+extern map              *g_udp_fds;                      //udp的相关参数容器
 
 #endif //_EPOLLET_H_

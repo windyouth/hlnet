@@ -30,8 +30,6 @@ shut_hander			g_tcp_shut = NULL;					    //断开事件函数指针(用户端)
 typedef void (* udp_reader)(udp_fd *ufd);
 udp_reader			g_udp_reader = NULL;					//udp读取函数指针
 
-uint8_t				g_is_keep_alive = NO;					//是否保持长连接
-
 uint                g_first_need = 0;                       //TCP首次接收的长度
 
 //array               *g_tcp_listener = NULL;                 //tcp监听套接字数组
@@ -157,22 +155,12 @@ int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander)
     
     if (!g_tcp_fds)
         goto error;        
-
-    //key
-    char *key = (char *)malloc(16);
-    if (!key) 
-        goto error;
-    //key赋值
-    bzero(key, 16);
-    sprintf(key, "%d", fd);
-
+    
     //value
     tcp_fd *tfd = (tcp_fd *)malloc(sizeof(tcp_fd));
     if (!tfd) 
-    {
-        safe_free(key);
         goto error;
-    }
+
     //value赋值
     tfd->fd = fd;
     tfd->heart = NO;
@@ -180,7 +168,7 @@ int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander)
     tfd->hander = hander;
 
     //放入容器
-	if (map_put(g_tcp_fds, key, strlen(key), tfd) != OP_MAP_SUCCESS)
+	if (map_put(g_tcp_fds, fd, tfd) != OP_MAP_SUCCESS)
     {
         safe_free(key);
         safe_free(tfd);
@@ -214,39 +202,28 @@ int create_udp_fd(uint16_t port, cb_udp hander)
 
     if (!g_udp_fds)
         goto error;        
-
-    //key
-    char *key = (char *)malloc(16);
-    if (!key) 
-        goto error;
-    //key赋值
-    bzero(key, 16);
-    sprintf(key, "%d", fd);
-
+    
     //创建结构体
     udp_fd *ufd = (udp_fd *)malloc(sizeof(udp_fd));
     if (!ufd) 
-    {
-        safe_free(key);
         goto error;
-    }
+
     //赋值
     ufd->fd = fd;
     ufd->buf = (char *)malloc(MAX_UDP_LENGTH);
     if (!ufd->buf)
     {
-        safe_free(key);
         safe_free(ufd);
 		goto error;
     }
     ufd->hander = hander;
 
     //放入容器
-	if (map_put(g_udp_fds, key, strlen(key), ufd) != OP_MAP_SUCCESS)
+	if (map_put(g_udp_fds, fd, ufd) != OP_MAP_SUCCESS)
     {
-        safe_free(key);
         safe_free(ufd->buf);
         safe_free(ufd);
+
 		goto error;
     }
 
@@ -404,10 +381,6 @@ static int read_data(struct epoll_event *ev)
         {
             //由于是边缘触发，为防止该套接字变僵尸，直接删除之。
             close_socket(cli);
-            //只有客户端没有设置keep_alive时，为短连接，此时需要提前回收。
-            //其他情况都是长连接，由keep_alive对象中的代码来进行回收。
-            if (!g_is_keep_alive) 
-                recycle_client(cli);
 
             return res;
         }
@@ -419,8 +392,6 @@ static int read_data(struct epoll_event *ev)
 	if (res < 0) 
 	{
 		close_socket(cli);
-		if (!g_is_keep_alive) 
-			recycle_client(cli);
 		
 		return res;
 	}
@@ -431,13 +402,14 @@ static int read_data(struct epoll_event *ev)
     cli->read += res;
 
     //询问引导函数下一步的need值
-    cli->guide(cli->id);
+    if (cli->guide(cli->id) < 0)
+        return -1;
 
 	//已经读空了，返回零。此处包括res=0的情况。
-	if (res < len) 
+    if (res < len) 
         return 0;
-    else
-	    return res;
+
+	return res;
 }
 
 //tcp事件读取函数
@@ -448,13 +420,26 @@ static void tcp_read(struct epoll_event *ev)
 	if (ev->events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 	{
 		close_socket(cli);
-		if (!g_is_keep_alive) 
-			recycle_client(cli);
 		return;
 	}
 
     //读空为止
-	while (read_data(ev) > 0);
+    int res;
+    do 
+    {
+        res = read_data(ev);
+    }while (res > 0)
+
+    //说明踢人了，直接返回
+    if (res < 0)
+    {
+        //移出就绪链表
+        if (cli->is_ready)
+            list_erase(g_ready_list, cli);
+        //关闭套接字和相关的数据结构
+        close_socket(cli);
+        return;
+    }
 
     //如果已经达到要求长度
     if (cli->is_ok)
@@ -531,15 +516,14 @@ void epollet_run(struct schedule *sche, void *arg)
 		//分发处理
 		for (i = 0; i < count; ++i)
 		{
-            itoa(g_events[i].data.fd, fd_str, 10);
             //接收TCP连接
-			if (tfd = map_get(g_tcp_fds, fd_str, strlen(fd_str)))
+			if (tfd = map_get(g_tcp_fds, g_events[i].data.fd))
 			{
                 //如果遇到fd为0的极端情况，会accept失败，不用担心。
 				tcp_accept(g_events[i].data.fd);
 			}
             //UDP消息
-			else if (ufd = map_get(g_udp_fds, fd_str, strlen(fd_str)))
+			else if (ufd = map_get(g_udp_fds, g_events[i].data.fd))
 			{
                 if (ufd->hander)
 				    ufd->hander(ufd);
@@ -589,6 +573,9 @@ void close_socket(client_t *cli)
 	close(cli->fd);
 	cli->fd = INVALID_SOCKET;
 
-	if (!g_is_keep_alive) 
-		recycle_client(cli);
+    //只有客户端没有设置keep_alive时，为短连接，此时需要提前回收。
+    //其他情况都是长连接，由keep_alive对象中的代码来进行回收。
+    tcp_fd *tfd = map_get(g_tcp_fds, cli->parent);
+    if (tfd && !tfd->heart)
+        recycle_client(cli);
 }

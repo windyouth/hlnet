@@ -2,7 +2,7 @@
 #define _KEEP_ALIVE_H_
 
 //启动心跳检测
-int keep_alive();
+int keep_alive(int fd);
 //添加到心跳检测池
 void add_alive(int client_id);
 //更新活跃时间
