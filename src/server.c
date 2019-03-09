@@ -19,9 +19,6 @@ static char				*g_udp_buffer = NULL;				//UDP缓冲区
 
 static struct schedule	*g_schedule = NULL;					//协程调度器
 
-static cb_tcp           g_cb_tcp = 0;                       //tcp回调函数
-static cb_udp           g_cb_udp = 0;                       //udp回调函数
-
 
 //网络消息分发
 void issue_tcp_msg(struct schedule *sche, void *arg)
@@ -29,6 +26,7 @@ void issue_tcp_msg(struct schedule *sche, void *arg)
     long index;
     list_item *item, *temp;
     client_t *cli = NULL;
+    tcp_fd *tfd;
 
     for (;;)
     {
@@ -38,8 +36,10 @@ void issue_tcp_msg(struct schedule *sche, void *arg)
 
             //更新活跃时间
             alive(cli->id);
-
-            g_cb_tcp(cli->id);
+            //通知应用层
+            tfd = map_get(g_tcp_fds, cli->parent);
+            if (tfd && tfd->hander)
+                tfd->hander(cli->id);
 
             //如果消息读完了，移出就绪链表
             if (cli->in->len <= cli->need)
@@ -71,7 +71,8 @@ static void udp_read(udp_fd *ufd)
 		return;
 
     //传递给协议层
-	g_cb_udp(addr.sin_addr.s_addr, addr.sin_port, ufd->buf, size);
+    if (ufd->hander)
+	    ufd->hander(addr.sin_addr.s_addr, addr.sin_port, ufd->buf, size);
 }
 
 //创建服务器
@@ -84,6 +85,8 @@ int serv_create()
 	//构造调度器
 	g_schedule  = coroutine_open();
 	if (!g_schedule) return FAILURE;
+
+    g_udp_reader = udp_read;
 
 	return epollet_create();
 }
@@ -189,18 +192,6 @@ void reg_link_event(link_hander func)
 void reg_shut_event(shut_hander func)
 {
 	g_tcp_shut = func;
-}
-
-//注册网络消息
-void set_cb_tcp(cb_tcp cb)
-{
-    g_cb_tcp = cb;
-}
-
-//注册UDP消息
-void set_cb_udp(cb_udp cb)
-{
-    g_cb_udp = cb;
 }
 
 //发送数据(tcp)

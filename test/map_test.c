@@ -35,14 +35,14 @@ int main(int argc, char **argv)
     stud3.name = "3-stud";
     stud3.score = 30;
 
-    map_put(&amap, stud0.name, strlen(stud0.name), &stud0);
-    map_put(&amap, stud1.name, strlen(stud1.name), &stud1);
-    map_put(&amap, stud2.name, strlen(stud2.name), &stud2);
-    map_put(&amap, stud3.name, strlen(stud3.name), &stud3);
+    map_put_str(&amap, stud0.name, strlen(stud0.name), &stud0);
+    map_put_str(&amap, stud1.name, strlen(stud1.name), &stud1);
+    map_put_str(&amap, stud2.name, strlen(stud2.name), &stud2);
+    map_put_str(&amap, stud3.name, strlen(stud3.name), &stud3);
 
     printf("map size = %ld\n", map_size(&amap));
 
-    stud_t *temp = (stud_t*)map_get(&amap, "1-stud", strlen("1-stud"));
+    stud_t *temp = (stud_t*)map_get_str(&amap, "1-stud", strlen("1-stud"));
     if(temp != NULL)
     {
         printf("map_get: id=%d, name=%s, score=%d\n",temp->id, temp->name, temp->score);

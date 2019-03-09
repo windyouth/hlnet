@@ -36,11 +36,6 @@ void reg_link_event(link_hander func);
 //注册中断事件处理函数
 void reg_shut_event(shut_hander func);
 
-//设置TCP回调函数
-void set_cb_tcp(cb_tcp cb);
-//设置UDP回调函数
-void set_cb_udp(cb_udp cb);
-
 //发送数据(tcp)
 int send_tcp(uint client_id, char *data, uint len);
 //发送数据(udp) ip, port必须是大端(网络序)

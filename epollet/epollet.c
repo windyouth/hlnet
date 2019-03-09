@@ -27,13 +27,13 @@ list                *g_ready_list = NULL;                   //就绪链表
 link_hander			g_tcp_link = NULL;					    //连接事件函数指针(用户端)
 shut_hander			g_tcp_shut = NULL;					    //断开事件函数指针(用户端)
 
-typedef void (* udp_reader)(udp_fd *ufd);
-udp_reader			g_udp_reader = NULL;					//udp读取函数指针
-
 uint                g_first_need = 0;                       //TCP首次接收的长度
 
 //array               *g_tcp_listener = NULL;                 //tcp监听套接字数组
 //array               *g_udp_fds = 0;
+
+//数据读取函数
+udp_reader          g_udp_reader = NULL;
 
 //tcp和udp的两个映射map
 map                 *g_tcp_fds = NULL;                      //tcp的相关参数容器
@@ -170,7 +170,6 @@ int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander)
     //放入容器
 	if (map_put(g_tcp_fds, fd, tfd) != OP_MAP_SUCCESS)
     {
-        safe_free(key);
         safe_free(tfd);
 		goto error;
     }
@@ -402,8 +401,10 @@ static int read_data(struct epoll_event *ev)
     cli->read += res;
 
     //询问引导函数下一步的need值
-    if (cli->guide(cli->id) < 0)
-        return -1;
+    tcp_fd *tfd = map_get(g_tcp_fds, cli->parent);
+    if (tfd)
+        if (tfd->guide(cli->id) < 0)
+            return -1;
 
 	//已经读空了，返回零。此处包括res=0的情况。
     if (res < len) 
@@ -428,7 +429,7 @@ static void tcp_read(struct epoll_event *ev)
     do 
     {
         res = read_data(ev);
-    }while (res > 0)
+    }while (res > 0);
 
     //说明踢人了，直接返回
     if (res < 0)
@@ -464,6 +465,7 @@ static void tcp_accept(int fd)
 	int len = sizeof(struct sockaddr_in);
 	int sock_fd, res;
 	link_hander hander;
+    tcp_fd *tfd;
 
 	//循环接收，收完为止。
 	for (;;)
@@ -484,18 +486,20 @@ static void tcp_accept(int fd)
 		ev.events = EPOLLIN | EPOLLOUT | EPOLLET| EPOLLRDHUP ; 
 		ev.data.ptr = client;
 		res = epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, sock_fd, &ev);
-		if (res == 0)
-		{
-			//添加到心跳检测
-			if (g_is_keep_alive == YES)
-				add_alive(client->id);
-            
-             client->need = g_first_need;
+        if (res != 0) continue;
 
-			//通知应用层
-            if (g_tcp_link)
-			    g_tcp_link(client->id, client->ip);
-		}			
+        tfd = map_get(g_tcp_fds, fd);
+        if (!tfd) continue;
+
+        //添加到心跳检测
+        if (tfd->heart)
+            add_alive(client->id);
+
+        client->need = g_first_need;
+
+        //通知应用层
+        if (g_tcp_link)
+            g_tcp_link(client->id, client->ip);
 	}//end for
 }
 
@@ -525,8 +529,8 @@ void epollet_run(struct schedule *sche, void *arg)
             //UDP消息
 			else if (ufd = map_get(g_udp_fds, g_events[i].data.fd))
 			{
-                if (ufd->hander)
-				    ufd->hander(ufd);
+                if (g_udp_reader)
+                    g_udp_reader(ufd);
 			}
             //TCP读写事件
 			else if (g_events[i].data.fd > g_epoll_fd)

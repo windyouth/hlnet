@@ -41,7 +41,7 @@ void issue_db_msg(struct schedule *sche, void *arg)
 		buffer_read(msg, cmd, sizeof(int));
 
 		//根据命令码查出函数并调用
-		func_item = (msg_func_item *)map_get(g_dbmsg_map, cmd, sizeof(int));
+		func_item = (msg_func_item *)map_get(g_dbmsg_map, *cmd);
 		if (func_item && func_item->msg_func)
 		{
 			hander = (dbmsg_hander)func_item->msg_func;
@@ -105,14 +105,11 @@ int start_database()
 //注册数据库消息
 int reg_db_msg(uint16_t msg, dbmsg_hander func)
 {
-	int *key = (int *)malloc(sizeof(int));
-	*key = msg;
-
 	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
 	if (!item) return MEM_ERROR;
 
 	item->msg_func = func;
-	if (map_put(g_dbmsg_map, key, sizeof(int), item) != OP_MAP_SUCCESS)
+	if (map_put(g_dbmsg_map, msg, item) != OP_MAP_SUCCESS)
 		return FAILURE;
 
 	return SUCCESS;

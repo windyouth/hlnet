@@ -141,7 +141,6 @@ void deal_tcpmsg(int client_id)
 	char *data = NULL;
 	msg_func_item *func_item;
 	tcpmsg_hander hander;
-	char cmd[8];
 
 	//取得对应的客户端
 	client_t *cli = get_client(client_id);
@@ -164,8 +163,7 @@ void deal_tcpmsg(int client_id)
         msp_map = (cli->parent == g_tcp_fd_user) ? g_msg_map_user : g_msg_map_manage;
 
         //取出消息处理函数派发消息
-        snprintf(cmd, sizeof(cmd), "%u", head->cmd_code);
-        func_item = (msg_func_item *)map_get(msg_map, cmd, strlen(cmd));
+        func_item = (msg_func_item *)map_get(msg_map, head->cmd_code);
         //执行消息处理函数
         if (func_item && func_item->msg_func)
         {
@@ -282,10 +280,6 @@ int listen_udp_port(ushort port)
 //注册网络消息
 int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
 {
-	char *key = (char *)malloc(8);
-	bzero(key, 8);
-	sprintf(key, "%u", msg);
-
 	map *dst_map = NULL;
 
 	switch (sock_type)
@@ -308,7 +302,7 @@ int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
 	if (!item) return MEM_ERROR;
 
 	item->msg_func = func;
-	if (map_put(dst_map, key, strlen(key), item) != OP_MAP_SUCCESS)
+	if (map_put(dst_map, msg, item) != OP_MAP_SUCCESS)
 		return FAILURE;
 
 	return SUCCESS;
@@ -316,16 +310,11 @@ int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
 
 int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 {
-    char *key = (char *)malloc(8);
-	bzero(key, 8);
-	sprintf(key, "%u", msg);
-
-	
 	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
 	if (!item) return MEM_ERROR;
 
 	item->msg_func = func;
 
-	return (map_put(g_net_udp_msg, key, strlen(key), item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
+	return (map_put(g_net_udp_msg, msg, item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
 
 }

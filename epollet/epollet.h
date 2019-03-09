@@ -13,6 +13,8 @@ typedef struct _tcp_fd
     uchar           heart;          //是否心跳检测
     cb_guide        guide;          //引导recv的函数指针
     cb_tcp          hander;         //消息处理函数的指针
+    link_hander     link;           //连接函数
+    shut_hander     shut;           //断开函数
 }tcp_fd;
 
 //UDP相关参数
@@ -23,9 +25,8 @@ typedef struct _udp_fd
     char            *buf;           //缓冲区
     cb_udp          hander;         //消息处理函数
 }udp_fd;
-
-//UDP读取函数
-typedef void (*udp_reader)(udp_fd *ufd);
+//UDP数据读取函数指针
+typedef void (* udp_reader)(struct _udp_fd *);
 
 //创建客户端监听套接字
 int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander);
@@ -62,9 +63,9 @@ extern list             *g_ready_list;          //就绪链表
 extern link_hander		g_tcp_link;			    //连接事件函数指针(用户端)
 extern shut_hander		g_tcp_shut;			    //断开事件函数指针(用户端)
 
-extern udp_reader		g_udp_reader;			//udp读取函数指针
+extern udp_reader       g_udp_reader;           //UDP数据读取函数
 
-extern uint             g_first_need;         //TCP端首次接收的数据包长度
+extern uint             g_first_need;           //TCP端首次接收的数据包长度
 
 //tcp和udp的两个映射map
 extern map              *g_tcp_fds;                      //tcp的相关参数容器
