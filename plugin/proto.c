@@ -4,17 +4,17 @@
 
 #define				MAX_CMDDATA_LEN			65000			//数据体的最大长度
 
-static int 				g_tcp_fd_user;		                //监听的套接字ID(用户端)
-static int 				g_tcp_fd_manage;		            //监听的套接字ID(管理端)
+//内核命令码(0x00~0x0F)
+#define				CMD_KERNEL_HEARTBEAT	0x00			//心跳
+#define				CMD_KERNEL_END			0x0F			//最后一个内核命令
+
+static int 				g_tcp_fd_user = INVALID_SOCKET;	    //监听的套接字ID(用户端)
+static int 				g_tcp_fd_manage = INVALID_SOCKET;   //监听的套接字ID(管理端)
+static int 		   		g_udp_fd = INVALID_SOCKET;			//监听的套接字ID(UDP)
 
 static map				*g_msg_map_user = NULL;			    //网络消息映射(TCP用户端口)
 static map				*g_msg_map_manage = NULL;			//网络消息映射(TCP管理端口)
 static map				*g_msg_map_udp = NULL;				//网络消息映射(UDP端口)
-
-//内核命令码(0x00~0x0F)
-#define				CMD_KERNEL_HEARTBEAT	0x00				//心跳
-#define				CMD_KERNEL_END			0x0F				//最后一个内核命令
-
 
 //正在读的部分
 enum _read_part
@@ -23,8 +23,30 @@ enum _read_part
 	READ_PART_DATA 		= 1				//正在读数据
 }read_part;
 
+//监听端口
+int listen_port(sock_type type, ushort port)
+{
+    int fd;
+    switch (type)
+    {
+        case sock_type_user:
+            fd = g_tcp_fd_user = listen_tcp(port, tcp_guide, deal_tcp_msg);
+            break;
+        case sock_type_manage:
+            fd = g_tcp_fd_manage = listen_tcp(port, tcp_guide, deal_tcp_msg);
+            break;
+        case sock_type_udp:
+            fd = g_udp_fd = listen_udp(port, deal_udp_msg);
+            break;
+        default:
+            break;
+    }
+
+    return (fd == INVALID_SOCKET) ? FAILURE : SUCCESS;
+}
+
 //引导函数
-int tcp_guide(int client_id)
+static int tcp_guide(int client_id)
 {
     //取得客户端结构
     client_t *cli = get_client(client_id);
@@ -55,27 +77,15 @@ int tcp_guide(int client_id)
         //只有一个包头，内含命令码的情况
         else
         {
-            //加入就绪链表
-            if (cli->is_ready == NO)
-            {
-                if (OP_LIST_SUCCESS == list_push_back(g_ready_list, cli))
-                    cli->is_ready = YES;
-            }
-
             /* 状态保持HEAD不变，need值不变，迎接下一个数据包 */
+            cli->is_ok = YES;
         }
     }//end if
     else            //读数据
     {
-        //加入就绪链表
-        if (cli->is_ready == NO)
-        {
-            if (OP_LIST_SUCCESS == list_push_back(g_ready_list, cli))
-                cli->is_ready = YES;
-        }
-
         cli->status = READ_PART_HEAD;
         cli->need = sizeof(cmd_head_t);
+        cli->is_ok = YES;
     }
 
     //已读部分置零
@@ -126,7 +136,7 @@ static int verify(client_t *cli)
     int total = head->data_size + sizeof(*head);
     if (total > buffer_length(cli->in))
     {
-        set_need(cli->id, total);
+        cli->need = total;
         return NO;
     }
     
@@ -174,7 +184,7 @@ void deal_tcpmsg(int client_id)
 
     //处理完了，重新设置需要长度
     if (buffer_empty(cli->in))
-        set_need(cli->id, sizeof(cmd_head_t));
+        cli->need = sizeof(cmd_head_t);
 }
 
 //处理UDP消息
@@ -195,7 +205,7 @@ void deal_udpmsg(uint ip, ushort port, char *data, uint len)
 }
 
 //发送数据(tcp)
-int tcp_send(uint client_id, uint16_t cmd, char *data, uint len)
+int send_tcp_data(uint client_id, uint16_t cmd, char *data, uint len)
 {
 	//取得对应的客户端
 	client_t *cli = get_client(client_id);
@@ -227,7 +237,7 @@ int tcp_send(uint client_id, uint16_t cmd, char *data, uint len)
 }
 
 //发送数据(udp) ip, port必须是大端(网络序)
-int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len)
+int send_udp_data(uint ip, uint16_t port, uint16_t cmd, char *data, uint len)
 {
 	//参数检查
 	if (len > MAX_UDP_LENGTH - sizeof(cmd_head_t))
@@ -316,5 +326,4 @@ int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 	item->msg_func = func;
 
 	return (map_put(g_net_udp_msg, msg, item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
-
 }

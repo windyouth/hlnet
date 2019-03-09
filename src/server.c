@@ -11,14 +11,10 @@
 #include "../epollet/epollet.h"
 #include "../coroutine/coroutine.h"
 
-
 #define		UDP_BUFFER_SIZE		(MAX_UDP_LENGTH + 1)	//UDP缓冲区大小
 #define		MAX_DATA_LEN	    65000			        //数据体的最大长度
 
-static char				*g_udp_buffer = NULL;				//UDP缓冲区
-
 static struct schedule	*g_schedule = NULL;					//协程调度器
-
 
 //网络消息分发
 void issue_tcp_msg(struct schedule *sche, void *arg)
@@ -113,25 +109,6 @@ int listen_udp(short port, cb_udp hander)
 	return create_udp_fd(port, hander);
 }
 
-//添加服务器参数
-int serv_ctl(sock_type type, short port)
-{
-	//tcp端口
-	if (type == socktype_tcp)		
-	{
-		return create_tcp(port);
-	}
-	//udp端口
-	else if (type == socktype_udp)				
-	{
-		return create_udp(port);
-	}
-	else
-	{
-		return PARAM_ERROR;
-	}
-}
-
 //运行服务器
 int serv_run()
 {
@@ -164,34 +141,20 @@ int serv_run()
 	coroutine_run(g_schedule);
 }
 
-//设置初次接收数据包的长度
-void set_first_need(uint need)
-{
-    g_first_need = need;
-}
-
-//设置下次接收数据包的长度
-int set_need(uint client_id, uint need)
-{
-	//取得对应的客户端
-	client_t *cli = get_client(client_id);
-	if (!cli) return PARAM_ERROR;
-
-    cli->need = need;
-
-    return SUCCESS;
-}
-
 //注册连接消息函数
-void reg_link_event(link_hander func)
+void reg_link_event(int listen_fd, link_hander func)
 {
-	g_tcp_link = func;
+    tcp_fd *tfd = map_get(g_tcp_fds, listen_fd);
+    if (tfd)
+        tfd->link = func;
 }
 
 //注册中断消息函数
-void reg_shut_event(shut_hander func)
+void reg_shut_event(int listen_fd, shut_hander func)
 {
-	g_tcp_shut = func;
+    tcp_fd *tfd = map_get(g_tcp_fds, listen_fd);
+    if (tfd)
+        tfd->shut = func;
 }
 
 //发送数据(tcp)
@@ -220,7 +183,7 @@ int send_tcp(uint client_id, char *data, uint len)
 }
 
 //发送数据(udp) ip, port必须是大端(网络序)
-int send_udp(uint ip, ushort port, char *data, uint len)
+int send_udp(int fd, uint ip, ushort port, char *data, uint len)
 {
 	//参数检查
 	if (len > MAX_UDP_LENGTH)
@@ -234,5 +197,5 @@ int send_udp(uint ip, ushort port, char *data, uint len)
 	addr.sin_port = port;
 
 	//发送
-	return sendto(g_udp_fd, data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
+	return sendto(fd, data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
 }

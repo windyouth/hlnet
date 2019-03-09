@@ -10,11 +10,12 @@ typedef struct _tcp_fd
 {
     as_map_item;
     int             fd;             //套接字
-    uchar           heart;          //是否心跳检测
     cb_guide        guide;          //引导recv的函数指针
     cb_tcp          hander;         //消息处理函数的指针
     link_hander     link;           //连接函数
     shut_hander     shut;           //断开函数
+    ushort          need;           //初次需要读的字节数
+    uchar           heart;          //是否心跳检测
 }tcp_fd;
 
 //UDP相关参数
@@ -56,19 +57,12 @@ void epollet_run(struct schedule *sche, void *arg);
 void close_socket(client_t *cli);
 
 //全局变量
-extern int 				g_udp_fd;				//监听的套接字ID(UDP)
-
 extern list             *g_ready_list;          //就绪链表
-
-extern link_hander		g_tcp_link;			    //连接事件函数指针(用户端)
-extern shut_hander		g_tcp_shut;			    //断开事件函数指针(用户端)
-
-extern udp_reader       g_udp_reader;           //UDP数据读取函数
-
-extern uint             g_first_need;           //TCP端首次接收的数据包长度
 
 //tcp和udp的两个映射map
 extern map              *g_tcp_fds;                      //tcp的相关参数容器
 extern map              *g_udp_fds;                      //udp的相关参数容器
+
+extern udp_reader       g_udp_reader;           //UDP数据读取函数
 
 #endif //_EPOLLET_H_

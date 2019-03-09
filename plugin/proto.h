@@ -3,13 +3,13 @@
 
 #include <sys/types.h>
 
-
-//tcp通信的类型
-typedef enum _tcp_type
+//通信的类型
+typedef enum _sock_type
 {
-    tcp_type_user = 1,
-    tcp_type_manage = 2
-}tcp_type;
+    sock_type_user = 1,
+    sock_type_manage = 2,
+    sock_type_udp = 3
+}sock_type;
 
 //网络数据包头
 typedef struct _cmd_head
@@ -19,6 +19,9 @@ typedef struct _cmd_head
 	ushort		proto_ver;			//协议版本号
 }cmd_head_t, *pcmd_head;
 
+//监听端口
+int listen_port(sock_type type, ushort port);
+
 //TCP消息函数
 //head中需要用到data_size和proto_ver两个值，cmd_code不需要关注。
 typedef int (*tcpmsg_hander)(int client_id, cmd_head_t *head, char *data);
@@ -26,16 +29,13 @@ typedef int (*tcpmsg_hander)(int client_id, cmd_head_t *head, char *data);
 typedef int (*udpmsg_hander)(uint ip, ushort port, cmd_head_t *head, char *data);
 
 //注册TCP消息
-int reg_tcp_msg(sock_type_e sock_type, uint16_t msg, tcpmsg_hander func);
+int reg_tcp_msg(tcp_type ttype, uint16_t msg, tcpmsg_hander func);
 //注册UDP消息
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
 
-//监听用户端口
-int listen_user_port(ushort port);
-
 //发送数据(tcp)
-int tcp_send(uint client_id, uint16_t cmd, char *data, uint len);
+int send_tcp_data(uint client_id, uint16_t cmd, char *data, uint len);
 //发送数据(udp) ip, port必须是大端(网络序)
-int udp_send(uint ip, uint16_t port, uint16_t cmd, char *data, uint len);
+int send_udp_data(uint ip, uint16_t port, uint16_t cmd, char *data, uint len);
 
 #endif //_PROTO_H_
