@@ -8,7 +8,7 @@
 #endif
 
 //创建服务器
-int serv_create();
+int serv_init();
 //监听tcp端口
 int listen_tcp(short port, cb_guide guide, cb_tcp hander);
 //监听udp端口

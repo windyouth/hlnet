@@ -72,7 +72,7 @@ static void udp_read(udp_fd *ufd)
 }
 
 //创建服务器
-int serv_create()
+int serv_init()
 {
     //初始化缓冲区仓库
     if (SUCCESS != buffer_store_init())

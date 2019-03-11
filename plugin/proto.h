@@ -19,6 +19,8 @@ typedef struct _cmd_head
 	ushort		proto_ver;			//协议版本号
 }cmd_head_t, *pcmd_head;
 
+//协议部分初始化
+int proto_init();
 //监听端口
 int listen_port(sock_type type, ushort port);
 
@@ -34,8 +36,10 @@ int reg_tcp_msg(tcp_type ttype, uint16_t msg, tcpmsg_hander func);
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
 
 //发送数据(tcp)
-int send_tcp_data(uint client_id, uint16_t cmd, char *data, uint len);
+int send_tcp_data(uint client_id, char *data, uint len);
 //发送数据(udp) ip, port必须是大端(网络序)
 int send_udp_data(uint ip, uint16_t port, uint16_t cmd, char *data, uint len);
 
+//注册TCP消息
+int reg_tcp_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func);
 #endif //_PROTO_H_

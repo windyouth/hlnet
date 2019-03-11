@@ -23,6 +23,33 @@ enum _read_part
 	READ_PART_DATA 		= 1				//正在读数据
 }read_part;
 
+//协议部分初始化
+int proto_init()
+{
+    if (!g_msg_map_user)
+    {
+        g_msg_map_user = (map *)malloc(sizeof(map));
+        if (!g_msg_map_user) return MEM_ERROR;
+        if (map_init(g_msg_map_user) != OP_MAP_SUCCESS) return MEM_ERROR;
+    }
+    
+    if (!g_msg_map_manage)
+    {
+        g_msg_map_manage = (map *)malloc(sizeof(map));
+        if (!g_msg_map_manage) return MEM_ERROR;
+        if (map_init(g_msg_map_manage) != OP_MAP_SUCCESS) return MEM_ERROR;
+    }
+    
+    if (!g_msg_map_udp)
+    {
+        g_msg_map_udp = (map *)malloc(sizeof(map));
+        if (!g_msg_map_udp) return MEM_ERROR;
+        if (map_init(g_msg_map_udp) != OP_MAP_SUCCESS) return MEM_ERROR;
+    }
+
+    return serv_init();
+}
+
 //监听端口
 int listen_port(sock_type type, ushort port)
 {
@@ -195,100 +222,35 @@ void deal_udpmsg(uint ip, ushort port, char *data, uint len)
 
     cmd_head_t *head = (cmd_head_t *)data;
 	char *data = NULL;
+    udpmsg_hander hander;
 
 	//检验数据
 	if (head->data_size + sizeof(*head) != len)
 		return;
 
     //根据命令码从消息映射容器中取出对应的处理函数并回调
-    // ...
+    msg_func_item *func_item = map_get(g_msg_map_udp, head->cmd_code);
+    if (func_item && func_item->msg_func)
+    {
+        hander = (udpmsg_hander)func_item->msg_func;
+        hander(cli->id, head, data);
+    }
 }
 
 //发送数据(tcp)
-int send_tcp_data(uint client_id, uint16_t cmd, char *data, uint len)
+int send_tcp_data(uint client_id, char *data, uint len)
 {
-	//取得对应的客户端
-	client_t *cli = get_client(client_id);
-	if (!cli) return PARAM_ERROR;
-
-	//申请缓冲区
-	int size = sizeof(cmd_head_t);
-	if (data) size += len;
-	
-	int res = buffer_rectify(cli->out, size);
-	if (res != SUCCESS) return res;
-
-	//写数据
-	cmd_head_t *head = (cmd_head_t *)write_ptr(cli->out);	
-	zero(head);
-	head->cmd_code = cmd;
-	seek_write(cli->out, sizeof(*head));
-	if (data)
-	{
-	   	head->data_size = len;
-		buffer_write(cli->out, data, len);
-	}
-
-	//发送，如果没有发成功，由后续的epoll写事件发送。
-	res = circle_send(cli->fd, read_ptr(cli->out), cli->out->len);
-	if (res > 0) buffer_reset(cli->out);
-
-	return res;
+    return send_tcp(client_id, data, len);
 }
 
 //发送数据(udp) ip, port必须是大端(网络序)
-int send_udp_data(uint ip, uint16_t port, uint16_t cmd, char *data, uint len)
+int send_udp_data(uint ip, uint16_t port, char *data, uint len)
 {
-	//参数检查
-	if (len > MAX_UDP_LENGTH - sizeof(cmd_head_t))
-		return PARAM_ERROR;
-
-	//填写地址信息
-	struct sockaddr_in addr;
-	zero(&addr);
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = ip;
-	addr.sin_port = port;
-
-	//申请缓冲区
-	const int size = data ? sizeof(cmd_head_t) : sizeof(cmd_head_t) + len;
-	char buf[size];
-	bzero(buf, size);
-
-	//写数据
-	cmd_head_t *head = (cmd_head_t *)buf;
-	head->cmd_code = cmd;
-	if (data)
-	{
-		head->data_size = len;
-		memcpy(buf + sizeof(cmd_head_t), data, len);
-	}
-
-	//发送
-	return sendto(g_udp_fd, data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
+    return send_udp(g_udp_fd, ip, port, data, len);
 }
 
-//监听用户端口
-int listen_user_port(ushort port)
-{
-	//初始化网络消息映射器
-	g_net_user_msg = (map *)malloc(sizeof(map));
-	if (!g_net_user_msg) return MEM_ERROR;
-	if (map_init(g_net_user_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-}
-
-//监听UDP端口
-int listen_udp_port(ushort port)
-{
-    //初始化网络消息映射器
-	g_net_udp_msg = (map *)malloc(sizeof(map));
-	if (!g_net_udp_msg) return MEM_ERROR;
-	if (map_init(g_net_udp_msg) != OP_MAP_SUCCESS) return MEM_ERROR;
-
-}
-
-//注册网络消息
-int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
+//注册TCP消息
+int reg_tcp_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
 {
 	map *dst_map = NULL;
 
@@ -296,12 +258,12 @@ int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
 	{
 		case socktype_user:
 			{
-				dst_map = g_net_user_msg;
+				dst_map = g_msg_map_user;
 			}
 			break;
 		case socktype_manage:
 			{
-				dst_map = g_net_manage_msg;
+				dst_map = g_msg_map_manage;
 			}
 			break;
 		default:
@@ -318,6 +280,7 @@ int reg_net_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
 	return SUCCESS;
 }
 
+//注册UDP消息
 int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 {
 	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
@@ -325,5 +288,5 @@ int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 
 	item->msg_func = func;
 
-	return (map_put(g_net_udp_msg, msg, item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
+	return (map_put(g_msg_map_udp, msg, item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
 }
