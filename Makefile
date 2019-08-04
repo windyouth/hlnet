@@ -3,12 +3,7 @@ target = hlnet/lib/libhlnet.so
 obj = $(wildcard obj/*.o)
 
 #如果不加入调试信息，按O2级别优化代码。
-debug = 
-ifneq ($(debug),)
-debug_flag = $(debug)
-else
 debug_flag = -O2
-endif
 
 flag += -lpthread
 # -fPIC 告诉编绎器产生与位置无关代码，为共享库.so所必须。 
@@ -61,3 +56,6 @@ clean:
 	#rm -f lib/* obj/* bin/include/* bin/lib/*
 	#make -C $(epollet_dir) clean
 	rm -rf $(obj_dir) $(bin_dir)
+
+debug:
+	@make debug_flag=-g

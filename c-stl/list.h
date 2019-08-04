@@ -82,7 +82,7 @@ typedef void (* deal_func)(list_item *item, void *arg);
 void list_for_each(list *list, deal_func deal, void *arg);
 
 //遍历链表
-#define list_foreach(list, index, item, temp)                      \
+#define list_foreach(list, index, item, temp)                       \
         for (index = (list)->size, item = (list)->head;             \
              index > 0 && item != NULL && (temp = item->next);      \
              index--, item = temp)

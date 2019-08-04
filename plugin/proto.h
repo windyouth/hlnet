@@ -2,6 +2,7 @@
 #define _PROTO_H_ 
 
 #include <sys/types.h>
+#include "../hlnet/include/server.h"
 
 //通信的类型
 typedef enum _sock_type
@@ -31,7 +32,7 @@ typedef int (*tcpmsg_hander)(int client_id, cmd_head_t *head, char *data);
 typedef int (*udpmsg_hander)(uint ip, ushort port, cmd_head_t *head, char *data);
 
 //注册TCP消息
-int reg_tcp_msg(tcp_type ttype, uint16_t msg, tcpmsg_hander func);
+int reg_tcp_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func);
 //注册UDP消息
 int reg_udp_msg(uint16_t msg, udpmsg_hander func);
 
@@ -40,6 +41,4 @@ int send_tcp_data(uint client_id, char *data, uint len);
 //发送数据(udp) ip, port必须是大端(网络序)
 int send_udp_data(uint ip, uint16_t port, uint16_t cmd, char *data, uint len);
 
-//注册TCP消息
-int reg_tcp_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func);
 #endif //_PROTO_H_

@@ -11,14 +11,6 @@
 
 #define			array_size(array)			(sizeof(array) / sizeof(array[0]))
 
-//交换两个元素的值
-#define	swap(a, b, temp) do						\
-{												\
-	temp = a;									\
-	a = b;										\
-	b = temp;									\
-} while(0)
-
 //安全释放指针
 #define	safe_free(ptr) do						\
 {												\
@@ -31,7 +23,5 @@
 
 //取得本机IP地址，网络序
 struct in_addr *get_addr();
-//取出0~n-1的随机数，且不重复
-void get_rand(int a[], int n);
 
 #endif //_ALGORITHM_H_

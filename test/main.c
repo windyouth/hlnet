@@ -9,6 +9,7 @@
 #include "../hlnet/include/moment.h"
 #include "../hlnet/include/alive.h"
 #include "../epollet/client.h"
+#include "../plugin/proto.h"
 #include "define.h"
 
 MYSQL				*g_mysql = NULL;			//mysql连接
@@ -44,21 +45,21 @@ int my_udpmsg_hander(uint32_t ip, uint16_t port, cmd_head_t *head, char *data)
 
 int api_test()
 {
-	if (SUCCESS != serv_create())
+	if (SUCCESS != proto_init())
 	{
 		puts("serv_create failed");
 		return -1;
 	}
 	puts("serv_create success");
 
-	if (SUCCESS != serv_ctl(socktype_user, 3366))
+	if (SUCCESS != listen_port(socktype_user, 3366))
 	{
 		puts("serv_ctl(socktype_client, 3366) failed");
 		return -1;
 	}
 	puts("serv_ctl(socktype_client, 3366) success");
 
-	if (SUCCESS != serv_ctl(socktype_manage, 4455))
+	if (SUCCESS != listen_port(socktype_manage, 4455))
 	{
 		puts("serv_ctl(socktype_manage, 4455) failed");
 		return -1;
@@ -277,10 +278,10 @@ void alive_test()
 int main()
 {
 	//创建服务器
-	if (SUCCESS != serv_create())
+	if (SUCCESS != proto_init())
 		puts("serv_create failure");
 	//监听端口
-	if (SUCCESS != serv_ctl(socktype_user, PORT_CLIENT))
+	if (SUCCESS != listen_port(socktype_user, PORT_CLIENT))
 		puts("serv_ctl failure");
 
 	//注册连接函数
@@ -291,9 +292,9 @@ int main()
 		puts("reg_shut_event failure");
 
 	//注册网络消息
-	if (SUCCESS != reg_net_msg(socktype_user, MSG_LOGIN, on_netmsg_login))
+	if (SUCCESS != reg_tcp_msg(socktype_user, MSG_LOGIN, on_netmsg_login))
 		puts("reg_net_msg failure");
-	if (SUCCESS != reg_net_msg(socktype_user, MSG_REGISTER, on_netmsg_reg))
+	if (SUCCESS != reg_tcp_msg(socktype_user, MSG_REGISTER, on_netmsg_reg))
 		puts("reg_net_msg failure");
 
 	//初始化数据库
