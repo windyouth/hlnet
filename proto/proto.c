@@ -23,55 +23,6 @@ enum _read_part
 	READ_PART_DATA 		= 1				//正在读数据
 }read_part;
 
-//协议部分初始化
-int proto_init()
-{
-    if (!g_msg_map_user)
-    {
-        g_msg_map_user = (map *)malloc(sizeof(map));
-        if (!g_msg_map_user) return MEM_ERROR;
-        if (map_init(g_msg_map_user) != OP_MAP_SUCCESS) return MEM_ERROR;
-    }
-    
-    if (!g_msg_map_manage)
-    {
-        g_msg_map_manage = (map *)malloc(sizeof(map));
-        if (!g_msg_map_manage) return MEM_ERROR;
-        if (map_init(g_msg_map_manage) != OP_MAP_SUCCESS) return MEM_ERROR;
-    }
-    
-    if (!g_msg_map_udp)
-    {
-        g_msg_map_udp = (map *)malloc(sizeof(map));
-        if (!g_msg_map_udp) return MEM_ERROR;
-        if (map_init(g_msg_map_udp) != OP_MAP_SUCCESS) return MEM_ERROR;
-    }
-
-    return serv_init();
-}
-
-//监听端口
-int listen_port(sock_type type, ushort port)
-{
-    int fd;
-    switch (type)
-    {
-        case sock_type_user:
-            fd = g_tcp_fd_user = listen_tcp(port, tcp_guide, deal_tcp_msg);
-            break;
-        case sock_type_manage:
-            fd = g_tcp_fd_manage = listen_tcp(port, tcp_guide, deal_tcp_msg);
-            break;
-        case sock_type_udp:
-            fd = g_udp_fd = listen_udp(port, deal_udp_msg);
-            break;
-        default:
-            break;
-    }
-
-    return (fd == INVALID_SOCKET) ? FAILURE : SUCCESS;
-}
-
 //引导函数
 static int tcp_guide(int client_id)
 {
@@ -171,13 +122,14 @@ static int verify(client_t *cli)
 } 
 
 //处理TCP消息
-void deal_tcpmsg(int client_id)
+void deal_tcp_msg(int client_id)
 {   
     //变量定义
     cmd_head_t *head = NULL;
 	char *data = NULL;
 	msg_func_item *func_item;
 	tcpmsg_hander hander;
+    map *msg_map = NULL;
 
 	//取得对应的客户端
 	client_t *cli = get_client(client_id);
@@ -197,7 +149,7 @@ void deal_tcpmsg(int client_id)
             return;
         }
 
-        msp_map = (cli->parent == g_tcp_fd_user) ? g_msg_map_user : g_msg_map_manage;
+        msg_map = (cli->parent == g_tcp_fd_user) ? g_msg_map_user : g_msg_map_manage;
 
         //取出消息处理函数派发消息
         func_item = (msg_func_item *)map_get(msg_map, head->cmd_code);
@@ -210,18 +162,18 @@ void deal_tcpmsg(int client_id)
     } //end while
 
     //处理完了，重新设置需要长度
-    if (buffer_empty(cli->in))
+    //if (buffer_empty(cli->in))
+    if (cli->in->len <= 0)
         cli->need = sizeof(cmd_head_t);
 }
 
 //处理UDP消息
-void deal_udpmsg(uint ip, ushort port, char *data, uint len)
+void deal_udp_msg(uint ip, ushort port, char *data, uint len)
 {
     assert(data);
     if (!data) return;
 
     cmd_head_t *head = (cmd_head_t *)data;
-	char *data = NULL;
     udpmsg_hander hander;
 
 	//检验数据
@@ -233,7 +185,7 @@ void deal_udpmsg(uint ip, ushort port, char *data, uint len)
     if (func_item && func_item->msg_func)
     {
         hander = (udpmsg_hander)func_item->msg_func;
-        hander(cli->id, head, data);
+        hander(ip, port, head, data);
     }
 }
 
@@ -244,24 +196,24 @@ int send_tcp_data(uint client_id, char *data, uint len)
 }
 
 //发送数据(udp) ip, port必须是大端(网络序)
-int send_udp_data(uint ip, uint16_t port, char *data, uint len)
+int send_udp_data(uint ip, ushort port, char *data, uint len)
 {
     return send_udp(g_udp_fd, ip, port, data, len);
 }
 
 //注册TCP消息
-int reg_tcp_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
+int reg_tcp_msg(sock_type sock_type, ushort msg, tcpmsg_hander func)
 {
 	map *dst_map = NULL;
 
 	switch (sock_type)
 	{
-		case socktype_user:
+		case sock_type_user:
 			{
 				dst_map = g_msg_map_user;
 			}
 			break;
-		case socktype_manage:
+		case sock_type_manage:
 			{
 				dst_map = g_msg_map_manage;
 			}
@@ -281,7 +233,7 @@ int reg_tcp_msg(sock_type sock_type, uint16_t msg, tcpmsg_hander func)
 }
 
 //注册UDP消息
-int reg_udp_msg(uint16_t msg, udpmsg_hander func)
+int reg_udp_msg(ushort msg, udpmsg_hander func)
 {
 	msg_func_item *item = (msg_func_item *)malloc(sizeof(msg_func_item));
 	if (!item) return MEM_ERROR;
@@ -289,4 +241,53 @@ int reg_udp_msg(uint16_t msg, udpmsg_hander func)
 	item->msg_func = func;
 
 	return (map_put(g_msg_map_udp, msg, item) == OP_MAP_SUCCESS) ? SUCCESS : FAILURE;
+}
+
+//协议部分初始化
+int proto_init()
+{
+    if (!g_msg_map_user)
+    {
+        g_msg_map_user = (map *)malloc(sizeof(map));
+        if (!g_msg_map_user) return MEM_ERROR;
+        if (map_init(g_msg_map_user) != OP_MAP_SUCCESS) return MEM_ERROR;
+    }
+    
+    if (!g_msg_map_manage)
+    {
+        g_msg_map_manage = (map *)malloc(sizeof(map));
+        if (!g_msg_map_manage) return MEM_ERROR;
+        if (map_init(g_msg_map_manage) != OP_MAP_SUCCESS) return MEM_ERROR;
+    }
+    
+    if (!g_msg_map_udp)
+    {
+        g_msg_map_udp = (map *)malloc(sizeof(map));
+        if (!g_msg_map_udp) return MEM_ERROR;
+        if (map_init(g_msg_map_udp) != OP_MAP_SUCCESS) return MEM_ERROR;
+    }
+
+    return serv_init();
+}
+
+//监听端口
+int listen_port(sock_type type, ushort port)
+{
+    int fd;
+    switch (type)
+    {
+        case sock_type_user:
+            fd = g_tcp_fd_user = listen_tcp(port, tcp_guide, deal_tcp_msg);
+            break;
+        case sock_type_manage:
+            fd = g_tcp_fd_manage = listen_tcp(port, tcp_guide, deal_tcp_msg);
+            break;
+        case sock_type_udp:
+            fd = g_udp_fd = listen_udp(port, deal_udp_msg);
+            break;
+        default:
+            break;
+    }
+
+    return (fd == INVALID_SOCKET) ? FAILURE : SUCCESS;
 }

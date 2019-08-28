@@ -16,6 +16,7 @@ epollet_dir = ./epollet
 coroutine_dir = ./coroutine
 cstl_dir = ./c-stl
 main_dir = ./src
+proto_dir = ./proto
 
 lib_dir = ./lib
 obj_dir = ./obj
@@ -30,11 +31,11 @@ $(shell mkdir -p $(bin_dir)/include)
 $(shell mkdir -p $(bin_dir)/lib)
 endif
 
-.PHONY: main common cstl coroutine epollet
+.PHONY: main common cstl coroutine epollet proto
 
 all: $(target)
 
-$(target): main common cstl coroutine epollet
+$(target): main common cstl coroutine epollet proto
 	$(compiler) -o $@ $(obj) $(flag) $(debug_flag)
 
 main:
@@ -51,6 +52,9 @@ cstl:
 
 epollet:
 	make -C $(epollet_dir) debug_flag=$(debug_flag)
+
+proto:
+	make -C $(proto_dir) debug_flag=$(debug_flag) define_flag=$(define)
 
 clean: 
 	#rm -f lib/* obj/* bin/include/* bin/lib/*

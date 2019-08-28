@@ -7,6 +7,7 @@
 #include "define.h"
 #include "../hlnet/include/algorithm.h"
 #include "../hlnet/include/common.h"
+#include "../hlnet/include/proto.h"
 
 #define         CONN_COUNT      200
 #define         SLEEP_TIME      2000
@@ -191,9 +192,9 @@ void one_connect()
 		
 	usleep(SLEEP_TIME);
     
-    for (int j = 0; j < 50; j++)
+    for (int j = 0; j < 1; j++)
 	{
-		send_reg_message(fd);
+		send_login_message(fd);
 
 		usleep(SLEEP_TIME);
 	}
@@ -201,6 +202,6 @@ void one_connect()
 
 void main()
 {
-	//one_connect();
-    multi_connect();
+	one_connect();
+    //multi_connect();
 }

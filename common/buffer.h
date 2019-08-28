@@ -26,7 +26,7 @@
 //缓冲区剩余大小
 #define buffer_surplus(buffer) 	((buffer)->size - (buffer)->len - (buffer)->gap)
 //缓冲区是否为空
-#define buffer_empty(buufer)    ((buffer)->len <= 0)
+#define buffer_empty(bufer)    ((buffer)->len <= 0)
 
 //偏移读指针
 #define seek_read(buf, off) do						\

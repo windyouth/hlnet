@@ -51,21 +51,21 @@ void main()
 	if (SUCCESS != serv_create())
 		puts("serv_create failure");
 	//监听端口
-	if (SUCCESS != serv_ctl(socktype_user, PORT_CLIENT))
+	if (SUCCESS != serv_ctl(sock_type_user, PORT_CLIENT))
 		puts("serv_ctl failure");
 
 	//注册连接函数
-	if (SUCCESS != reg_link_event(socktype_user, my_link_hander))
+	if (SUCCESS != reg_link_event(sock_type_user, my_link_hander))
 		puts("reg_link_event failure");
 	//注册断开函数
-	if (SUCCESS != reg_shut_event(socktype_user, my_shut_hander))
+	if (SUCCESS != reg_shut_event(sock_type_user, my_shut_hander))
 		puts("reg_shut_event failure");
 
 	//注册网络消息
-	if (SUCCESS != reg_net_msg(socktype_user, MSG_QPS, on_netmsg_qps))
+	if (SUCCESS != reg_net_msg(sock_type_user, MSG_QPS, on_netmsg_qps))
 		puts("reg_net_msg failure");
 
-    set_first_length(socktype_user, sizeof(cmd_head_t));
+    set_first_length(sock_type_user, sizeof(cmd_head_t));
 
 	//运行服务器
 	//puts("pressure test, come on ......");

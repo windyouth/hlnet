@@ -76,7 +76,7 @@ int map_put(map *map, int key, void *value)
     char *key_str = (char *)malloc(16);
     if (!key_str) return OP_MAP_FAILURE;
 
-    itoa(key, key_str, 10);
+    snprintf(key_str, 16, "%d", key);
 
     return map_put_str(map, key_str, strlen(key_str), value);
 }
@@ -87,7 +87,7 @@ map_entry *map_get(map *map, int key)
     char *key_str = (char *)malloc(16);
     if (!key_str) return NULL;
 
-    itoa(key, key_str, 10);
+    snprintf(key_str, 16, "%d", key);
 
     return map_get_str(map, key_str, strlen(key_str));
 }

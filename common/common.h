@@ -2,7 +2,11 @@
 #define _COMMON_H_
 
 #include <sys/types.h>
+#ifdef _HLNET_
 #include "../c-stl/map.h"
+#else
+#include "map.h"
+#endif
 
 //错误码
 #define				SUCCESS					0					//成功

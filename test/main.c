@@ -52,19 +52,19 @@ int api_test()
 	}
 	puts("serv_create success");
 
-	if (SUCCESS != listen_port(socktype_user, 3366))
+	if (SUCCESS != listen_port(sock_type_user, 3366))
 	{
 		puts("serv_ctl(socktype_client, 3366) failed");
 		return -1;
 	}
 	puts("serv_ctl(socktype_client, 3366) success");
 
-	if (SUCCESS != listen_port(socktype_manage, 4455))
+	if (SUCCESS != listen_port(sock_type_manage, 4455))
 	{
-		puts("serv_ctl(socktype_manage, 4455) failed");
+		puts("serv_ctl(sock_type_manage, 4455) failed");
 		return -1;
 	}
-	puts("serv_ctl(socktype_manage, 4455) success");
+	puts("serv_ctl(sock_type_manage, 4455) success");
 
 	if (SUCCESS != serv_ctl(socktype_udp, 5566))
 	{
@@ -73,21 +73,21 @@ int api_test()
 	}
 	puts("serv_ctl(socktype_udp, 5566) success");
 
-	if (SUCCESS != reg_link_event(socktype_user, my_link_hander))
+	if (SUCCESS != reg_link_event(sock_type_user, my_link_hander))
 	{
 		puts("reg_link_event failed");
 		return -1;
 	}
 	puts("reg_link_event success");
 
-	if (SUCCESS != reg_shut_event(socktype_manage, my_shut_hander))
+	if (SUCCESS != reg_shut_event(sock_type_manage, my_shut_hander))
 	{
 		puts("reg_shut_event failed");
 		return -1;
 	}
 	puts("reg_shut_event success");
 
-	if (SUCCESS != reg_net_msg(socktype_user, MSG_LOGIN, my_tcpmsg_hander))
+	if (SUCCESS != reg_net_msg(sock_type_user, MSG_LOGIN, my_tcpmsg_hander))
 	{
 		puts("reg_net_msg failed");
 		return -1;
@@ -281,20 +281,20 @@ int main()
 	if (SUCCESS != proto_init())
 		puts("serv_create failure");
 	//监听端口
-	if (SUCCESS != listen_port(socktype_user, PORT_CLIENT))
+	if (SUCCESS != listen_port(sock_type_user, PORT_CLIENT))
 		puts("serv_ctl failure");
 
 	//注册连接函数
-	if (SUCCESS != reg_link_event(socktype_user, my_link_hander))
+	if (SUCCESS != reg_link_event(sock_type_user, my_link_hander))
 		puts("reg_link_event failure");
 	//注册断开函数
-	if (SUCCESS != reg_shut_event(socktype_user, my_shut_hander))
+	if (SUCCESS != reg_shut_event(sock_type_user, my_shut_hander))
 		puts("reg_shut_event failure");
 
 	//注册网络消息
-	if (SUCCESS != reg_tcp_msg(socktype_user, MSG_LOGIN, on_netmsg_login))
+	if (SUCCESS != reg_tcp_msg(sock_type_user, MSG_LOGIN, on_netmsg_login))
 		puts("reg_net_msg failure");
-	if (SUCCESS != reg_tcp_msg(socktype_user, MSG_REGISTER, on_netmsg_reg))
+	if (SUCCESS != reg_tcp_msg(sock_type_user, MSG_REGISTER, on_netmsg_reg))
 		puts("reg_net_msg failure");
 
 	//初始化数据库
@@ -328,7 +328,7 @@ int main()
 
     //alive_test();
 
-    set_first_length(socktype_user, sizeof(cmd_head_t));
+    set_first_length(sock_type_user, sizeof(cmd_head_t));
 
 	//运行服务器
 	puts("serv_run...");
