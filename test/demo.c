@@ -30,13 +30,13 @@ int deal_login_msg(int client_id, cmd_head_t *head, char *data)
 	char *rsp = "我是服务器，已收到你的登录消息。";
 
     char send_buf[256];
-    cmd_head_t *rsp_head;
+    cmd_head_t *rsp_head = (cmd_head_t *)send_buf;
     rsp_head->cmd_code = MSG_LOGIN;
     rsp_head->data_size = strlen(rsp);
     rsp_head->proto_ver = 0x01;
     snprintf(rsp_head + 1, 200, rsp);
 
-	send_tcp_data(client_id, send_buf, strlen(rsp));
+	send_tcp_data(client_id, send_buf, sizeof(cmd_head_t) + strlen(rsp));
 
 	return SUCCESS;
 }
@@ -46,13 +46,16 @@ void main()
 	if (SUCCESS != proto_init())
 		puts("serv_create failure");
 	//监听端口
-	if (SUCCESS != listen_port(sock_type_user, PORT_CLIENT))
-		puts("serv_ctl failure");
+    int fd = listen_port(sock_type_user, PORT_CLIENT);
+    if (fd == -1)
+        puts("listen_port failure");
+
+    printf("listen port: %d \n", PORT_CLIENT);
 
 	//注册连接函数
-	reg_link_event(sock_type_user, my_link_hander);
+	reg_link_event(fd, my_link_hander);
 	//注册断开函数
-	reg_shut_event(sock_type_user, my_shut_hander);
+	reg_shut_event(fd, my_shut_hander);
 
 	//注册消息
     reg_tcp_msg(sock_type_user, MSG_LOGIN, deal_login_msg);
@@ -60,4 +63,6 @@ void main()
 	SUCCESS != init_log("log.txt", loglevel_info);
 	//运行服务器
 	serv_run();
+
+    puts("server runing ...");
 }

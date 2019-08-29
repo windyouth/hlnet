@@ -126,7 +126,7 @@ static int epoll_add(int fd, int flag)
 }
 
 //创建TCP监听套接字
-int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander)
+int create_tcp_fd(uint16_t port, ushort need, cb_guide guide, cb_tcp hander)
 {
     //参数校验
     assert(guide && hander);
@@ -151,6 +151,7 @@ int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander)
     //value赋值
     tfd->fd = fd;
     tfd->heart = NO;
+    tfd->need = need;
     tfd->guide = guide;
     tfd->hander = hander;
 

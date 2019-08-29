@@ -189,15 +189,10 @@ void one_connect()
 		puts("client_tcp_socket failure");
 		exit(1);
 	}
-		
-	usleep(SLEEP_TIME);
-    
-    for (int j = 0; j < 1; j++)
-	{
-		send_login_message(fd);
 
-		usleep(SLEEP_TIME);
-	}
+    printf("连接成功，fd: %d \n", fd);
+		
+	send_login_message(fd);
 }
 
 void main()

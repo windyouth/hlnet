@@ -10,7 +10,7 @@
 //创建服务器
 int serv_init();
 //监听tcp端口
-int listen_tcp(short port, cb_guide guide, cb_tcp hander);
+int listen_tcp(ushort port, ushort need, cb_guide guide, cb_tcp hander);
 //监听udp端口
 int listen_udp(short port, cb_udp hander);
 //运行服务器

@@ -94,12 +94,11 @@ static int verify(client_t *cli)
     assert(cli);
     if (!cli) return NO;
 
-    cmd_head_t *head = 0;
-
     //检验数据长度是否满足数据头
     if (buffer_length(cli->in) < sizeof(cmd_head_t))
         return NO;
 
+    cmd_head_t *head = read_ptr(cli->in);
     //如果大于规定值，踢掉。
 	if (head->data_size > MAX_CMDDATA_LEN) 
 	{
@@ -277,10 +276,12 @@ int listen_port(sock_type type, ushort port)
     switch (type)
     {
         case sock_type_user:
-            fd = g_tcp_fd_user = listen_tcp(port, tcp_guide, deal_tcp_msg);
+            fd = g_tcp_fd_user = listen_tcp(port, sizeof(cmd_head_t), 
+                                            tcp_guide, deal_tcp_msg);
             break;
         case sock_type_manage:
-            fd = g_tcp_fd_manage = listen_tcp(port, tcp_guide, deal_tcp_msg);
+            fd = g_tcp_fd_manage = listen_tcp(port, sizeof(cmd_head_t),
+                                              tcp_guide, deal_tcp_msg);
             break;
         case sock_type_udp:
             fd = g_udp_fd = listen_udp(port, deal_udp_msg);
@@ -289,5 +290,5 @@ int listen_port(sock_type type, ushort port)
             break;
     }
 
-    return (fd == INVALID_SOCKET) ? FAILURE : SUCCESS;
+    return fd;
 }

@@ -30,7 +30,7 @@ typedef struct _udp_fd
 typedef void (* udp_reader)(struct _udp_fd *);
 
 //创建客户端监听套接字
-int create_tcp_fd(uint16_t port, cb_guide guide, cb_tcp hander);
+int create_tcp_fd(uint16_t port, ushort need, cb_guide guide, cb_tcp hander);
 //创建UDP套接字
 int create_udp_fd(uint16_t port, cb_udp hander);
 

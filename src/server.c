@@ -88,9 +88,9 @@ int serv_init()
 }
 
 //监听tcp端口
-int listen_tcp(short port, cb_guide guide, cb_tcp hander)
+int listen_tcp(ushort port, ushort need, cb_guide guide, cb_tcp hander)
 {
-    int fd = create_tcp_fd(port, guide, hander);
+    int fd = create_tcp_fd(port, need, guide, hander);
 	if (INVALID_SOCKET == fd)
 		return INVALID_SOCKET;
 		
