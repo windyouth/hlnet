@@ -68,6 +68,7 @@
 {													\
 	(buf)->read = 0;								\
 	(buf)->write = 0;								\
+	(buf)->seek = 0;								\
 	(buf)->len = 0;									\
 	(buf)->gap = 0;									\
 	(buf)->end = 0;									\
