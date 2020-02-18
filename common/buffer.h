@@ -86,7 +86,7 @@ typedef struct _buffer
 {
 	uint    	read;			//读索引
 	uint    	write;			//写索引
-    uint        seek;           //定位索引
+    uint        seek;           //定位索引,位于读和写索引之间,用于连续写场景
 	int		    len;			//数据已占用的总长度，不含尾部空长度
 	int		    gap;			//尾部空长度
 	uint	    size;			//缓冲区大小

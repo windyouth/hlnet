@@ -53,8 +53,28 @@ void send_login_message(int fd)
 		return;
 	}
 	printf("发送成功，发送字节数：%d \n", res);
+    //发两次
+	if ((res = send(fd, buf, len, 0)) < 0)
+	{
+		puts("send data failed");
+		return;
+	}
+	printf("发送成功，发送字节数：%d \n", res);
 
-	res = recv(fd, buf, len, 0);
+	res = recv(fd, buf, 56, 0);
+	printf("the bytes of data from server：%d \n", res);
+	if (res > 0)
+	{
+		buf[res] = 0;
+		head = (cmd_head_t *)buf;
+		char *data = (char *)(head + 1);
+		printf("the message from server：\n");
+		printf("命令码：0x00%X \n", head->cmd_code);
+		printf("协议版本号：%d \n", head->proto_ver);
+		printf("数据长度：%d \n", head->data_size);
+		printf("数据内容：%s \n", data);
+	}
+	res = recv(fd, buf, 56, 0);
 	printf("the bytes of data from server：%d \n", res);
 	if (res > 0)
 	{

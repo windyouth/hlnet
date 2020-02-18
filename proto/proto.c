@@ -37,8 +37,8 @@ static int tcp_guide(int client_id)
     //如果在读包头
     if (cli->status == READ_PART_HEAD)
     {
-        //大于规定值，直接踢掉
         cmd_head_t *head = seek_ptr(cli->in);
+        //大于规定值，直接踢掉
         if (head->data_size > MAX_CMDDATA_LEN)
         {
             close_socket(cli);
